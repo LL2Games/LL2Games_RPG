@@ -16,12 +16,24 @@ ProcessManager* ProcessManager::Instance()
 
 void ProcessManager::Init()
 {
-    m_login = DaemonFactory::Create(DaemonType::LOGIN);
-    m_chat = DaemonFactory::Create(DaemonType::CHAT);
+    //mainD 데몬으로 재시행
+    pid_t pid = fork();
+    if (pid < 0) return;
+
+    if (pid > 0) //parent
+    {
+        exit(0);
+    }
+
+    if (pid == 0) //데몬으로 재시행
+        return; 
 }
 
 void ProcessManager::StartDaemons()
 {
+    m_login = DaemonFactory::Create(DaemonType::LOGIN);
+    m_chat = DaemonFactory::Create(DaemonType::CHAT);
+
     m_login->Run();
     m_chat->Run();
 
