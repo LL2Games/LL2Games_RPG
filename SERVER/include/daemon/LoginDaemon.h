@@ -1,12 +1,14 @@
 #pragma once
 #include "BaseDaemon.h"
 
+//Template Method
+
 class LoginDaemon : public BaseDaemon {
 public:
-    LoginDaemon() : BaseDaemon("LOGIN_DAEMON", "./bin/login_server") {}
+    LoginDaemon() : BaseDaemon("LOGIN_DAEMON", "./loginD") {}
 protected:
     const char* GetExecPath() const override
     {
-        return "./bin/login_server";
+        return "./loginD";
     }
 };

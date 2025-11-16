@@ -5,6 +5,8 @@
 
 class BaseDaemon;
 
+//Singleton
+
 class ProcessManager
 {
 public:

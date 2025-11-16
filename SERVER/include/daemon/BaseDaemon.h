@@ -2,6 +2,8 @@
 #include <string>
 #include <unistd.h>
 
+//Template Method
+
 class BaseDaemon
 {
 public:

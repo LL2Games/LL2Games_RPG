@@ -5,6 +5,8 @@
 
 #define LOOP_GAP 10
 
+//Observer
+
 class ProcessMonitor
 {
 public:
