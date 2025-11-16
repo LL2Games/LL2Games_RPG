@@ -2,6 +2,9 @@
 # C / C++ build artifacts
 #############################################
 
+# Log
+*logs/
+
 # GCC / Clang build
 *.o
 *.a
