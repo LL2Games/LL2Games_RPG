@@ -6,6 +6,7 @@ CXXFLAGS			= -std=c++17 -O2 -Wall -Wextra -Werror -MMD -MP
 INC_DIR				= include
 INCLUDES_MAIN		= -I$(INC_DIR)/MAIN/daemon -I$(INC_DIR)/MAIN/manager -I$(INC_DIR)/MAIN/monitor
 INCLUDES_LOGIN 		= -I$(INC_DIR)/LOGIN
+INCLUDES_CHAT 		= -I$(INC_DIR)/CHAT
 
 LFALGS				= -lmysqlclient -lslog
 LDFLAGS				= -Wl,-rpath=../lib/slog
@@ -26,10 +27,12 @@ TARGETS		= $(MAIND) $(LOGIND) $(CHATD)
 SRC_DIR				= src
 SRC_DIR_MAIN		= src/MAIN
 SRC_DIR_LOGIN 		= src/LOGIN
+SRC_DIR_CHAT 		= src/CHAT
 
 OBJ_DIR_COMMON		= obj/common
 OBJ_DIR_MAIN		= obj/main
 OBJ_DIR_LOGIN		= obj/login
+OBJ_DIR_CHAT		= obj/chat
 
 # subdirectories
 LOG_DIR = $(SRC_DIR)/log
@@ -42,6 +45,10 @@ LOGIN_CORE_DIR = $(SRC_DIR_LOGIN)/core
 LOGIN_DB_DIR = $(SRC_DIR_LOGIN)/db
 LOGIN_PACKET_DIR = $(SRC_DIR_LOGIN)/packet
 LOGIN_UTIL_DIR = $(SRC_DIR_LOGIN)/util
+
+CHAT_CORE_DIR = $(SRC_DIR_CHAT)/core
+CHAT_PACKET_DIR = $(SRC_DIR_CHAT)/packet
+CHAT_UTIL_DIR = $(SRC_DIR_CHAT)/util
 
 # ==================================
 # Source Files
@@ -74,6 +81,18 @@ SRCS_LOGIN =\
 	\
 	$(SRC_DIR_LOGIN)/main.cpp
 
+SRCS_CHAT =\
+	$(CHAT_CORE_DIR)/Server.cpp \
+	$(CHAT_CORE_DIR)/Client.cpp \
+	\
+	$(CHAT_PACKET_DIR)/ChatMsgHandler.cpp \
+	$(CHAT_PACKET_DIR)/PacketFactory.cpp \
+	$(CHAT_PACKET_DIR)/PacketParser.cpp \
+	\
+	$(CHAT_UTIL_DIR)/StringUtil.cpp\
+	\
+	$(SRC_DIR_CHAT)/main.cpp
+
 
 # ==================================
 # Object / Dep Files
@@ -86,6 +105,9 @@ DEPS_MAIN = $(OBJS_MAIN:.o=.d)
 
 OBJS_LOGIN = $(SRCS_LOGIN:%.cpp=$(OBJ_DIR_LOGIN)/%.o)
 DEPS_LOGIN = $(OBJS_LOGIN:.o=.d)
+
+OBJS_CHAT = $(SRCS_CHAT:%.cpp=$(OBJ_DIR_CHAT)/%.o)
+DEPS_CHAT = $(OBJS_CHAT:.o=.d)
 
 # ==================================
 # Build Rules
@@ -101,6 +123,10 @@ $(MAIND): $(OBJS_COMMON) $(OBJS_MAIN)
 $(LOGIND) : $(OBJS_COMMON) $(OBJS_LOGIN)
 	@echo " [LD] $@"
 	$(CXX) $(CXXFLAGS) $(INCLUDES_LOGIN) -o $@ $^ $(LIB_INCLUDE) $(LIB_PATH) $(LFALGS) $(LDFLAGS)
+
+$(CHATD) : $(OBJS_COMMON) $(OBJS_CHAT)
+	@echo " [LD] $@"
+	$(CXX) $(CXXFLAGS) -I$(INC_DIR) $(INCLUDES_CHAT) -o $@ $^ $(LIB_INCLUDE) $(LIB_PATH) $(LFALGS) $(LDFLAGS)
 
 # 각각의 .cpp -> obj/*.o 규칙
 $(OBJ_DIR_COMMON)/%.o:%.cpp
@@ -118,6 +144,11 @@ $(OBJ_DIR_LOGIN)/%.o:%.cpp
 	@echo " [CXX] $<"
 	$(CXX) $(CXXFLAGS) $(INCLUDES_LOGIN) -c $< -o $@ $(LIB_INCLUDE) $(LIB_PATH) $(LFALGS) $(LDFLAGS)
 
+$(OBJ_DIR_CHAT)/%.o:%.cpp
+	@mkdir -p $(dir $@)
+	@echo " [CXX] $<"
+	$(CXX) $(CXXFLAGS) -I$(INC_DIR) $(INCLUDES_CHAT) -c $< -o $@ $(LIB_INCLUDE) $(LIB_PATH) $(LFALGS) $(LDFLAGS)
+
 # ==================================
 # Utility
 # ==================================
@@ -125,8 +156,10 @@ main : $(MAIND)
 
 login : $(LOGIND)
 
+chat : $(CHATD)
+
 clean:
-	rm -rf $(OBJ_DIR_MAIN) $(OBJ_DIR_COMMON) $(OBJ_DIR_LOGIN) 
+	rm -rf $(OBJ_DIR_MAIN) $(OBJ_DIR_COMMON) $(OBJ_DIR_LOGIN) $(OBJ_DIR_CHAT)
 
 fclean: clean
 	rm -rf $(TARGETS)
