@@ -1,16 +1,17 @@
 # ==================================
 # Build Config
 # ==================================
-CXX			= g++
-CXXFLAGS	= -std=c++17 -O2 -Wall -Wextra -Werror -MMD -MP
-INCLUDES_MAIN	= -Iinclude/daemon -Iinclude/manager -Iinclude/monitor
-INCLUDES_LOGIN = -Iinclude/LOGIN
+CXX					= g++
+CXXFLAGS			= -std=c++17 -O2 -Wall -Wextra -Werror -MMD -MP
+INC_DIR				= include
+INCLUDES_MAIN		= -I$(INC_DIR)/MAIN/daemon -I$(INC_DIR)/MAIN/manager -I$(INC_DIR)/MAIN/monitor
+INCLUDES_LOGIN 		= -I$(INC_DIR)/LOGIN
 
-LFALGS			= -lmysqlclient -lslog
-LDFLAGS			= -Wl,-rpath=../lib/slog
+LFALGS				= -lmysqlclient -lslog
+LDFLAGS				= -Wl,-rpath=../lib/slog
 
-LIB_INCLUDE		= -I./include/slog
-LIB_PATH		= -L./lib/slog
+LIB_INCLUDE			= -I./include/slog
+LIB_PATH			= -L./lib/slog
 
 BIN_DIR		= bin
 MAIND		= $(BIN_DIR)/mainD
@@ -23,19 +24,19 @@ TARGETS		= $(MAIND) $(LOGIND) $(CHATD)
 # Directory Structure
 # ==================================
 SRC_DIR				= src
+SRC_DIR_MAIN		= src/MAIN
 SRC_DIR_LOGIN 		= src/LOGIN
 
-INC_DIR				= include
 OBJ_DIR_COMMON		= obj/common
-OBJ_DIR_MAIN		= obj
+OBJ_DIR_MAIN		= obj/main
 OBJ_DIR_LOGIN		= obj/login
 
 # subdirectories
 LOG_DIR = $(SRC_DIR)/log
 
-DAEMON_DIR	= $(SRC_DIR)/daemon
-MANAGER_DIR = $(SRC_DIR)/manager
-MONITOR_DIR = $(SRC_DIR)/monitor
+DAEMON_DIR	= $(SRC_DIR_MAIN)/daemon
+MANAGER_DIR = $(SRC_DIR_MAIN)/manager
+MONITOR_DIR = $(SRC_DIR_MAIN)/monitor
 
 LOGIN_CORE_DIR = $(SRC_DIR_LOGIN)/core
 LOGIN_DB_DIR = $(SRC_DIR_LOGIN)/db
@@ -58,7 +59,7 @@ SRCS_MAIN =\
 	\
 	$(MONITOR_DIR)/ProcessMonitor.cpp \
 	\
-	$(SRC_DIR)/main.cpp
+	$(SRC_DIR_MAIN)/main.cpp
 
 SRCS_LOGIN =\
 	$(LOGIN_CORE_DIR)/Server.cpp \
