@@ -114,7 +114,7 @@ void Server::ProcessClient(Client *cli)
             }
             return;
         }
-        buf += temp;
+        buf.append(temp, tempLen);
     } while (tempLen == BUFFER_SIZE);
     cli->m_recvBuffer.insert(cli->m_recvBuffer.end(), buf.begin(), buf.end());
 
