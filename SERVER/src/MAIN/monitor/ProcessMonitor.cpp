@@ -1,6 +1,7 @@
 #include "ProcessMonitor.h"
 #include <sys/stat.h>
 #include <stdio.h>
+#include "K_slog.h"
 
 ProcessMonitor::ProcessMonitor()
 {}
@@ -22,7 +23,7 @@ void ProcessMonitor::Loop()
 
             if (stat(procPath, &st) != 0)
             {
-                printf("Crashed[%s]\n", procPath);
+                K_slog_trace(K_SLOG_TRACE,"Crashed[%s]\n", procPath);
                 item.cb(); //crash callback
             }
         }

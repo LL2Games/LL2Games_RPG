@@ -1,3 +1,4 @@
+#pragma once
 #include "slog.h"
 
 enum e_slog
