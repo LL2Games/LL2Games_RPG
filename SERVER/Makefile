@@ -4,6 +4,7 @@
 CXX					= g++
 CXXFLAGS			= -std=c++17 -O2 -Wall -Wextra -Werror -MMD -MP
 INC_DIR				= include
+INCLUDES_COMMON		= -I$(INC_DIR)/COMMON -I$(INC_DIR)/COMMON/packet
 INCLUDES_MAIN		= -I$(INC_DIR)/MAIN/daemon -I$(INC_DIR)/MAIN/manager -I$(INC_DIR)/MAIN/monitor
 INCLUDES_LOGIN 		= -I$(INC_DIR)/LOGIN
 INCLUDES_CHAT 		= -I$(INC_DIR)/CHAT
@@ -118,36 +119,36 @@ all: $(TARGETS)
 
 $(MAIND): $(OBJS_COMMON) $(OBJS_MAIN)
 	@echo " [LD] $@"
-	$(CXX) $(CXXFLAGS) $(INCLUDES_MAIN) -o $@ $^ $(LIB_INCLUDE) $(LIB_PATH) $(LFALGS) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(INCLUDES_COMMON) $(INCLUDES_MAIN) -o $@ $^ $(LIB_INCLUDE) $(LIB_PATH) $(LFALGS) $(LDFLAGS)
 
 $(LOGIND) : $(OBJS_COMMON) $(OBJS_LOGIN)
 	@echo " [LD] $@"
-	$(CXX) $(CXXFLAGS) $(INCLUDES_LOGIN) -o $@ $^ $(LIB_INCLUDE) $(LIB_PATH) $(LFALGS) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(INCLUDES_COMMON) $(INCLUDES_LOGIN) -o $@ $^ $(LIB_INCLUDE) $(LIB_PATH) $(LFALGS) $(LDFLAGS)
 
 $(CHATD) : $(OBJS_COMMON) $(OBJS_CHAT)
 	@echo " [LD] $@"
-	$(CXX) $(CXXFLAGS) -I$(INC_DIR) $(INCLUDES_CHAT) -o $@ $^ $(LIB_INCLUDE) $(LIB_PATH) $(LFALGS) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(INCLUDES_COMMON) $(INCLUDES_CHAT) -o $@ $^ $(LIB_INCLUDE) $(LIB_PATH) $(LFALGS) $(LDFLAGS)
 
 # 각각의 .cpp -> obj/*.o 규칙
 $(OBJ_DIR_COMMON)/%.o:%.cpp
 	@mkdir -p $(dir $@)
 	@echo " [CXX] $<"
-	$(CXX) $(CXXFLAGS) -c $< -o $@ $(LIB_INCLUDE) $(LIB_PATH) $(LFALGS) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) -c $< -o $@ $(INCLUDES_COMMON) $(LIB_INCLUDE) $(LIB_PATH) $(LFALGS) $(LDFLAGS)
 
 $(OBJ_DIR_MAIN)/%.o:%.cpp
 	@mkdir -p $(dir $@)
 	@echo " [CXX] $<"
-	$(CXX) $(CXXFLAGS) $(INCLUDES_MAIN) -c $< -o $@ $(LIB_INCLUDE) $(LIB_PATH) $(LFALGS) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(INCLUDES_COMMON) $(INCLUDES_MAIN) -c $< -o $@ $(LIB_INCLUDE) $(LIB_PATH) $(LFALGS) $(LDFLAGS)
 
 $(OBJ_DIR_LOGIN)/%.o:%.cpp
 	@mkdir -p $(dir $@)
 	@echo " [CXX] $<"
-	$(CXX) $(CXXFLAGS) $(INCLUDES_LOGIN) -c $< -o $@ $(LIB_INCLUDE) $(LIB_PATH) $(LFALGS) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(INCLUDES_COMMON) $(INCLUDES_LOGIN) -c $< -o $@ $(LIB_INCLUDE) $(LIB_PATH) $(LFALGS) $(LDFLAGS)
 
 $(OBJ_DIR_CHAT)/%.o:%.cpp
 	@mkdir -p $(dir $@)
 	@echo " [CXX] $<"
-	$(CXX) $(CXXFLAGS) -I$(INC_DIR) $(INCLUDES_CHAT) -c $< -o $@ $(LIB_INCLUDE) $(LIB_PATH) $(LFALGS) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) -I$(INC_DIR) $(INCLUDES_COMMON) $(INCLUDES_CHAT) -c $< -o $@ $(LIB_INCLUDE) $(LIB_PATH) $(LFALGS) $(LDFLAGS)
 
 # ==================================
 # Utility

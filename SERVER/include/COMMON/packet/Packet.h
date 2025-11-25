@@ -11,5 +11,7 @@ struct PacketHeader
 
 // 패킷타입 정의
 enum PACKET_TYPE : uint16_t {
-    PKT_CHAT_MSG = 100,
+    PKT_LOGIN = 0x01,
+    PKT_REGISTER = 0x02,
+    PKT_CHAT =0x03,
 };

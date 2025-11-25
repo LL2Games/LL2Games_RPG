@@ -1,5 +1,5 @@
 #include "CHAT/packet/ChatMsgHandler.h"
-#include "CHAT/packet/Packet.h"
+#include "Packet.h"
 #include <functional>
 #include <string>
 #include "K_slog.h"

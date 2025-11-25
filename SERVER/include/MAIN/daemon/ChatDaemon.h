@@ -5,10 +5,10 @@
 
 class ChatDaemon : public BaseDaemon {
 public:
-    ChatDaemon() : BaseDaemon("CHAT_DAEMON", "./bin/chatD") {}
+    ChatDaemon() : BaseDaemon("CHAT_DAEMON", "./chatD") {}
 protected:
     const char* GetExecPath() const override
     {
-        return "./bin/chatD";
+        return "./chatD";
     }
 };

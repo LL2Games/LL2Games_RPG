@@ -5,7 +5,7 @@ std::unique_ptr<IPacketHandler> PacketFactory::Create(uint16_t type)
 {
     switch(type)
     {
-        case PKT_CHAT_MSG: return std::make_unique<ChatMsgHandler>();
+        case PKT_CHAT: return std::make_unique<ChatMsgHandler>();
     }
 
     return nullptr;
