@@ -3,7 +3,7 @@
 #include <vector>
 #include <unistd.h>
 
-#define LOOP_GAP 10
+#define LOOP_GAP 2
 
 //Observer
 
@@ -11,7 +11,7 @@ class ProcessMonitor
 {
 public:
     ProcessMonitor();
-    using Callback = std::function<void()>;
+    using Callback = std::function<pid_t()>;
 
     void AddWatch(int pid, Callback onCrash);
     void Loop();

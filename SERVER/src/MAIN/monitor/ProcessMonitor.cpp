@@ -20,11 +20,11 @@ void ProcessMonitor::Loop()
             struct stat st;
             char procPath[64];
             snprintf(procPath, sizeof(procPath), "/proc/%d", item.pid);
-
+            //K_slog_trace(K_SLOG_DEBUG,"check process[%s]", procPath);
             if (stat(procPath, &st) != 0)
             {
                 K_slog_trace(K_SLOG_TRACE,"Crashed[%s]\n", procPath);
-                item.cb(); //crash callback
+                item.pid = item.cb(); //crash callback
             }
         }
         sleep(LOOP_GAP);

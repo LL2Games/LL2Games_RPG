@@ -8,7 +8,7 @@ class BaseDaemon
 {
 public:
     virtual ~BaseDaemon() = default;
-    void Run(); //Template Method;
+    pid_t Run(); //Template Method;
 
     pid_t GetPID() const { return m_pid; }
     const std::string& GetName() const { return m_name; }

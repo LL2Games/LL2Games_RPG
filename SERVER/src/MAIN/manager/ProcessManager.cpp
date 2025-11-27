@@ -37,13 +37,13 @@ void ProcessManager::StartDaemons()
     m_login->Run();
     m_chat->Run();
 
-    m_monitor.AddWatch(m_login->GetPID(), [this]{
+    m_monitor.AddWatch(m_login->GetPID(), [this]() -> pid_t{
         printf("LOGIN DAEMON crashed-> Restart\n");
-        m_login->Run();
+        return m_login->Run();
     });
-    m_monitor.AddWatch(m_chat->GetPID(), [this]{
+    m_monitor.AddWatch(m_chat->GetPID(), [this]() -> pid_t{
         printf("CHAT_DAEMON crashed-> Restart\n");
-        m_chat->Run();
+        return m_chat->Run();
     });
 }
 
