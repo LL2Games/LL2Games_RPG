@@ -22,4 +22,7 @@ private:
         Callback cb;
     };
     std::vector<WatchItem> m_items;
+
+public:
+    std::vector<WatchItem>& GetItems() { return m_items; }
 };

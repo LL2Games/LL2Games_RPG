@@ -24,4 +24,7 @@ private:
     static ProcessManager *s_Instance;
     std::unique_ptr<BaseDaemon> m_login, m_chat;
     ProcessMonitor m_monitor;
+
+public:
+    ProcessMonitor& GetMonitor() { return m_monitor; }
 };
