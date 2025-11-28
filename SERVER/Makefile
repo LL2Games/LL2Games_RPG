@@ -36,7 +36,7 @@ OBJ_DIR_LOGIN		= obj/login
 OBJ_DIR_CHAT		= obj/chat
 
 # subdirectories
-LOG_DIR = $(SRC_DIR)/log
+COMMON_DIR = $(SRC_DIR)/COMMON
 
 DAEMON_DIR	= $(SRC_DIR_MAIN)/daemon
 MANAGER_DIR = $(SRC_DIR_MAIN)/manager
@@ -55,7 +55,7 @@ CHAT_UTIL_DIR = $(SRC_DIR_CHAT)/util
 # Source Files
 # ==================================
 SRCS_COMMON =\
-	$(LOG_DIR)/K_slog.cpp
+	$(COMMON_DIR)/K_slog.cpp
 
 SRCS_MAIN =\
 	$(DAEMON_DIR)/BaseDaemon.cpp \
