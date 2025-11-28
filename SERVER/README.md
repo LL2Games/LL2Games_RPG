@@ -41,3 +41,11 @@ SERVER/
 | TCP(Chat) | 채팅/파티/길드 | 5200 | PK_CHAT_MSG, PK_PARTY_MSG |
 | TCP(Game) | 명령, 맵 전환 | 5301 | PK_ENTER_MAP, PK_MOVE_ZONE |
 | UDP(Game) | 실시간 위치/전투 | 5401 | PK_GAME_MOVE, PK_ATTACK |
+
+
+
+# ** Packet Body(TLV(FieldType-Length-Value) 방식) **
+[NickLen(1)][Nick(NickLen)][MsgLen(2)][Msg(MsgLen)][Other fields...]
+
+
+필드를 순서대로 append하는 방식.

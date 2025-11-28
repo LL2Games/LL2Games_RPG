@@ -1,6 +1,7 @@
 #include "CHAT/core/Server.h"
 #include "CHAT/packet/PacketParser.h"
 #include "K_slog.h"
+#include "Packet.h"
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <cstring>
@@ -119,19 +120,21 @@ void Server::ProcessClient(Client *cli)
     cli->m_recvBuffer.insert(cli->m_recvBuffer.end(), buf.begin(), buf.end());
 
     PacketParser::Parse(cli, m_clients, 
-        [&](const std::string &msg, const int execptFD){
-            this->BroadCast(msg, execptFD);
+        [&](const std::string&nick, const std::string &msg, const int execptFD){
+            this->BroadCast(nick, msg, execptFD);
         }
     );
 }
 
-void Server::BroadCast(const std::string &msg, const int exceptFd)
+void Server::BroadCast(const std::string& nick, const std::string &msg, const int exceptFd)
 {
+    std::string body = PacketParser::MakeChatBody(nick, msg);
+    std::string packet = PacketParser::MakePacket(PKT_CHAT, body);
     for (auto cli : m_clients)
     {
         if (cli->GetFD() == exceptFd)
             continue;
         
-        send(cli->GetFD(), msg.c_str(), msg.size(), 0);
+        send(cli->GetFD(), packet.c_str(), packet.size(), 0);
     }
 }

@@ -14,5 +14,5 @@ private:
 
     void AcceptNewClient();
     void ProcessClient(Client* cli);
-    void BroadCast(const std::string& msg, const int exceptFd = -1);
+    void BroadCast(const std::string& nick, const std::string& msg, const int exceptFd = -1);
 };
