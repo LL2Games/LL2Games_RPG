@@ -19,7 +19,10 @@ LIB_SLOG_PATH		= ./lib/slog
 LIB_MYSQL_PATH		= ./lib/mysql
 LIB_PATH			= -L$(LIB_SLOG_PATH) -L$(LIB_MYSQL_PATH)
 
-BIN_DIR		= bin
+BIN_DIR				= bin
+
+LOG_DIR				= logs/main logs/login logs/chat
+
 MAIND		= $(BIN_DIR)/mainD
 LOGIND		= $(BIN_DIR)/loginD
 CHATD		= $(BIN_DIR)/chatD
@@ -132,21 +135,25 @@ all: $(TARGETS)
 
 $(BIN_DIR):
 	@echo " [MKDIR] $@"
-	@mkdir -p $(BIN_DIR)
+	@mkdir -p $@
+
+$(LOG_DIR):
+	@echo " [MKDIR] $@"
+	@mkdir -p $@
 
 $(LIB_SLOG): $(OBJS_SLOG)
 	@echo " [LD] $@"
 	$(CXX) -shared -o $@ $^
 
-$(MAIND): $(OBJS_COMMON) $(OBJS_MAIN) | $(LIB_SLOG) $(BIN_DIR) 
+$(MAIND): $(OBJS_COMMON) $(OBJS_MAIN) | $(LIB_SLOG) $(BIN_DIR) $(LOG_DIR)
 	@echo " [LD] $@"
 	$(CXX) $(CXXFLAGS) $(INCLUDES_COMMON) $(INCLUDES_MAIN) -o $@ $^ $(LIB_INCLUDE) $(LIB_PATH) $(LFALGS) $(LDFLAGS)
 
-$(LOGIND) : $(OBJS_COMMON) $(OBJS_LOGIN) | $(LIB_SLOG) $(BIN_DIR) 
+$(LOGIND) : $(OBJS_COMMON) $(OBJS_LOGIN) | $(LIB_SLOG) $(BIN_DIR) $(LOG_DIR)
 	@echo " [LD] $@"
 	$(CXX) $(CXXFLAGS) $(INCLUDES_COMMON) $(INCLUDES_LOGIN) -o $@ $^ $(LIB_INCLUDE) $(LIB_PATH) $(LFALGS) $(LDFLAGS)
 
-$(CHATD) : $(OBJS_COMMON) $(OBJS_CHAT) | $(LIB_SLOG) $(BIN_DIR) 
+$(CHATD) : $(OBJS_COMMON) $(OBJS_CHAT) | $(LIB_SLOG) $(BIN_DIR) $(LOG_DIR)
 	@echo " [LD] $@"
 	$(CXX) $(CXXFLAGS) $(INCLUDES_COMMON) $(INCLUDES_CHAT) -o $@ $^ $(LIB_INCLUDE) $(LIB_PATH) $(LFALGS) $(LDFLAGS)
 
