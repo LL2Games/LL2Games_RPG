@@ -10,10 +10,13 @@ INCLUDES_LOGIN 		= -I$(INC_DIR)/LOGIN
 INCLUDES_CHAT 		= -I$(INC_DIR)/CHAT
 
 LFALGS				= -lmysqlclient -lslog
-LDFLAGS				= -Wl,-rpath=../lib/slog
+LDFLAGS				= -Wl,-rpath=../lib/slog -Wl,-rpath=../lib/mysql -pthread
 
 LIB_INCLUDE			= -I./include/slog
-LIB_PATH			= -L./lib/slog
+
+LIB_SLOG_PATH		= ./lib/slog
+LIB_MYSQL_PATH		= ./lib/mysql
+LIB_PATH			= -L$(LIB_SLOG_PATH) -L$(LIB_MYSQL_PATH)
 
 BIN_DIR		= bin
 MAIND		= $(BIN_DIR)/mainD
@@ -21,6 +24,16 @@ LOGIND		= $(BIN_DIR)/loginD
 CHATD		= $(BIN_DIR)/chatD
 
 TARGETS		= $(MAIND) $(LOGIND) $(CHATD)
+# ==================================
+# Library Structure
+# ==================================
+LIB_SLOG_DIR		= ./lib/slog
+OBJ_DIR_SLOG		= obj/slog
+
+LIB_SLOG			= $(LIB_SLOG_DIR)/libslog.so
+SRCS_SLOG			= $(LIB_SLOG_DIR)/slog.cpp
+
+OBJS_SLOG			= $(SRCS_SLOG:$(LIB_SLOG_DIR)/%.cpp=$(OBJ_DIR_SLOG)/%.o)
 
 # ==================================
 # Directory Structure
@@ -116,20 +129,32 @@ DEPS_CHAT = $(OBJS_CHAT:.o=.d)
 
 all: $(TARGETS)
 
+$(BIN_DIR):
+	@echo " [MKDIR] $@"
+	@mkdir -p $(BIN_DIR)
 
-$(MAIND): $(OBJS_COMMON) $(OBJS_MAIN)
+$(LIB_SLOG): $(OBJS_SLOG)
+	@echo " [LD] $@"
+	$(CXX) -shared -o $@ $^
+
+$(MAIND): $(OBJS_COMMON) $(OBJS_MAIN) $(LIB_SLOG) | $(BIN_DIR) 
 	@echo " [LD] $@"
 	$(CXX) $(CXXFLAGS) $(INCLUDES_COMMON) $(INCLUDES_MAIN) -o $@ $^ $(LIB_INCLUDE) $(LIB_PATH) $(LFALGS) $(LDFLAGS)
 
-$(LOGIND) : $(OBJS_COMMON) $(OBJS_LOGIN)
+$(LOGIND) : $(OBJS_COMMON) $(OBJS_LOGIN) $(LIB_SLOG) | $(BIN_DIR) 
 	@echo " [LD] $@"
 	$(CXX) $(CXXFLAGS) $(INCLUDES_COMMON) $(INCLUDES_LOGIN) -o $@ $^ $(LIB_INCLUDE) $(LIB_PATH) $(LFALGS) $(LDFLAGS)
 
-$(CHATD) : $(OBJS_COMMON) $(OBJS_CHAT)
+$(CHATD) : $(OBJS_COMMON) $(OBJS_CHAT) $(LIB_SLOG) | $(BIN_DIR) 
 	@echo " [LD] $@"
 	$(CXX) $(CXXFLAGS) $(INCLUDES_COMMON) $(INCLUDES_CHAT) -o $@ $^ $(LIB_INCLUDE) $(LIB_PATH) $(LFALGS) $(LDFLAGS)
 
 # 각각의 .cpp -> obj/*.o 규칙
+$(OBJ_DIR_SLOG)/%.o: $(LIB_SLOG_DIR)/%.cpp
+	@mkdir -p $(dir $@)
+	@echo " [CXX] $<"
+	$(CXX) $(CXXFLAGS) -fPIC $(LIB_INCLUDE) -c $< -o $@
+
 $(OBJ_DIR_COMMON)/%.o:%.cpp
 	@mkdir -p $(dir $@)
 	@echo " [CXX] $<"
@@ -153,6 +178,8 @@ $(OBJ_DIR_CHAT)/%.o:%.cpp
 # ==================================
 # Utility
 # ==================================
+lib : $(LIB_SLOG)
+
 main : $(MAIND)
 
 login : $(LOGIND)
@@ -160,7 +187,7 @@ login : $(LOGIND)
 chat : $(CHATD)
 
 clean:
-	rm -rf $(OBJ_DIR_MAIN) $(OBJ_DIR_COMMON) $(OBJ_DIR_LOGIN) $(OBJ_DIR_CHAT)
+	rm -rf $(OBJ_DIR_MAIN) $(OBJ_DIR_COMMON) $(OBJ_DIR_LOGIN) $(OBJ_DIR_CHAT) $(OBJ_DIR_SLOG)
 
 fclean: clean
 	rm -rf $(TARGETS)
@@ -170,7 +197,7 @@ re : fclean all
 # 자동 의존성 include
  -include $(DEPS)
 
- .PHONY: all clean fclean re
+ .PHONY: all clean fclean re lib main login chat 
 
 #-MMD  → .d 의존성 생성
 #-MP   → 의존성 타겟 더미 생성해 빌드 오류 방지
