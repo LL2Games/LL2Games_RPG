@@ -9,8 +9,9 @@ INCLUDES_MAIN		= -I$(INC_DIR)/MAIN/daemon -I$(INC_DIR)/MAIN/manager -I$(INC_DIR)
 INCLUDES_LOGIN 		= -I$(INC_DIR)/LOGIN
 INCLUDES_CHAT 		= -I$(INC_DIR)/CHAT
 
+PROJECT_ROOT		= $(shell pwd)
 LFALGS				= -lmysqlclient -lslog
-LDFLAGS				= -Wl,-rpath=../lib/slog -Wl,-rpath=../lib/mysql -pthread
+LDFLAGS				= -Wl,-rpath=$(PROJECT_ROOT)/lib/slog -Wl,-rpath=$(PROJECT_ROOT)/lib/mysql -pthread
 
 LIB_INCLUDE			= -I./include/slog
 
@@ -137,15 +138,15 @@ $(LIB_SLOG): $(OBJS_SLOG)
 	@echo " [LD] $@"
 	$(CXX) -shared -o $@ $^
 
-$(MAIND): $(OBJS_COMMON) $(OBJS_MAIN) $(LIB_SLOG) | $(BIN_DIR) 
+$(MAIND): $(OBJS_COMMON) $(OBJS_MAIN) | $(LIB_SLOG) $(BIN_DIR) 
 	@echo " [LD] $@"
 	$(CXX) $(CXXFLAGS) $(INCLUDES_COMMON) $(INCLUDES_MAIN) -o $@ $^ $(LIB_INCLUDE) $(LIB_PATH) $(LFALGS) $(LDFLAGS)
 
-$(LOGIND) : $(OBJS_COMMON) $(OBJS_LOGIN) $(LIB_SLOG) | $(BIN_DIR) 
+$(LOGIND) : $(OBJS_COMMON) $(OBJS_LOGIN) | $(LIB_SLOG) $(BIN_DIR) 
 	@echo " [LD] $@"
 	$(CXX) $(CXXFLAGS) $(INCLUDES_COMMON) $(INCLUDES_LOGIN) -o $@ $^ $(LIB_INCLUDE) $(LIB_PATH) $(LFALGS) $(LDFLAGS)
 
-$(CHATD) : $(OBJS_COMMON) $(OBJS_CHAT) $(LIB_SLOG) | $(BIN_DIR) 
+$(CHATD) : $(OBJS_COMMON) $(OBJS_CHAT) | $(LIB_SLOG) $(BIN_DIR) 
 	@echo " [LD] $@"
 	$(CXX) $(CXXFLAGS) $(INCLUDES_COMMON) $(INCLUDES_CHAT) -o $@ $^ $(LIB_INCLUDE) $(LIB_PATH) $(LFALGS) $(LDFLAGS)
 
