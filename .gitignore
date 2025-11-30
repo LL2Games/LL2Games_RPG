@@ -8,8 +8,8 @@
 # GCC / Clang build
 *.o
 *.a
-*.so
-*.so.*
+#*.so
+#*.so.*
 *.out
 *.obj
 *.dll
