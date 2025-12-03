@@ -2,14 +2,25 @@
 #include <vector>
 #include <string>
 
-class Client {
+class Client{
 public:
-    Client(const int fd) : m_fd(fd) {}
-    int GetFD() const {return m_fd;}
-    std::string GetNICK() const {return m_nick;}
+    Client(int fd);
+    ~Client();
+
+    int SetId(const std::string id) { m_id = id; return 0; }
+    const std::string& GetId() const { return m_id; }
+
+    int SetNick(const std::string nick) { m_nick = nick; return 0; }
+    const std::string& GetNick() const { return m_nick; }
+
+    int GetFD() const { return m_fd; }
+
+    // 버퍼
     std::vector<char> m_recvBuffer;
+
     
     private:
-    std::string  m_nick;
     int m_fd;
+    std::string m_id;
+    std::string m_nick;
 };

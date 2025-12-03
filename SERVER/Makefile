@@ -65,6 +65,7 @@ LOGIN_PACKET_DIR = $(SRC_DIR_LOGIN)/packet
 LOGIN_UTIL_DIR = $(SRC_DIR_LOGIN)/util
 
 CHAT_CORE_DIR = $(SRC_DIR_CHAT)/core
+CHAT_DB_DIR = $(SRC_DIR_CHAT)/db
 CHAT_PACKET_DIR = $(SRC_DIR_CHAT)/packet
 CHAT_UTIL_DIR = $(SRC_DIR_CHAT)/util
 
@@ -103,6 +104,9 @@ SRCS_CHAT =\
 	$(CHAT_CORE_DIR)/Server.cpp \
 	$(CHAT_CORE_DIR)/Client.cpp \
 	\
+	$(CHAT_DB_DIR)/MySQLManager.cpp \
+	\
+	$(CHAT_PACKET_DIR)/ChatInitHandler.cpp \
 	$(CHAT_PACKET_DIR)/ChatMsgHandler.cpp \
 	$(CHAT_PACKET_DIR)/PacketFactory.cpp \
 	$(CHAT_PACKET_DIR)/PacketParser.cpp \

@@ -1,4 +1,5 @@
 #include "CHAT/core/Server.h"
+#include "db/MySQLManager.h"
 #include "K_slog.h"
 
 #define DAEMON_NAME "CHAT_SERVER"
@@ -9,6 +10,8 @@ int main(int ac, char **av)
 {
     K_slog_init(LOG_PATH, "CHAT_SERVER");
     K_slog_trace(K_SLOG_TRACE, "[%s]==============START==============", DAEMON_NAME);
+
+    MySQLManager::Instance().Connect("127.0.0.1", "root", "1234", "testdb", 3306);
 
     Server server;
 
