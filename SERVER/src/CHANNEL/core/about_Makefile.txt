@@ -1,0 +1,8 @@
+
+Makefile : CXXFLAGS
+-O2     : Optimize Level 2 (컴파일러가 코드를 더 빠르게 실행되도록 최적화 )
+-Wall   : 모든 일반 경고 활성화 (초기화 안 된 변수, 사용되지 않는 변수, 암시적 타입 변환)
+-Wetxra : -Wall에서 포함되지 않은 추가적인 경고까지 확인 (포인터 비교 이상, 댕글링 포인터 가능성, switch에서 누락된 case, 함수 인자 미사용)
+-Werror : 경고가 하나라도 발생하면 컴파일을 실패시킴
+-MND    : 각 .cpp 파일이 어떤 헤더를 include 하는지 기록한 .d 파일을 생성한다.
+-MP     : -MND와 함께 동작, missing header (삭제된 헤더)로 인해 Makefile이 실패하는 상황을 방지한다.
