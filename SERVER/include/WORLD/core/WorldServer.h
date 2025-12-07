@@ -9,10 +9,14 @@
 class WorldServer
 {
 public:
+    WorldServer();
+    ~WorldServer();
     int Init(const std::string& configPath);
+    int Init(const int port);
     int Run();
     int OnAccept();
     int OnReceive(int fd, const std::string& buf);
+    int OnReceive(int fd);
     int OnDisconnect(int fd);
     int HandleSelectCharacter(int fd, const std::string& charId);
     int HandleChannelHeartBeat(const std::string& pkt);
