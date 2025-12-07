@@ -1,4 +1,4 @@
-#include "MapManager.h"
+#include "CHANNEL/core/MapManager.h"
 
 MapManager::MapManager()
 {

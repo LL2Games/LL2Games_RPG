@@ -1,77 +1,49 @@
 CXX					= g++
 CXXFLAGS			= -std=c++17 -O2 -Wall -Wextra -Werror -MMD -MP
-INC_DIR				= ../../include
+INC_DIR				= ../../../include
+OBJ_DIR				= ../../../obj/channel
+BIN_DIR				= ../../../bin
+LIB_DIR				= ../../../lib
 
-INCLUDES_COMMON		= -I$(INC_DIR)/COMMON -I$(INC_DIR)/COMMON/packet
-INCLUDES_CHANNEL 	= -I$(INC_DIR)/CHANNEL
+INCLUDES			= -I$(INC_DIR)
 
-#실행 파일 
-BIN_DIR				= bin
+# 라이브러리
+PROJECT_ROOT		= $(shell cd ../../.. && pwd)
+LIB_MYSQL_PATH		= $(PROJECT_ROOT)/lib/mysql
+LIB_CHANNEL_DB		= $(LIB_DIR)/channel/db/libchannel_db.a
 
-#라이브러리
-PROJECT_ROOT		= $(shell pwd)
-LFALGS				= -lmysqlclient #-lslog
-LDFLAGS				= -Wl,-rpath=$(PROJECT_ROOT)/lib/slog -Wl,-rpath=$(PROJECT_ROOT)/lib/mysql -pthread
+LDFLAGS				= -L$(LIB_MYSQL_PATH) -lmysqlclient -Wl,-rpath=$(LIB_MYSQL_PATH) -pthread
 
-#LIB_SLOG_PATH		= ./lib/slog
-LIB_MYSQL_PATH		= ./lib/mysql
-#LIB_PATH			= -L$(LIB_SLOG_PATH) -L$(LIB_MYSQL_PATH)
-LIB_PATH			= -L$(LIB_MYSQL_PATH)
+# 실행 파일
+CHANNELD			= $(BIN_DIR)/channelD
 
-
-CHANNELD			=$(BIN_DIR)/channelD
-
-
-SRC_DIR				= src
-SRC_DIR_CHANNEL		= src/db
-
-
-LOGIN_DB_DIR = $(SRC_DIR_CHANNEL)/db
-
-SRCS_CHANNEL =\
+# 소스 파일
+SRCS =\
 	ChannelServer.cpp \
 	ChannelSession.cpp \
 	MapManager.cpp \
-	$(LOGIN_DB_DIR)/MySQLManager.cpp \
-	$(LOGIN_DB_DIR)/RedisClient.cpp \
-	PlayerManager.cpp \
-	../main.cpp
+	PlayerManager.cpp
+
+# 오브젝트 파일
+OBJS = $(SRCS:%.cpp=$(OBJ_DIR)/core/%.o)
+DEPS = $(OBJS:.o=.d)
 
 
-OBJS_CHANNEL = $(SRCS_CHANNEL:%.cpp=$(OBJ_DIR_CHANNEL)/%.o)
-DEPS_LOGIN = $(OBJS_CHANNEL:.o=.d)
+.PHONY: all clean
 
+all: $(CHANNELD)
 
-all: $(TARGETS)
-
-$(BIN_DIR):
-	@echo " [MKDIR] $@"
-	@mkdir -p $@
-
-$(LOG_DIR):
-	@echo " [MKDIR] $@"
-	@mkdir -p $@
-
-$(LIB_SLOG): $(OBJS_SLOG)
+$(CHANNELD): $(OBJS) $(LIB_CHANNEL_DB)
+	@mkdir -p $(BIN_DIR)
 	@echo " [LD] $@"
-	$(CXX) -shared -o $@ $^
+	$(CXX) $(CXXFLAGS) -o $@ $(OBJS) $(LIB_CHANNEL_DB) $(LDFLAGS)
 
-$(CHANNELD) : $(OBJS_CHANNEL) | $(LIB_SLOG) $(BIN_DIR) $(LOG_DIR)
-	@echo " [LD] $@"
-	$(CXX) $(CXXFLAGS) $(INCLUDES_COMMON) $(INCLUDES_CHAT) -o $@ $^ $(LIB_INCLUDE) $(LIB_PATH) $(LFALGS) $(LDFLAGS)
-
-$(OBJ_DIR_CHANNEL)/%.o:%.cpp
+$(OBJ_DIR)/core/%.o: %.cpp
 	@mkdir -p $(dir $@)
 	@echo " [CXX] $<"
-	$(CXX) $(CXXFLAGS) -I$(INC_DIR) $(INCLUDES_COMMON) $(INCLUDES_CHANNEL) -c $< -o $@ $(LIB_INCLUDE) $(LIB_PATH) $(LFALGS) $(LDFLAGS)
-
-
-channel : $(CHANNELD)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
 clean:
-	rm -rf $(CHANNELD) $(OBJ_DIR_CHANNEL)
+	rm -rf $(OBJ_DIR)/core $(CHANNELD)
 
-fclean: clean
-	rm -rf $(TARGETS)
-
-re : fclean all
+-include $(DEPS)

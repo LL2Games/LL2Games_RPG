@@ -1,10 +1,12 @@
 #pragma once
 
-#include "ChannelSession.h"
-#include "PlayerManager.h"
-#include "MySqlConnectionPool.h"
-#include "RedisClient.h"
-#include "MapManager.h"
+#include "CHANNEL/core/ChannelSession.h"
+#include "CHANNEL/core/PlayerManager.h"
+#include "CHANNEL/core/MapManager.h"
+#include "CHANNEL/db/MySqlConnectionPool.h"
+#include "CHANNEL/db/RedisClient.h"
+#include "CHANNEL/core/common.h"
+
 
 class ChannelServer
 {
@@ -24,7 +26,7 @@ public:
 private:
     int m_channel_id;
     int m_listen_fd;
-    map<int,ChannelSession*> m_sessions;
+    std::map<int,ChannelSession*> m_sessions;
     PlayerManager m_player_mamager;
     MySqlConnectionPool m_db;
     RedisClient m_redis;

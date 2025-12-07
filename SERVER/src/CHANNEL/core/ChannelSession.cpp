@@ -1,4 +1,4 @@
-#include "ChannelSession.h"
+#include "CHANNEL/core/ChannelSession.h"
 
 ChannelSession::ChannelSession()
 {
