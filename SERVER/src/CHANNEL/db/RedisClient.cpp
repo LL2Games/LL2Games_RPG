@@ -1,9 +1,11 @@
-#include "RedisClient.h"
+#include "CHANNEL/db/RedisClient.h"
 
 RedisClient::RedisClient()
 {
+
 }
 
 RedisClient::~RedisClient()
 {
+    
 }
