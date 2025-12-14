@@ -25,6 +25,7 @@ enum PACKET_TYPE : uint16_t {
     PKT_REGISTER = 0x02,
     PKT_CHAT_INIT,
     PKT_CHAT,
+    PKT_INIT_WORLD,
     PKT_SELECT_CHARACTER,
     PKT_SELECT_CHANNEL,
 };
@@ -43,7 +44,9 @@ struct PacketContext
     int payload_len = 0;
 
     //World에서 사용
-    
+    WorldSession *session = nullptr;
+    CharacterService *char_service = nullptr;
+
     //Chat에서 사용
     std::vector<Client*>* clients = nullptr;
     std::function<void(const std::string&, const std::string&, int)> broadcast;

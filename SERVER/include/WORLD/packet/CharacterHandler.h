@@ -5,5 +5,5 @@
 class CharacterHandler : public IPacketHandler
 {
 public:
-    void Execute(PacketContext* ctx);
+    void Execute(PacketContext* ctx) override;
 };

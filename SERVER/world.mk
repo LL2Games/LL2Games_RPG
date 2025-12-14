@@ -63,8 +63,11 @@ SRCS_COMMON =\
 
 SRCS_WORLD =\
 	$(WORLD_CORE_DIR)/WorldServer.cpp \
+	$(WORLD_CORE_DIR)/WorldSession.cpp \
+	$(WORLD_CORE_DIR)/CharacterService.cpp \
 	\
 	$(WORLD_PACKET_DIR)/CharacterHandler.cpp \
+	$(WORLD_PACKET_DIR)/WorldInitHandler.cpp \
 	\
 	$(WORLD_DIR)/main.cpp
 

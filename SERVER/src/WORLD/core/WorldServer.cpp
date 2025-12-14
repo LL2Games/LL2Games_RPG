@@ -104,6 +104,8 @@ int WorldServer::OnAccept()
     WorldSession *session = new WorldSession(client_fd);
     m_sessions[client_fd] = session;
 
+    OnReceive(client_fd);   //첫 ID 입력
+
     return 0;
 }
 
@@ -149,6 +151,8 @@ int WorldServer::OnReceive(int fd)
 
     auto handler = PacketFactory::Create(pkt->type);
     PacketContext ctx;
+    ctx.session = m_sessions[fd];
+    ctx.char_service = &m_char_service;
     ctx.fd = fd;
     ctx.payload = (char *)pkt->payload.c_str();
     ctx.payload_len = pkt->payload.size();
@@ -160,3 +164,4 @@ int WorldServer::OnReceive(int fd)
 
     return 0;
 }
+
