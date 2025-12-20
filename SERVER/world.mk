@@ -21,9 +21,9 @@ BIN_DIR				= bin
 
 LOG_DIR				= logs/world
 
-WORLDD		= $(BIN_DIR)/worldD
+WORLDD				= $(BIN_DIR)/worldD
 
-TARGETS		= $(WORLDD) 
+TARGETS				= $(WORLDD) 
 # ==================================
 # Library Structure
 # ==================================
@@ -68,6 +68,8 @@ SRCS_WORLD =\
 	\
 	$(WORLD_PACKET_DIR)/CharacterHandler.cpp \
 	$(WORLD_PACKET_DIR)/WorldInitHandler.cpp \
+	\
+	$(WORLD_DB_DIR)/MySqlConnectionPool.cpp\
 	\
 	$(WORLD_DIR)/main.cpp
 

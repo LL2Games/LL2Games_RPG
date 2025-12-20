@@ -27,10 +27,17 @@ std::optional<ParsedPacket> PacketParser::Parse(std::vector<char>& buf)
 
     const char *payload = reinterpret_cast<const char *>(buf.data() + sizeof(PacketHeader));
     int payloadLen = pktLen - sizeof(PacketHeader);
-    K_slog_trace(K_SLOG_TRACE, "[%s] type=%x", __FUNCTION__, type);
-
+    
     parsedPacket.type = type;
     parsedPacket.payload = std::string(payload, payloadLen);
+
+    K_slog_trace(K_SLOG_TRACE, "[%s] type=%x", __FUNCTION__, type);
+    K_slog_trace(K_SLOG_TRACE, "[%s][%d] payload[%d]", __FUNCTION__, __LINE__, payloadLen);
+    for (int i = 0; i < payloadLen; i++)
+    {
+        K_slog_trace(K_SLOG_TRACE, "[%x]", payload[i]);
+    }
+
     buf.erase(buf.begin(), buf.begin() + pktLen);
 
     return parsedPacket;

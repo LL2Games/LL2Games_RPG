@@ -6,17 +6,11 @@
 
 void CharacterHandler::Execute(PacketContext* ctx)
 {
-    CharacterService *char_service = nullptr;
     WorldSession *session = nullptr;
+    CharacterService *char_service = nullptr;
     if (ctx == nullptr)
     {
         K_slog_trace(K_SLOG_ERROR, "[%s][%d] ctx is nullptr\n", __FUNCTION__, __LINE__);
-        return;
-    }
-    char_service = ctx->char_service;
-    if (char_service == nullptr)
-    {
-        K_slog_trace(K_SLOG_ERROR, "[%s][%d] char_service is nullptr\n", __FUNCTION__, __LINE__);
         return;
     }
     session = ctx->session;
@@ -25,6 +19,13 @@ void CharacterHandler::Execute(PacketContext* ctx)
         K_slog_trace(K_SLOG_ERROR, "[%s][%d] session is nullptr\n", __FUNCTION__, __LINE__);
         return;
     }
+    char_service = ctx->char_service;
+    if (char_service == nullptr)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] char_service is nullptr\n", __FUNCTION__, __LINE__);
+        return;
+    }
+    
 
     std::vector<std::string> char_list = char_service->GetCharacterList(session->GetID());
     session->Send(PKT_SELECT_CHARACTER, char_list);

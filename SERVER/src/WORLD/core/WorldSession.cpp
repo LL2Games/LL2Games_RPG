@@ -1,7 +1,9 @@
 #include "WorldSession.h"
 #include <sys/socket.h>
+#include <unistd.h>
 #include "PacketParser.h"
 #include "K_slog.h"
+
 
 WorldSession::WorldSession(const int fd) : m_fd(fd)
 {
@@ -25,5 +27,10 @@ int WorldSession::Send(int type, const std::vector<std::string>& payload)
 
 int WorldSession::Close()
 {
+    if (m_fd > 0)
+    {
+        close(m_fd);
+        m_fd = 0;
+    }
     return 0;
 } 

@@ -54,10 +54,12 @@ int WorldServer::Init(const int port)
 
 int WorldServer::Run()
 {
+    int idx = 0;
     fd_set reads;
 
     while (true)
     {
+        K_slog_trace(K_SLOG_TRACE, "[%s][%d] Run[%d]", __FUNCTION__, __LINE__, ++idx);
         FD_ZERO(&reads);
         FD_SET(m_listen_fd, &reads);
 
@@ -101,6 +103,7 @@ int WorldServer::OnAccept()
         return -1;
     }
 
+    K_slog_trace(K_SLOG_TRACE, "[%s][%d] client_accept[fd=%d]", __FUNCTION__, __LINE__, client_fd);
     WorldSession *session = new WorldSession(client_fd);
     m_sessions[client_fd] = session;
 
@@ -130,6 +133,7 @@ int WorldServer::OnReceive(int fd)
         {
             //disconnect
             //OnDisconnect(fd);
+            K_slog_trace(K_SLOG_TRACE, "Client %d disconnected\n", fd);
             close(fd);
             delete m_sessions[fd];
             m_sessions.erase(fd);
