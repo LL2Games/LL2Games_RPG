@@ -44,6 +44,6 @@ err:
     else
     {
         std::vector<std::string> char_list = char_service->GetCharacterList(session->GetID());
-        session->Send(PKT_SELECT_CHARACTER, char_list);
+        session->SendOk(PKT_SELECT_CHARACTER, char_list);
     }
 }

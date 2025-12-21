@@ -25,11 +25,10 @@ int WorldSession::Send(int type, const std::vector<std::string>& payload)
     return 0;
 }
 
-int WorldSession::SendOk(int type)
+int WorldSession::SendOk(int type, std::vector<std::string> payload)
 {
-    std::vector<std::string> msg;
-    msg.push_back("ok");
-    std::string body = PacketParser::MakeBody(msg);
+    payload.insert(payload.begin(), "ok");
+    std::string body = PacketParser::MakeBody(payload);
     std::string packet = PacketParser::MakePacket(type, body);
     send(m_fd, packet.c_str(), packet.size(), 0);
     return 0;

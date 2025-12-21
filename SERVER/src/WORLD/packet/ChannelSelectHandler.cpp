@@ -96,7 +96,7 @@ err:
             std::vector<std::string> channel_info;
             channel_info.push_back(info.ip);
             channel_info.push_back(std::to_string(info.port));
-            session->Send(PKT_SELECT_CHANNEL, channel_info);
+            session->SendOk(PKT_SELECT_CHANNEL, channel_info);
         }
     }
 }
