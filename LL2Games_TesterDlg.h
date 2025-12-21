@@ -36,7 +36,7 @@ public:
 	CEdit m_editPort;
 	CEdit m_editType;
 	CEdit m_editPayload;
-	CEdit m_editResponse;
+	//CEdit m_editResponse;
 
 	MySocket m_socket;
 
@@ -45,4 +45,5 @@ public:
 	afx_msg void OnBnClickedButtonExit();
 	afx_msg void OnBnClickedButtonDisconnect();
 	afx_msg LRESULT OnReceive(WPARAM wParam, LPARAM lParam);
+	CListBox m_listResponse;
 };

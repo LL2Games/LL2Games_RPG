@@ -32,7 +32,8 @@ void CLL2GamesTesterDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT_PORT, m_editPort);
 	DDX_Control(pDX, IDC_EDIT_TYPE, m_editType);
 	DDX_Control(pDX, IDC_EDIT_PAYLOAD, m_editPayload);
-	DDX_Control(pDX, IDC_EDIT_RESPONSE, m_editResponse);
+	//DDX_Control(pDX, IDC_EDIT_RESPONSE, m_editResponse);
+	DDX_Control(pDX, IDC_LIST_RESPONSE, m_listResponse);
 }
 
 BEGIN_MESSAGE_MAP(CLL2GamesTesterDlg, CDialogEx)
@@ -164,10 +165,16 @@ void CLL2GamesTesterDlg::OnBnClickedButtonRequest()
 	std::string packet = PacketParser::MakePacket(type, body);
 
 	m_socket.Send(packet.c_str(), packet.size());
+	/*{
+		CString strTmp;
+		strTmp.Format(_T("요청성공[%d]", type));
+		AfxMessageBox(strTmp);
+	}*/
 }
 
 LRESULT CLL2GamesTesterDlg::OnReceive(WPARAM wParam, LPARAM lParam)
 {
+	int nIdxResponse = 0;
 	int recvLen = (int)wParam;
 	std::vector<char>* data = reinterpret_cast<std::vector<char>*>(lParam);
 	
@@ -178,11 +185,17 @@ LRESULT CLL2GamesTesterDlg::OnReceive(WPARAM wParam, LPARAM lParam)
 		return -1;
 	}
 
+	//응답박스 비우기
+	m_listResponse.ResetContent();
+
 	const ParsedPacket& pkt = pktOpt.value();
 
 	// TYPE 출력 문자열
 	CString strType;
-	strType.Format(L"0x%04X", pkt.type);
+	strType.Format(L"TYPE:0x%04X", pkt.type);
+	m_listResponse.InsertString(nIdxResponse++, strType);
+
+	m_listResponse.InsertString(nIdxResponse++, _T("PAYLOAD:"));
 	// ---- PAYLOAD Length + Value 파싱 ----
 	CString strParsedPayload;
 	const char* p = pkt.payload.data();
@@ -217,6 +230,7 @@ LRESULT CLL2GamesTesterDlg::OnReceive(WPARAM wParam, LPARAM lParam)
 			fieldIndex++,
 			wideValue.GetString()
 		);
+		m_listResponse.InsertString(nIdxResponse++, line);
 		strParsedPayload += line;
 	}
 
@@ -224,14 +238,15 @@ LRESULT CLL2GamesTesterDlg::OnReceive(WPARAM wParam, LPARAM lParam)
 		strParsedPayload = L"(empty)";
 
 	// ---- RESPONSE 출력 ----
-	CString response;
+	/*CString response;
 	response.Format(
-		L"TYPE    : %s\r\nPAYLOAD :\r\n%s",
+		L"TYPE:%s\r\nPAYLOAD:\r\n%s",
 		strType.GetString(),
 		strParsedPayload.GetString()
 	);
-
-	m_editResponse.SetWindowText(response);
+	
+	m_listResponse.InsertString(0, response);*/
+	//m_editResponse.SetWindowText(response);
 err:
 
 	delete data;
