@@ -14,13 +14,17 @@ WorldServer::~WorldServer() {}
 
 int WorldServer::Init(const std::string &configPath)
 {
+    m_channel_manager.Init();
     //server conf read, parsing
     K_slog_trace(K_SLOG_DEBUG, "[%s][%d] configPath[%s]", __FUNCTION__, __LINE__, configPath); //test
+
     return 0;
 }
 
 int WorldServer::Init(const int port)
 {
+    m_channel_manager.Init();
+
     m_listen_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (m_listen_fd < 0)
     {
@@ -157,6 +161,7 @@ int WorldServer::OnReceive(int fd)
     PacketContext ctx;
     ctx.session = m_sessions[fd];
     ctx.char_service = &m_char_service;
+    ctx.channel_manager = &m_channel_manager;
     ctx.fd = fd;
     ctx.payload = (char *)pkt->payload.c_str();
     ctx.payload_len = pkt->payload.size();

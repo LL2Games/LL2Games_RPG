@@ -65,9 +65,11 @@ SRCS_WORLD =\
 	$(WORLD_CORE_DIR)/WorldServer.cpp \
 	$(WORLD_CORE_DIR)/WorldSession.cpp \
 	$(WORLD_CORE_DIR)/CharacterService.cpp \
+	$(WORLD_CORE_DIR)/ChannelManager.cpp \
 	\
 	$(WORLD_PACKET_DIR)/CharacterHandler.cpp \
 	$(WORLD_PACKET_DIR)/WorldInitHandler.cpp \
+	$(WORLD_PACKET_DIR)/ChannelSelectHandler.cpp \
 	\
 	$(WORLD_DB_DIR)/MySqlConnectionPool.cpp\
 	\

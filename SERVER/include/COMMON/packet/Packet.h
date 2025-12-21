@@ -8,6 +8,7 @@ class Client;
 class WorldServer;
 class WorldSession;
 class CharacterService;
+class ChannelManager;
 class RedisClient;
 class MySqlConnectionPool;
 
@@ -46,6 +47,7 @@ struct PacketContext
     //World에서 사용
     WorldSession *session = nullptr;
     CharacterService *char_service = nullptr;
+    ChannelManager *channel_manager = nullptr;
 
     //Chat에서 사용
     std::vector<Client*>* clients = nullptr;

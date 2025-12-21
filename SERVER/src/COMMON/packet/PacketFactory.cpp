@@ -2,6 +2,7 @@
 #include "PacketFactory.h"
 #include "../WORLD/packet/WorldInitHandler.h"
 #include "../WORLD/packet/CharacterHandler.h"
+#include "../WORLD/packet/ChannelSelectHandler.h"
 
 std::unique_ptr<IPacketHandler> PacketFactory::Create(uint16_t type)
 {
@@ -13,6 +14,7 @@ std::unique_ptr<IPacketHandler> PacketFactory::Create(uint16_t type)
         */
         case PKT_INIT_WORLD: return std::make_unique<WorldInitHandler>();
         case PKT_SELECT_CHARACTER: return std::make_unique<CharacterHandler>();
+        case PKT_SELECT_CHANNEL: return std::make_unique<ChannelSelectHandler>();
     }
 
     return nullptr;
