@@ -25,6 +25,27 @@ int WorldSession::Send(int type, const std::vector<std::string>& payload)
     return 0;
 }
 
+int WorldSession::SendOk(int type)
+{
+    std::vector<std::string> msg;
+    msg.push_back("ok");
+    std::string body = PacketParser::MakeBody(msg);
+    std::string packet = PacketParser::MakePacket(type, body);
+    send(m_fd, packet.c_str(), packet.size(), 0);
+    return 0;
+}
+
+int WorldSession::SendNok(int type, const std::string &errMsg)
+{
+    std::vector<std::string> msg;
+    msg.push_back("nok");
+    msg.push_back(errMsg);
+    std::string body = PacketParser::MakeBody(msg);
+    std::string packet = PacketParser::MakePacket(type, body);
+    send(m_fd, packet.c_str(), packet.size(), 0);
+    return 0;
+}
+
 int WorldSession::Close()
 {
     if (m_fd > 0)

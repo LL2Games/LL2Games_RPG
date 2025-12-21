@@ -41,7 +41,7 @@ std::vector<std::string> CharacterService::GetCharacterList(const std::string& a
         while ((row = mysql_fetch_row(res)))
         {
             std::string char_id = row[0];
-            std::string summary = std::string(row[1]) + "|" + row[2] + "|" + row[3];
+            std::string summary = std::string(row[1]) + "$" + row[2] + "$" + row[3];
             char_list.push_back(summary);
 
             //Redis캐시 적재

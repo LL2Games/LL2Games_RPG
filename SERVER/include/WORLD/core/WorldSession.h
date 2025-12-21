@@ -27,8 +27,10 @@ public:
     
     int OnPacket(const std::string& packet);
     int Send(int type, const std::vector<std::string>& payload);
-    int Close(); 
-    
+    int SendOk(int type);
+    int SendNok(int type, const std::string& errMsg);
+    int Close();
+
     std::vector<char> m_recvBuffer;
 private:
     int m_fd;

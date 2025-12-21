@@ -55,4 +55,6 @@ void WorldInitHandler::Execute(PacketContext *ctx)
 
     session->SetAccountid(account_id);
 
+    //응답코드 추가
+    session->SendOk(PKT_INIT_WORLD);
 }
