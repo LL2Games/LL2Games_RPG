@@ -26,13 +26,16 @@ int ChannelServer::SerNonblocking(int fd)
 
 bool ChannelServer::Init(const int port)
 {
+    K_slog_trace(K_SLOG_TRACE, "[%s] Channel Server Init %d\n", "ChannelServer", port); 
    if(!InitListenSocket(port))
    {
+        K_slog_trace(K_SLOG_ERROR, "[%s] InitListenSocket %d\n", "ChannelServer", port); 
         return false;
    }
 
    if(!InitEpoll())
    {
+        K_slog_trace(K_SLOG_ERROR, "[%s] InitEpoll Error %d\n", "ChannelServer", port); 
         return false;
    }
 
@@ -47,12 +50,14 @@ bool ChannelServer::InitListenSocket(int port)
 
     if(m_listen_fd < 0)
     {
+        K_slog_trace(K_SLOG_ERROR, "[%s] m_listen_fd Set Error %d\n", "ChannelServer", port); 
         return false;
     }
 
     int opt = 1;
     if(setsockopt(m_listen_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
     {
+        K_slog_trace(K_SLOG_ERROR, "[%s] m_listen_fd Setsockopt Error %d\n", "ChannelServer", port);
         close(m_listen_fd);
         m_listen_fd =-1;
         return false;
@@ -63,8 +68,9 @@ bool ChannelServer::InitListenSocket(int port)
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
     addr.sin_port = htons(static_cast<uint16_t>(port));
 
-    if(bind(m_listen_fd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr) < 0))
-    {
+    if(bind(m_listen_fd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr))< 0)
+    {   
+        K_slog_trace(K_SLOG_ERROR, "[%s][%s][%d] m_listen_fd bind Error %d\n", "ChannelServer", __FILE__, __LINE__,  port);
         close(m_listen_fd);
         m_listen_fd = -1;
         return false;
@@ -72,6 +78,7 @@ bool ChannelServer::InitListenSocket(int port)
 
     if(listen(m_listen_fd, 1024) < 0)
     {
+        K_slog_trace(K_SLOG_ERROR, "[%s][%s][%d] m_listen_fd listen Error %d\n", "ChannelServer", __FILE__, __LINE__, port);
         close(m_listen_fd);
         m_listen_fd = -1;
         return false;
@@ -79,12 +86,13 @@ bool ChannelServer::InitListenSocket(int port)
 
     if(SerNonblocking(m_listen_fd) < 0)
     {
+        K_slog_trace(K_SLOG_ERROR, "[%s] SerNonblocking Error %d\n", "ChannelServer", port);
         close(m_listen_fd);
         m_listen_fd = -1;
         return false;
     }
 
-    std::cout << "Listening on Port" << port << std::endl;
+    K_slog_trace(K_SLOG_TRACE, "[%s] Listening on Port %d\n", "ChannelServer", port);
     return true;
 
 
@@ -95,6 +103,7 @@ bool ChannelServer::InitEpoll()
     m_epfd = epoll_create1(EPOLL_CLOEXEC);
     if(m_epfd < 0)
     {
+        K_slog_trace(K_SLOG_ERROR, "[%s] m_epfd epoll_create Error %d\n", "ChannelServer", m_epfd);
         return false;
     }
 
@@ -104,11 +113,13 @@ bool ChannelServer::InitEpoll()
 
     if(epoll_ctl(m_epfd, EPOLL_CTL_ADD, m_listen_fd, &ev) < 0)
     {
+        K_slog_trace(K_SLOG_ERROR, "[%s] m_epfd epoll 속성 설정 실패 %d\n", "ChannelServer", m_epfd);
         close(m_epfd);
         m_epfd = -1;
         return false;
     }
 
+    K_slog_trace(K_SLOG_TRACE, "[%s] InitEpoll Success \n", "ChannelServer");
     m_events.resize(64);
     return true;
 }
@@ -117,7 +128,7 @@ void ChannelServer::Run()
 {
     if(m_listen_fd < 0 || m_epfd < 0)
     {
-        std::cout << "Run failed : server not initialized." << std::endl;
+        K_slog_trace(K_SLOG_ERROR, "[%s] m_listen_fd or m_epfd is Not initialized %d\n", "ChannelServer", m_epfd);
         return;
     }
 

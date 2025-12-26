@@ -145,4 +145,6 @@ bool ChannelSession::FlushSend()
     return true;
 }
 
+// 지금 방식은 클라이언트 하나에 해당해서 Send를 하는 방식인데 Player 클래스를 vector로 가지고 있고
+// 같은 맵, 시야 범위 등등 환경요소들을 확인해서 보내는 방식으로 변경 필요
 

@@ -14,21 +14,33 @@ public:
     ChannelServer();
     ~ChannelServer();
 
-    void Init();
+    bool Init(const int port);
     void Run();
-    void GameLoop();
-    void OnAccept();
-    void OnReceive(int fd, char* buf);
+
+    void OnReceive(int fd, char* buf, size_t len);
     void OnDisconnect(int fd);
     void BroadCast(); // 매개변수로 packet 받아야함
     void SendHeartbeatToWorld();
+   
+private:
+    bool InitListenSocket(int port);
+    bool InitEpoll();
+
+    void GameLoop();
+    void OnAccept();
+
+    static int SerNonblocking(int fd);
 
 private:
     int m_channel_id;
     int m_listen_fd;
-    std::map<int,ChannelSession*> m_sessions;
+    int m_epfd;
+    bool m_running;
+
+    std::vector<epoll_event> m_events;
+    std::unordered_map<int,ChannelSession*> m_sessions;
     PlayerManager m_player_mamager;
-    MySqlConnectionPool m_db;
+    //MySqlConnectionPool m_db;
     RedisClient m_redis;
     MapManager m_map_manager;
     

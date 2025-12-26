@@ -15,3 +15,9 @@ enum PACKET_TYPE : uint16_t {
     PKT_REGISTER = 0x02,
     PKT_CHAT =0x03,
 };
+
+typedef struct packet
+{
+    PacketHeader header{};
+    std::vector<uint8_t> payload;
+} Packet;
