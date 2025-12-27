@@ -8,14 +8,15 @@ INCLUDES_COMMON		= -I$(INC_DIR)/COMMON -I$(INC_DIR)/COMMON/packet
 INCLUDES_WORLD 		= -I$(INC_DIR)/WORLD -I$(INC_DIR)/WORLD/core -I$(INC_DIR)/WORLD/db -I$(INC_DIR)/WORLD/packet 
 
 PROJECT_ROOT		= $(shell pwd)
-LFALGS				= -lmysqlclient -lslog
-LDFLAGS				= -Wl,-rpath=$(PROJECT_ROOT)/lib/slog -Wl,-rpath=$(PROJECT_ROOT)/lib/mysql -pthread
+LFALGS				= -lmysqlclient -lslog -lhiredis
+LDFLAGS				= -Wl,-rpath=$(PROJECT_ROOT)/lib/slog -Wl,-rpath=$(PROJECT_ROOT)/lib/mysql -Wl,-rpath=$(PROJECT_ROOT)/lib/hiredis -pthread
 
 LIB_INCLUDE			= -I./include/slog
 
 LIB_SLOG_PATH		= ./lib/slog
 LIB_MYSQL_PATH		= ./lib/mysql
-LIB_PATH			= -L$(LIB_SLOG_PATH) -L$(LIB_MYSQL_PATH)
+LIB_REDIS_PATH		= ./lib/hiredis
+LIB_PATH			= -L$(LIB_SLOG_PATH) -L$(LIB_MYSQL_PATH) -L$(LIB_REDIS_PATH)
 
 BIN_DIR				= bin
 
@@ -72,6 +73,7 @@ SRCS_WORLD =\
 	$(WORLD_PACKET_DIR)/ChannelSelectHandler.cpp \
 	\
 	$(WORLD_DB_DIR)/MySqlConnectionPool.cpp\
+	$(WORLD_DB_DIR)/RedisClient.cpp\
 	\
 	$(WORLD_DIR)/main.cpp
 
@@ -139,7 +141,8 @@ fclean: clean
 re : fclean all
 
 # 자동 의존성 include
- -include $(DEPS)
+ -include $(DEPS_COMMON)
+ -include $(DEPS_WORLD)
 
  .PHONY: all clean fclean re lib world
 
