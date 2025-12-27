@@ -1,0 +1,49 @@
+              ┌───────────────────┐
+              │   WorldServer     │
+              │-------------------│
+              │ m_sessions        │───┐
+              │ m_channel_manager │   │
+              │ m_char_service    │   │
+              │ m_db              │   │
+              │ m_redis           │   │
+              └───────────────────┘   │
+          ▲        ▲          ▲       │
+          │        │          │       │
+ composition   composition  aggregation│
+ (검은 다이아)  (검은 다이아)   (또는 composition)
+          │        │          │       │
+          │        │          │       ▼
+          │        │   ┌────────────────────┐
+          │        │   │  CharacterService  │
+          │        │   └────────────────────┘
+          │        │          ▲      ▲
+          │        │          │      │ dependency
+          │        │   dep(..>)      │
+          │        │     ┌───────────┘
+          │        │     │
+          │        │     │
+          │        │ ┌───────────────┐
+          │        │ │MySqlConnection│ (싱글톤)
+          │        │ └───────────────┘
+          │        │ ┌───────────────┐
+          │        └>│  RedisClient  │ (싱글톤)
+          │          └───────────────┘
+          │
+          │ composition(1:* 세션 소유)
+          ▼
+   ┌───────────────────┐
+   │   WorldSession    │
+   └───────────────────┘
+          ▲
+          │ association (세션이 서버 참조)
+          └──────────────┐
+                         │
+   ┌───────────────────┐ │ composition
+   │  ChannelManager   │<┘
+   └───────────────────┘
+          │
+          │ composition(1:* 채널)
+          ▼
+   ┌───────────────────┐
+   │   ChannelInfo     │ (struct, 엔티티)
+   └───────────────────┘

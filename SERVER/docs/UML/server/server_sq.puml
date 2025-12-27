@@ -1,0 +1,71 @@
+@startuml
+actor Client
+participant WorldServer
+participant CharacterService
+participant ChannelManager
+collections Redis
+database MySQL
+participant ChannelServer
+participant ChannelCache
+
+Client -> WorldServer: Connect (TCP)
+activate WorldServer
+
+Client -> WorldServer: ReqCharList(accountId)
+WorldServer -> CharacterService: GetCharacterList(accountId)
+activate CharacterService
+
+CharacterService -> Redis: HGETALL "charlist:{accountId}"
+alt cache hit
+    Redis --> CharacterService: charList (summary)
+else cache miss
+    Redis --> CharacterService: (not found)
+    CharacterService -> MySQL: SELECT * FROM characters WHERE accountId=..
+    MySQL --> CharacterService: rows
+    CharacterService -> Redis: HMSET "charlist:{accountId}" ...
+end
+
+CharacterService --> WorldServer: charList
+deactivate CharacterService
+
+WorldServer --> Client: CharList
+
+Client -> WorldServer: SelectChar(charId)
+WorldServer -> ChannelManager: SelectBestChannel()
+activate ChannelManager
+
+ChannelManager -> Redis: HGETALL "channel:*"
+Redis --> ChannelManager: channel states
+ChannelManager --> WorldServer: ChannelInfo(ip, port, channelId)
+deactivate ChannelManager
+
+WorldServer --> Client: ChannelInfo(ip,port,channelId)
+
+Client -> WorldServer: Disconnect
+deactivate WorldServer
+
+' ---- Connect to Channel ----
+
+Client -> ChannelServer: Connect (TCP channel)
+activate ChannelServer
+
+Client -> ChannelServer: LoginWithChar(charId)
+ChannelServer -> ChannelCache: LoadPlayerState(charId)
+activate ChannelCache
+
+ChannelCache -> Redis: HGETALL "player:{charId}"
+alt cache hit
+    Redis --> ChannelCache: player snapshot
+    ChannelCache --> ChannelServer: PlayerState
+else cache miss
+    Redis --> ChannelCache: (not found)
+    ChannelCache -> MySQL: SELECT * FROM characters WHERE charId=..
+    MySQL --> ChannelCache: full char data
+    ChannelCache -> Redis: HMSET "player:{charId}" ...
+    ChannelCache --> ChannelServer: PlayerState
+end
+deactivate ChannelCache
+
+ChannelServer --> Client: GameStart / EnterMap
+
+@enduml
