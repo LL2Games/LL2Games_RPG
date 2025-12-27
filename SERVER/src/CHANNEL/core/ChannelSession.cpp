@@ -1,6 +1,10 @@
 #include "CHANNEL/core/ChannelSession.h"
+#include "CHANNEL/core/ChannelServer.h"
+#include "COMMON/packet/PacketParser.h"
+#include "COMMON/packet/PacketFactory.h"
+#include "COMMON/packet/Packet.h"
 
-ChannelSession::ChannelSession(int fd) : m_fd(fd)
+ChannelSession::ChannelSession(int fd, ChannelServer* server) : m_fd(fd), m_server(server)
 {
     m_recvBuf.reserve(8192);
 }
@@ -16,11 +20,31 @@ bool ChannelSession::OnBytes(const uint8_t* data, size_t len)
 
     while(true)
     {
-        Packet pkt; 
-        if(!TryPopOnePacket(pkt))
+        std::vector<char> buf(m_recvBuf.begin(), m_recvBuf.end());
+        auto pkt = PacketParser::Parse(buf);
+        if(!pkt)
+        {
             break;
+        }
 
-        HandlePacket(pkt);
+        auto handler = PacketFactory::Create(pkt->type);
+        if(handler)
+        {
+            PacketContext ctx;
+            ctx.session = this;
+            ctx.fd = m_fd;
+            ctx.payload = const_cast<char*>(pkt->payload.c_str());
+            ctx.payload_len = pkt->payload.size();
+            
+            // PlayerManager 설정
+            if (m_server) {
+                ctx.player_manager = m_server->GetPlayerManager();
+            }
+
+            handler->Execute(&ctx);
+        }
+
+        
     }
 
     return true;
@@ -148,3 +172,32 @@ bool ChannelSession::FlushSend()
 // 지금 방식은 클라이언트 하나에 해당해서 Send를 하는 방식인데 Player 클래스를 vector로 가지고 있고
 // 같은 맵, 시야 범위 등등 환경요소들을 확인해서 보내는 방식으로 변경 필요
 
+
+int ChannelSession::Send(int type, const std::vector<std::string>& payload)
+{
+    std::string body = PacketParser::MakeBody(payload);
+    std::string packet = PacketParser::MakePacket(type, body);
+    send(m_fd, packet.c_str(), packet.size(), 0);
+
+    return 0;
+}
+
+int ChannelSession::SendOk(int type, std::vector<std::string> payload)
+{
+    payload.insert(payload.begin(), "ok");
+    std::string body = PacketParser::MakeBody(payload);
+    std::string packet = PacketParser::MakePacket(type, body);
+    send(m_fd, packet.c_str(), packet.size(), 0);
+    return 0;
+}
+
+int ChannelSession::SendNok(int type, const std::string &errMsg)
+{
+    std::vector<std::string> msg;
+    msg.push_back("nok");
+    msg.push_back(errMsg);
+    std::string body = PacketParser::MakeBody(msg);
+    std::string packet = PacketParser::MakePacket(type, body);
+    send(m_fd, packet.c_str(), packet.size(), 0);
+    return 0;
+}

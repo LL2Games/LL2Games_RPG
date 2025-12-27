@@ -3,10 +3,12 @@
 #include "CHANNEL/core/Player.h"
 
 
+class ChannelServer;
+
 class ChannelSession
 {
 public:
-    explicit ChannelSession(int fd);
+    explicit ChannelSession(int fd, ChannelServer* server = nullptr);
     ~ChannelSession();
 
 
@@ -21,9 +23,16 @@ public:
 
     bool NeadWriteEvent() const {return !m_sendQueue.empty();}
 
+    int Send(int type, const std::vector<std::string>& payload);
+    int SendOk(int type, std::vector<std::string> payload);
+    int SendNok(int type, const std::string &errMsg);
+
 public: 
     int OnPacket(Packet packet);
     int Send(int type ,std::string data);
+
+    void SetPlayer(Player* player) {m_player = player;}
+    Player* GetPlayer() const {return m_player;}
 
 
 private:
@@ -36,6 +45,7 @@ private:
 
 private:
     int m_fd = -1;
+    ChannelServer* m_server = nullptr;
 
     std::vector<uint8_t> m_recvBuf;
 

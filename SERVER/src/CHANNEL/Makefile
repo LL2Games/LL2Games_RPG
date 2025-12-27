@@ -37,14 +37,20 @@ CORE_SRCS =\
 
 DB_SRCS =\
 	db/MySqlConnectionPool.cpp \
+	db/PlayerService.cpp \
 	db/RedisClient.cpp
+
+PACKET_SRCS =\
+	../COMMON/packet/PlayerHandler.cpp \
+	../COMMON/packet/PacketFactory.cpp \
+	../COMMON/packet/PacketParse.cpp
 
 COMMON_SRCS =\
 	../COMMON/K_slog.cpp
 
 MAIN_SRC = main.cpp
 
-ALL_SRCS = $(CORE_SRCS) $(DB_SRCS) $(COMMON_SRCS) $(MAIN_SRC)
+ALL_SRCS = $(CORE_SRCS) $(DB_SRCS) $(PACKET_SRCS) $(COMMON_SRCS) $(MAIN_SRC)
 
 # 오브젝트 파일
 OBJS = $(ALL_SRCS:%.cpp=$(OBJ_DIR)/%.o)

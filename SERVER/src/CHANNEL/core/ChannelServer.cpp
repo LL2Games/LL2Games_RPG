@@ -228,7 +228,7 @@ void ChannelServer::OnAccept()
             continue;
         }
 
-        ChannelSession* session = new ChannelSession(cfd);
+        ChannelSession* session = new ChannelSession(cfd, this);
 
         m_sessions[cfd] = session;
 
@@ -251,7 +251,10 @@ void ChannelServer::OnReceive(int fd, char* buf, size_t len)
     }
 
      ChannelSession* session = it->second;
-     session->OnBytes((const uint8_t*)buf, len);
+     if(!session->OnBytes((const uint8_t*)buf, len))
+     {
+        OnDisconnect(fd);
+     }
 }
 
 void ChannelServer::OnDisconnect(int fd)
@@ -271,11 +274,6 @@ void ChannelServer::OnDisconnect(int fd)
 }
 
 void ChannelServer::BroadCast()
-{
-
-}
-
-void ChannelServer::SendHeartbeatToWorld()
 {
 
 }

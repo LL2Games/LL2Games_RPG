@@ -20,7 +20,7 @@ public:
     void OnReceive(int fd, char* buf, size_t len);
     void OnDisconnect(int fd);
     void BroadCast(); // 매개변수로 packet 받아야함
-    void SendHeartbeatToWorld();
+    PlayerManager* GetPlayerManager() { return &m_player_mamager; }
    
 private:
     bool InitListenSocket(int port);
