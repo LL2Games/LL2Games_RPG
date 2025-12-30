@@ -32,13 +32,15 @@ CORE_SRCS =\
 	core/ChannelServer.cpp \
 	core/ChannelSession.cpp \
 	core/MapManager.cpp \
+	core/MapInstance.cpp \
 	core/PlayerManager.cpp \
-	core/Player.cpp
+	core/Player.cpp 
 
 DB_SRCS =\
 	db/MySqlConnectionPool.cpp \
 	db/PlayerService.cpp \
-	db/RedisClient.cpp
+	db/RedisClient.cpp \
+	db/RRedisUtility.cpp
 
 PACKET_SRCS =\
 	../COMMON/packet/PlayerHandler.cpp \
