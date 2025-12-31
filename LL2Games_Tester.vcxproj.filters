@@ -45,6 +45,9 @@
     <ClInclude Include="UTIL.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="CStatusLed.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="LL2Games_Tester.cpp">
@@ -63,6 +66,9 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="UTIL.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="CStatusLed.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

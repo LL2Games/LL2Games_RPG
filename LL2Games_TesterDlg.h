@@ -4,6 +4,7 @@
 
 #pragma once
 #include "MySocket.h"
+#include "CStatusLed.h"
 
 
 // CLL2GamesTesterDlg 대화 상자
@@ -45,5 +46,8 @@ public:
 	afx_msg void OnBnClickedButtonExit();
 	afx_msg void OnBnClickedButtonDisconnect();
 	afx_msg LRESULT OnReceive(WPARAM wParam, LPARAM lParam);
+	//void UpdateConnectionUI(ConnectionState state);
+	afx_msg LRESULT UpdateConnectionUI(WPARAM wParam, LPARAM lParam);
 	CListBox m_listResponse;
+	CStatusLed m_statusLed;
 };

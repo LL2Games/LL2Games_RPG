@@ -185,6 +185,7 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="CStatusLed.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="LL2Games_Tester.h" />
     <ClInclude Include="LL2Games_TesterDlg.h" />
@@ -197,6 +198,7 @@
     <ClInclude Include="UTIL.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CStatusLed.cpp" />
     <ClCompile Include="LL2Games_Tester.cpp" />
     <ClCompile Include="LL2Games_TesterDlg.cpp" />
     <ClCompile Include="MySocket.cpp" />

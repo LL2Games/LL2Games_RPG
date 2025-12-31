@@ -34,6 +34,7 @@ void CLL2GamesTesterDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT_PAYLOAD, m_editPayload);
 	//DDX_Control(pDX, IDC_EDIT_RESPONSE, m_editResponse);
 	DDX_Control(pDX, IDC_LIST_RESPONSE, m_listResponse);
+	DDX_Control(pDX, IDC_STATIC_STATUS_LED, m_statusLed);
 }
 
 BEGIN_MESSAGE_MAP(CLL2GamesTesterDlg, CDialogEx)
@@ -44,6 +45,7 @@ BEGIN_MESSAGE_MAP(CLL2GamesTesterDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_EXIT, &CLL2GamesTesterDlg::OnBnClickedButtonExit)
 	ON_BN_CLICKED(IDC_BUTTON_DISCONNECT, &CLL2GamesTesterDlg::OnBnClickedButtonDisconnect)
 	ON_MESSAGE(WM_SOCKET_RECEIVE, &CLL2GamesTesterDlg::OnReceive)
+	ON_MESSAGE(WM_SOCKET_DISCONNECT, &CLL2GamesTesterDlg::UpdateConnectionUI)
 END_MESSAGE_MAP()
 
 
@@ -67,6 +69,7 @@ BOOL CLL2GamesTesterDlg::OnInitDialog()
 
 
 	// TODO: 여기에 추가 초기화 작업을 추가합니다.
+	UpdateConnectionUI((WPARAM)ConnectionState::DISCONNECTED, 0);
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
@@ -112,28 +115,32 @@ HCURSOR CLL2GamesTesterDlg::OnQueryDragIcon()
 void CLL2GamesTesterDlg::OnBnClickedButtonConnect()
 {
 	CString strIp, strPort;
-
 	if (m_socket.m_bIsConnect == TRUE)
 	{
 		AfxMessageBox(L"Socket Already connected");
 		return;
 	}
 
+	UpdateConnectionUI((WPARAM)ConnectionState::CONNECTING, 0);
+
 	m_editIP.GetWindowTextW(strIp);
 	m_editPort.GetWindowTextW(strPort);
 	if (!m_socket.Create())
 	{
 		AfxMessageBox(L"Socket Create Failed");
+		UpdateConnectionUI((WPARAM)ConnectionState::DISCONNECTED, 0);
 		return;
 	}
 
 	if (!m_socket.Connect(strIp, atoi(CT2A(strPort))))
 	{
 		AfxMessageBox(L"Connect Failed");
+		UpdateConnectionUI((WPARAM)ConnectionState::DISCONNECTED, 0);
 		return;
 	}
 
 	m_socket.m_bIsConnect = TRUE;
+	UpdateConnectionUI((WPARAM)ConnectionState::CONNECTED, 0);
 	AfxMessageBox(L"Connected to WorldServer");
 }
 
@@ -262,3 +269,30 @@ void CLL2GamesTesterDlg::OnBnClickedButtonExit()
 	exit(0);
 }
 
+//상태변경 함수
+LRESULT CLL2GamesTesterDlg::UpdateConnectionUI(WPARAM wParam, LPARAM lParam)
+{
+	ConnectionState state = (ConnectionState)wParam;
+	//m_connState = state;
+
+	switch (state)
+	{
+	case ConnectionState::CONNECTED:
+		m_statusLed.SetColor(RGB(0, 200, 0)); // 초록
+		SetDlgItemText(IDC_STATIC_STATUS_TEXT, L"연결 중");
+		break;
+
+	case ConnectionState::CONNECTING:
+		m_statusLed.SetColor(RGB(255, 165, 0)); // 주황
+		SetDlgItemText(IDC_STATIC_STATUS_TEXT, L"연결 시도 중");
+		break;
+
+	case ConnectionState::DISCONNECTED:
+	default:
+		m_statusLed.SetColor(RGB(200, 0, 0)); // 빨강
+		SetDlgItemText(IDC_STATIC_STATUS_TEXT, L"연결 끊김");
+		break;
+	}
+
+	return 0;
+}

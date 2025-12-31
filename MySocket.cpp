@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "LL2Games_Tester.h"
 #include "MySocket.h"
+#include "CStatusLed.h"
 #include <vector>
 
 
@@ -50,6 +51,7 @@ void MySocket::OnClose(int nErrorCode)
     AfxMessageBox(L"Server disconnected");
     Close();
     m_bIsConnect = FALSE;
+    ::PostMessage(m_hWndOwner, WM_SOCKET_DISCONNECT, (WPARAM)ConnectionState::DISCONNECTED, (LPARAM)0);
     CSocket::OnClose(nErrorCode);
 }
 

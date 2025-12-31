@@ -2,6 +2,7 @@
 
 #define BUFFER_SIZE 1024
 #define WM_SOCKET_RECEIVE (WM_USER + 100)
+#define WM_SOCKET_DISCONNECT (WM_USER + 101)
 
 #pragma pack(push, 1)
 struct PacketHeader
