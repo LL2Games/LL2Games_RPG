@@ -1,5 +1,5 @@
-#include "core/Server.h"
-#include "packet/PacketParser.h"
+#include "Server.h"
+#include "PacketParser.h"
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <cstring>

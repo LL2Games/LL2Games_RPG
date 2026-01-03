@@ -33,17 +33,26 @@ void ProcessManager::StartDaemons()
 {
     m_login = DaemonFactory::Create(DaemonType::LOGIN);
     m_chat = DaemonFactory::Create(DaemonType::CHAT);
-
+    m_world = DaemonFactory::Create(DaemonType::WORLD);
+    
     m_login->Run();
     m_chat->Run();
+    m_world->Run();
 
+    
     m_monitor.AddWatch(m_login->GetPID(), [this]() -> pid_t{
-        printf("LOGIN DAEMON crashed-> Restart\n");
-        return m_login->Run();
+       printf("LOGIN DAEMON crashed-> Restart\n");
+       return m_login->Run();
     });
+    
     m_monitor.AddWatch(m_chat->GetPID(), [this]() -> pid_t{
-        printf("CHAT_DAEMON crashed-> Restart\n");
-        return m_chat->Run();
+       printf("CHAT_DAEMON crashed-> Restart\n");
+       return m_chat->Run();
+    });
+    
+    m_monitor.AddWatch(m_world->GetPID(), [this]() -> pid_t{
+        printf("WORLD_DAEMON crashed-> Restart\n");
+        return m_world->Run();
     });
 }
 
