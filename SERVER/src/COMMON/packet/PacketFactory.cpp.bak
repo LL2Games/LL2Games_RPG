@@ -1,5 +1,10 @@
 #include "Packet.h"
 #include "PacketFactory.h"
+#include "../LOGIN/handler/LoginHandler.h"
+
+#include "../CHAT/handler/ChatInitHandler.h"
+#include "../CHAT/handler/ChatMsgHandler.h"
+
 #include "../WORLD/packet/WorldInitHandler.h"
 #include "../WORLD/packet/CharacterHandler.h"
 #include "../WORLD/packet/ChannelSelectHandler.h"
@@ -8,13 +13,21 @@ std::unique_ptr<IPacketHandler> PacketFactory::Create(uint16_t type)
 {
     switch(type)
     {
-        /*case PKT_CHAT_INIT: return std::make_unique<ChatInitHandler>();
-        case PKT_CHAT: return std::make_unique<ChatMsgHandler>();
+
+            #if 1 //CHAT
+                    case PKT_CHAT_INIT: return std::make_unique<ChatInitHandler>();
+                    case PKT_CHAT: return std::make_unique<ChatMsgHandler>();
+            #endif //CHAT
+#if 1 //LOGIN
         case PKT_LOGIN: return std::make_unique<LoginHandler>();
-        */
+#endif //LOGIN
+
+
+#if 1 //WORLD
         case PKT_INIT_WORLD: return std::make_unique<WorldInitHandler>();
         case PKT_SELECT_CHARACTER: return std::make_unique<CharacterHandler>();
         case PKT_SELECT_CHANNEL: return std::make_unique<ChannelSelectHandler>();
+#endif //WORLD
     }
 
     return nullptr;

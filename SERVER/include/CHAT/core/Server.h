@@ -2,15 +2,17 @@
 #include <vector>
 #include <sys/select.h>
 #include "Client.h"
+#include "ChatPacketFactory.h"
 
 class Server {
-public:
+    public:
     bool Init(const int port);
     void Run();
-
-private:
+    
+    private:
     int m_listenFd;
     std::vector<Client *> m_clients;
+    ChatPacketFactory m_factory;
 
     void AcceptNewClient();
     void ProcessClient(Client* cli);

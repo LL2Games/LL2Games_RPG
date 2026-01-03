@@ -18,8 +18,10 @@ public:
     // 버퍼
     std::vector<char> m_recvBuffer;
 
-    
-    private:
+    int SendOk(const int type, std::vector<std::string> payload={});
+    int SendNok(const int type, const std::string &errMsg);
+ 
+private:
     int m_fd;
     std::string m_id;
     std::string m_nick;

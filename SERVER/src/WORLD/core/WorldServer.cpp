@@ -5,8 +5,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "K_slog.h"
-#include "COMMON/packet/PacketParser.h"
-#include "COMMON/packet/PacketFactory.h"
+#include "PacketParser.h"
 #include "util/type.h"
 
 WorldServer::WorldServer() {}
@@ -111,8 +110,6 @@ int WorldServer::OnAccept()
     WorldSession *session = new WorldSession(client_fd);
     m_sessions[client_fd] = session;
 
-    OnReceive(client_fd);   //첫 ID 입력
-
     return 0;
 }
 
@@ -157,7 +154,7 @@ int WorldServer::OnReceive(int fd)
     }
     K_slog_trace(K_SLOG_DEBUG, "[%s][%d] parsed packet type=%x, payload len=%d", __FUNCTION__, __LINE__, pkt->type, (int)pkt->payload.size());
 
-    auto handler = PacketFactory::Create(pkt->type);
+    auto handler = m_factory.Create(pkt->type);
     PacketContext ctx;
     ctx.session = m_sessions[fd];
     ctx.char_service = &m_char_service;

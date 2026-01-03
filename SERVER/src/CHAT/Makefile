@@ -32,6 +32,7 @@ LDFLAGS      := -pthread \
 INCLUDES := \
     -I$(INC_DIR) \
     -I$(INC_DIR)/COMMON \
+    -I$(INC_DIR)/COMMON/packet \
 	-I$(INC_DIR)/COMMON/slog \
     -I$(INC_DIR)/CHAT \
     -I$(INC_DIR)/CHAT/core \
@@ -56,16 +57,18 @@ SRCS := \
     core/Server.cpp \
     core/Client.cpp \
     \
+    packet/ChatPacketFactory.cpp \
     packet/ChatInitHandler.cpp \
     packet/ChatMsgHandler.cpp \
-    packet/PacketFactory.cpp \
-    packet/PacketParser.cpp \
     \
     db/MySQLManager.cpp \
     \
     util/StringUtil.cpp \
     \
     main.cpp
+
+#packet/PacketFactory.cpp \
+#packet/PacketParser.cpp \
 
 # ==================================
 # Objects / Deps (경로 미러링)

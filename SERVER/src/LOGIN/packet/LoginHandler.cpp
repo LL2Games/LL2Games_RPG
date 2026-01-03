@@ -1,61 +1,77 @@
-#include "packet/LoginHandler.h"
+#include "Packet.h"
+#include "LoginHandler.h"
+#include "Client.h"
 #include "db/MySQLManager.h"
 #include <sys/socket.h>
+#include "K_slog.h"
+#include "PacketParser.h"
 
-#if 1 /*gunoo22 251123 임시*/
-void LoginHandler::Execute(Client* client, const char* payload, const int len)
+void LoginHandler::Execute(PacketContext* ctx)
 {
-    std::string data(payload, len);
+    int rc = EXIT_SUCCESS;
+    std::string errMsg;
+    size_t offset = 0;
+    Client* client = nullptr;
+    std::string id;
+    std::string pw;
 
-    // "id$pw$" 구조 확인
-    size_t pos1 = data.find('$');
-    if (pos1 == std::string::npos)
+    client = ctx->client;
+    if (client == nullptr)
     {
-        send(client->GetFD(), "NOK$InvalidFormat$", 19, 0);
-        return;
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] client is nullptr\n", __FUNCTION__, __LINE__);
+        rc = EXIT_FAILURE;
+        errMsg = "[" + std::to_string(rc) + "]client is nullptr";
+        goto err;
     }
 
-    size_t pos2 = data.find('$', pos1 + 1);
-    if (pos2 == std::string::npos)
+    //id
+    if (!PacketParser::ParseLengthPrefixedString(
+            ctx->payload,
+            ctx->payload_len,
+            offset,
+            id,
+            errMsg))
     {
-        send(client->GetFD(), "NOK$InvalidFormat$", 19, 0);
-        return;
+        rc = EXIT_FAILURE;
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] ParseLengthPrefixedString fail", __FUNCTION__, __LINE__);
+        goto err;
     }
-
-    std::string id = data.substr(0, pos1);
-    std::string pw = data.substr(pos1 + 1, pos2 - (pos1 + 1));
-
-    bool ok = MySQLManager::Instance().Login(id, pw);
-
-    if (ok)
+    //pw
+    if (!PacketParser::ParseLengthPrefixedString(
+            ctx->payload,
+            ctx->payload_len,
+            offset,
+            pw,
+            errMsg))
     {
-        client->m_id = id;
-        client->m_nick = MySQLManager::Instance().GetNick(id);
-        send(client->GetFD(), "OK$", 3, 0);
+        rc = EXIT_FAILURE;
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] ParseLengthPrefixedString fail", __FUNCTION__, __LINE__);
+        goto err;
     }
-    else
-    {
-        send(client->GetFD(), "NOK$Invalid ID/PW$", 19, 0);
-    }
-}
-
-#else
-void LoginHandler::Execute(Client* client, const char* payload, const int len)
-{
-    (void)len;
-    std::string id = payload;
-    std::string pw = payload + id.size() + 1;
-    bool ok = MySQLManager::Instance().Login(id, pw);
     
-    if (ok)
+    K_slog_trace(K_SLOG_DEBUG, "[%s][%d] id=%s pw=%s\n", __FUNCTION__, __LINE__, id.c_str(), pw.c_str());
+
+    if (!MySQLManager::Instance().Login(id, pw))
     {
-        client->m_id = id;
-        client->m_nick = MySQLManager::Instance().GetNick(id);
-        send(client->GetFD(), "OK$", 3, 0);        
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] Login fail invalid ID/PW\n", __FUNCTION__, __LINE__);
+        rc = EXIT_FAILURE;
+        errMsg = "[" + std::to_string(rc) + "]Login fail invalid ID/PW";
+        goto err;
+    }
+
+err:
+    if (rc != EXIT_SUCCESS)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] Err=%s", __FUNCTION__, __LINE__, errMsg.c_str());
+        client->SendNok(PKT_LOGIN, errMsg);
     }
     else
     {
-        send(client->GetFD(), "NOK$Invalid ID/PW$", 19, 0);
+        std::string nick = MySQLManager::Instance().GetNick(id);
+        K_slog_trace(K_SLOG_TRACE, "[%s][%d] Login SUCCESS ID=%s, NICK=%s\n", __FUNCTION__, __LINE__,id.c_str(), nick.c_str());
+        std::vector<std::string> login_info;
+        login_info.push_back("id=" + id);
+        login_info.push_back("nick=" + nick);
+        client->SendOk(PKT_LOGIN, login_info);
     }
 }
-#endif

@@ -12,6 +12,8 @@ class ChannelManager;
 class RedisClient;
 class MySqlConnectionPool;
 
+#define BUFFER_SIZE 1024
+
 #pragma pack(push, 1)
 struct PacketHeader
 {
@@ -42,15 +44,18 @@ struct PacketContext
     Client* client = nullptr;
     int fd = -1;
     char *payload = nullptr;
-    int payload_len = 0;
+    size_t payload_len = 0;
 
-    //World에서 사용
+    //Login
+
+    //Chat
+    std::vector<Client*>* clients = nullptr;
+    std::function<void(const std::string&, const std::string&, int)> broadcast;
+
+    //World
     WorldSession *session = nullptr;
     CharacterService *char_service = nullptr;
     ChannelManager *channel_manager = nullptr;
 
-    //Chat에서 사용
-    std::vector<Client*>* clients = nullptr;
-    std::function<void(const std::string&, const std::string&, int)> broadcast;
     
 };

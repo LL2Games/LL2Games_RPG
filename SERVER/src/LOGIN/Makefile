@@ -30,6 +30,7 @@ LDFLAGS      := -pthread \
 # ==================================
 INCLUDES := \
     -I$(INC_DIR) \
+    -I$(INC_DIR)/COMMON/packet \
 	-I$(INC_DIR)/COMMON/slog \
     -I$(INC_DIR)/LOGIN \
     -I$(INC_DIR)/LOGIN/core \
@@ -53,10 +54,10 @@ TARGET := $(BIN_DIR)/loginD
 # ==================================
 SRCS := \
     core/Server.cpp \
+    core/Client.cpp \
     \
+    packet/LoginPacketFactory.cpp \
     packet/LoginHandler.cpp \
-    packet/PacketFactory.cpp \
-    packet/PacketParser.cpp \
     \
     db/MySQLManager.cpp \
     \

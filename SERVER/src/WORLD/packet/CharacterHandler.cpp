@@ -2,6 +2,7 @@
 #include "CharacterService.h"
 #include "WorldSession.h"
 #include "K_slog.h"
+#include "PacketParser.h"
 
 
 void CharacterHandler::Execute(PacketContext* ctx)

@@ -56,6 +56,7 @@ SRCS := \
     core/CharacterService.cpp \
     core/ChannelManager.cpp \
     \
+    packet/WorldPacketFactory.cpp \
     packet/CharacterHandler.cpp \
     packet/WorldInitHandler.cpp \
     packet/ChannelSelectHandler.cpp \

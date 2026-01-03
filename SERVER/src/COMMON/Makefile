@@ -27,11 +27,10 @@ AR  			:= ar
 CXXFLAGS 		:= $(COMMON_CXXFLAGS)
 ARFLAGS  		:= rcs
 
-# LFLAGS		 	:= $(COMMON_LFLAGS)
-# LDFLAGS      	:= -pthread \
-#              	   -Wl,-rpath=$(LIB_DIR)/slog \
-#              	   -Wl,-rpath=$(LIB_DIR)/mysql \
-#              	   -Wl,-rpath=$(LIB_DIR)/hiredis
+LFLAGS		 	:= $(COMMON_LFLAGS)
+LDFLAGS      	:= -pthread \
+             	   -Wl,-rpath=$(LIB_DIR)/mysql \
+             	   -Wl,-rpath=$(LIB_DIR)/hiredis
 
 # ==================================
 # Includes
@@ -39,8 +38,13 @@ ARFLAGS  		:= rcs
 INCLUDES := \
 	-I$(INC_DIR) \
 	-I$(INC_DIR)/COMMON \
+	-I$(INC_DIR)/COMMON/db \
 	-I$(INC_DIR)/COMMON/packet \
 	-I$(INC_DIR)/COMMON/slog
+
+LIB_PATH := \
+    -L$(LIB_DIR)/mysql \
+    -L$(LIB_DIR)/hiredis
 
 # ==================================
 # Sources
@@ -48,8 +52,13 @@ INCLUDES := \
 SRCS := \
 	slog/slog.cpp \
 	slog/K_slog.cpp \
-	packet/PacketParser.cpp \
-	packet/PacketFactory.cpp
+	\
+	db/MySqlConnectionPool.cpp \
+	db/RedisClient.cpp \
+	\
+	packet/PacketParser.cpp
+	
+#packet/PacketFactory.cpp
 
 # ==================================
 # Objects / Deps
@@ -72,8 +81,7 @@ $(TARGET): $(OBJS)
 $(OBJ_DIR)/%.o: %.cpp
 	@mkdir -p $(dir $@)
 	@echo " [CXX] $<"
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@ 
-#$(LIB_PATH) $(LFLAGS) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@ $(LIB_PATH) $(LFLAGS) $(LDFLAGS)
 
 # ==================================
 # Clean
