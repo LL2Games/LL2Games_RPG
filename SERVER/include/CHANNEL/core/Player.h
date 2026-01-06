@@ -1,5 +1,6 @@
 #pragma once
 #include "COMMON/common.h"
+#include "CHANNEL/util/PlayerData.h"
 
 class Player
 {
@@ -16,7 +17,13 @@ public:
     void SetLevel(int m_level){this->m_level = m_level;}
     void SetPosition(float m_xPos, float m_yPos) {this->m_xPos = m_xPos; this->m_yPos = m_yPos;}
 
+
+    void SetInitData(const PlayerInitData playerInitData);
+
     int GetId() {return m_char_id;}
+    std::string GetName() {return m_name;}
+
+
 
 private:
     int m_char_id;

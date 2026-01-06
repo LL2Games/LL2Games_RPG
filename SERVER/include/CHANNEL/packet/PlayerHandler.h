@@ -10,7 +10,7 @@ class PlayerHandler : public IPacketHandler
 {
 public:
     void Execute(PacketContext * ctx) override;
-    void HandleChannelAuth(PacketContext *ctx, const std::vector<std::string>& payload);
+    void HandleChannelAuth(PacketContext *ctx);
 
-    std::vector<std::string> ParsePayload(const std::string& payload);
+
 };

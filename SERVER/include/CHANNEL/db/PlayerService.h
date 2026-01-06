@@ -1,8 +1,12 @@
 #pragma once
 #include "../core/common.h"
 #include "../core/Player.h"
+#include "../util/PlayerData.h"
 #include "MySqlConnectionPool.h"
+#include "RedisClient.h"
 #include <memory>
+
+
 
 class PlayerService
 {
@@ -15,5 +19,7 @@ public:
     bool UpdatePlayerPosition(int playerId, float x, float y);
 
 private:
-    MySqlConnectionPool* m_pool;
+    MySqlConnectionPool* m_mySql;
+    RedisClient* m_redis;
+
 };

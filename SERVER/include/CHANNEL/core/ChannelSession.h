@@ -24,7 +24,7 @@ public:
     bool NeadWriteEvent() const {return !m_sendQueue.empty();}
 
     int Send(int type, const std::vector<std::string>& payload);
-    int SendOk(int type, std::vector<std::string> payload);
+    int SendOk(int type, std::vector<std::string> payload={});
     int SendNok(int type, const std::string &errMsg);
 
 public: 

@@ -2,6 +2,7 @@
 #include "CHANNEL/core/MapInstance.h"
 
 
+
 MapInstance::MapInstance()
 {
 
@@ -12,18 +13,28 @@ MapInstance::~MapInstance()
 
 }
 
-void MapInstance::Update(float delta, int time)
+int MapInstance::Init(const MapInitData& data)
 {
-    (void)delta;
-    (void)time;
+    // 몬스터 상태 관리 
+    for (const auto& info : data.spawns) {
+        for (int i = 0; i < info.spawnNum; ++i) {
+            m_spawnList.emplace_back(info);
+        }
+    }
+        return 0;
 }
 
-void MapInstance::SpawnMonster()
+int MapInstance::Update(float deltaTime)
+{
+    
+}
+
+int MapInstance::SpawnMonster()
 {
 
 }
 
-void MapInstance::RemoveMonster()
+int MapInstance::RemoveMonster()
 {
     
 }
