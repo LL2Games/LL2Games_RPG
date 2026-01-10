@@ -1,5 +1,8 @@
 #include "CHANNEL/core/common.h"
 #include "CHANNEL/core/MapManager.h"
+#include "CHANNEL/core/PlayerManager.h"
+#include <nlohmann/json.hpp>
+#include <fstream>
 
 MapManager::MapManager()
 {
@@ -9,23 +12,61 @@ MapManager::~MapManager()
 {
 }
 
-int MapManager::CreateMap(MapRegion mapType)
+int MapManager::CreateMap(int mapId)
 {
-    //ÀÌ¹Ì ¸ÊÀÌ ¸¸µé¾îÁ® ÀÖ´ÂÁö È®ÀÎ ÈÄ ¸¸µé¾îÁ® ÀÖÀ¸¸é ÇÃ·¹ÀÌ¾î ÀÌµ¿
-    if(m_maps.find(mapType) == m_maps.end())
-    {
+    int result = 0;
+    if(m_maps.find(mapId) != m_maps.end())  return -1;
 
+    MapInitData mapData;
+
+    std::string path= "./data/maps/" + std::to_string(mapId) +".json";
+    std::ifstream file(path);
+
+    if(!file.is_open()) {
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] FAILED OPEN [%s] FILE", __FUNCTION__, __LINE__, path.c_str());
+        return -1;
     }
 
-    // MapData ÀĞ¾î¿À±â
-    MapInitData data;
+    // JSON íŒŒì¼ íŒŒì‹±
+    nlohmann::json j;
+    file >> j;
+
+    // Json íŒŒì¼ì—ì„œ ëª¬ìŠ¤í„° ë°ì´í„° ì½ì–´ì˜¤ê¸°
+    LoadMonsters(j, mapData.MonstersData);
 
     MapInstance* newMap = new MapInstance();
 
-    if(newMap->Init(data) == 0)
+    if(newMap->Init(mapData) == 0)
     {
-        m_maps[mapType]= newMap;
+        m_maps[mapId]= newMap;
     }
 
-
+    return 1;
 }
+
+ void MapManager::LoadMonsters(nlohmann::json& j, std::vector<MonsterSpawnData> MonstersData)
+ {
+    /*
+    struct MonsterSpawnData {
+    MonsterType type;
+    bool isAlive;
+    float timer;
+    float respawnDelay;
+};
+    */
+    auto MonsterCount = j["Monster"].size();
+
+    MonstersData.resize(MonsterCount);
+    // Json íŒŒì¼ì—ì„œ Monster ë°°ì—´ì˜ ì •ë³´ë“¤ì„ ë°˜ë³µë¬¸ì„ í†µí•´ ì„¤ì •
+    for(const auto& Monster : j["monsters"]){
+        MonsterSpawnData data;
+
+        data.type = Monster["monsterId"];
+        data.spawnPos.xPos = Monster["x"];
+        data.spawnPos.yPos = Monster["y"];
+        data.ItemId = Monster["group"];
+        MonstersData.push_back(data);
+    }
+
+    K_slog_trace(K_SLOG_TRACE, "[%s][%d] MonsterLoad Success", __FUNCTION__, __LINE__);
+ }

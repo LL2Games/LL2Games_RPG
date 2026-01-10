@@ -15,19 +15,30 @@ MapInstance::~MapInstance()
 
 int MapInstance::Init(const MapInitData& data)
 {
-    // ¸ó½ºÅÍ »óÅÂ °ü¸® 
-    for (const auto& info : data.spawns) {
-        for (int i = 0; i < info.spawnNum; ++i) {
-            m_spawnList.emplace_back(info);
-        }
-    }
-        return 0;
+    this->m_mapID = data.mapID;
+    this->m_monsterSpawnList = data.MonstersData;
 }
 
 int MapInstance::Update(float deltaTime)
 {
     
 }
+
+int MapInstance::InitSpawnMonster()
+{
+    m_monsterList.reserve(m_monsterSpawnList.size());
+    for(m_monsterSpawnListIter = m_monsterSpawnList.begin(); m_monsterSpawnListIter < m_monsterSpawnList.end(); ++m_monsterListIter)
+    {
+        Monster monster;
+        monster.type = m_monsterSpawnListIter->type;
+        monster.Pos = m_monsterSpawnListIter->spawnPos;
+
+        // JSON íŒŒì¼ì„ í†µí•´ì„œ ëª¬ìŠ¤í„°ì˜ ì •ë³´ë¥¼ ê°€ì§€ê³  ì˜¨ë‹¤.
+
+        m_monsterList.push_back(monster);
+    }
+
+}   
 
 int MapInstance::SpawnMonster()
 {
