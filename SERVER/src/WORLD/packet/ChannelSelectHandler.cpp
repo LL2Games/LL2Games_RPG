@@ -2,6 +2,7 @@
 #include "WorldSession.h"
 #include "ChannelManager.h"
 #include "K_slog.h"
+#include "PacketParser.h"
 
 
 void ChannelSelectHandler::Execute(PacketContext* ctx)
@@ -10,10 +11,7 @@ void ChannelSelectHandler::Execute(PacketContext* ctx)
     ChannelManager *channel_manager = nullptr;
     int rc = EXIT_SUCCESS;
     std::string errMsg;
-    const char* data = nullptr;
-    size_t len = 0;
     size_t offset = 0;
-    uint8_t value_len = 0;
     std::string channel_id;
 
     if (ctx == nullptr)
@@ -40,38 +38,17 @@ void ChannelSelectHandler::Execute(PacketContext* ctx)
         goto err;
     }
     
-    data = ctx->payload;
-    len = ctx->payload_len;
-
-    // payload 파싱
-    if (offset >= len)
+    if (!PacketParser::ParseLengthPrefixedString(
+            ctx->payload,
+            ctx->payload_len,
+            offset,
+            channel_id,
+            errMsg))
     {
-        K_slog_trace(K_SLOG_ERROR, "[%s] payload empty", __FUNCTION__);
         rc = EXIT_FAILURE;
-        errMsg = "[" + std::to_string(rc) + "]payload empty";
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] ParseLengthPrefixedString fail", __FUNCTION__, __LINE__);
         goto err;
     }
-
-    // length
-    value_len = static_cast<uint8_t>(data[offset]);
-    offset += 1;
-
-    // (선택) 예약 바이트 skip
-    if (offset < len && data[offset] == 0x00)
-        offset += 1;
-
-    if (offset + value_len > len)
-    {
-        K_slog_trace(K_SLOG_ERROR,
-                     "[%s] payload length overflow", __FUNCTION__);
-        rc = EXIT_FAILURE;
-        errMsg = "[" + std::to_string(rc) + "]payload length overflow";
-        goto err;
-    }
-
-    // value
-    channel_id.assign(data + offset, value_len);
-    offset += value_len;
 
     K_slog_trace(K_SLOG_DEBUG,
         "[%s] client(%d) channel_id=[%s]",

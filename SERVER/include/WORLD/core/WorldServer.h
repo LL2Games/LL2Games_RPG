@@ -6,6 +6,7 @@
 #include "WorldSession.h"
 #include "ChannelManager.h"
 #include "CharacterService.h"
+#include "WorldPacketFactory.h"
 
 class WorldServer
 {
@@ -28,4 +29,5 @@ private:
     ChannelManager  m_channel_manager;
     RedisClient m_redis;
     CharacterService m_char_service;
+    WorldPacketFactory m_factory;
 };

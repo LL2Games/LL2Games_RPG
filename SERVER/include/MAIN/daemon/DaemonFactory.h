@@ -2,10 +2,11 @@
 #include <memory>
 #include "LoginDaemon.h"
 #include "ChatDaemon.h"
+#include "WorldDaemon.h"
 
 //Factory
 
-enum class DaemonType { LOGIN, CHAT };
+enum class DaemonType { LOGIN, CHAT, WORLD };
 
 class DaemonFactory
 {

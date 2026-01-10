@@ -1,17 +1,14 @@
 #include "Client.h"
-#include "MySQLManager.h"
 #include "PacketParser.h"
 #include <sys/socket.h>
 #include <unistd.h>
 
-Client::Client(const int fd) : m_fd(fd) 
-{
-}
+Client::Client(int fd) : m_fd(fd) {}
+Client::~Client() {}
 
-Client::~Client() 
-{
-
-}
+int Client::GetFD() const { return m_fd; }
+std::string Client::GetID() const { return m_id; }
+std::string Client::GetNick() const { return m_nick; }
 
 int Client::SendOk(const int type, std::vector<std::string> payload)
 {

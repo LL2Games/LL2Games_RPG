@@ -1,8 +1,11 @@
-#include "CHAT/core/Server.h"
-#include "CHAT/packet/PacketParser.h"
-#include "CHAT/packet/PacketFactory.h"
+#include "Server.h"
+#include "Client.h"
+// #include "CHAT/packet/PacketParser.h"
+// #include "CHAT/packet/PacketFactory.h"
 #include "K_slog.h"
 #include "Packet.h"
+#include "IPacketHandler.h"
+#include "PacketParser.h"
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <cstring>
@@ -90,37 +93,6 @@ void Server::AcceptNewClient()
 
     Client *cli = new Client(client_fd);
 
-    // id 받기
-    K_slog_trace(K_SLOG_DEBUG, "[%s][%d]wait recv id\n", __FUNCTION__, __LINE__);
-    char temp[4096];
-    int recv_len = recv(client_fd, temp, sizeof(temp), 0);
-    K_slog_trace(K_SLOG_DEBUG, "[%s][%d]recv[len=%d][%s]\n", __FUNCTION__, __LINE__, recv_len, temp);
-    if (recv_len <= 0)
-    {
-        K_slog_trace(K_SLOG_TRACE, "Client %d disconnected\n", client_fd);
-        close(client_fd);
-        delete cli;
-        return;
-    }
-
-    // 버퍼 누적
-    cli->m_recvBuffer.insert(cli->m_recvBuffer.end(), temp, temp + recv_len);
-
-    // 패킷 파싱
-    auto pkt = PacketParser::Parse(cli);
-    if (!pkt.has_value())
-    {
-        K_slog_trace(K_SLOG_ERROR, "[%s][%d] Packet Parse failed", __FUNCTION__, __LINE__);
-        return;
-    }
-
-    auto handler = PacketFactory::Create(pkt->type);
-        if (handler)
-        {
-            handler->Execute(cli, pkt->payload.c_str(), pkt->payload.size(), std::vector<Client *>(),
-                             nullptr);
-        }
-
     m_clients.push_back(cli);
     K_slog_trace(K_SLOG_TRACE, "[%s] Client[fd=%d][id=%s][nick=%s] connected\n", "LOGIN", client_fd, cli->GetId().c_str(), cli->GetNick().c_str());
 }
@@ -157,7 +129,7 @@ void Server::ProcessClient(Client *cli)
     cli->m_recvBuffer.insert(cli->m_recvBuffer.end(), buf.begin(), buf.end());
 
     K_slog_trace(K_SLOG_DEBUG, "[%s][%d] recv from fd=%d, len=%d", __FUNCTION__, __LINE__, cli->GetFD(), buf.size());
-    auto pkt = PacketParser::Parse(cli);
+    auto pkt = PacketParser::Parse(cli->m_recvBuffer);
     if (!pkt.has_value())
     {
         K_slog_trace(K_SLOG_ERROR, "[%s][%d] Packet Parse failed", __FUNCTION__, __LINE__);
@@ -165,21 +137,31 @@ void Server::ProcessClient(Client *cli)
     }
     K_slog_trace(K_SLOG_DEBUG, "[%s][%d] parsed packet type=%x, payload len=%d", __FUNCTION__, __LINE__, pkt->type, (int)pkt->payload.size());
 
-    auto handler = PacketFactory::Create(pkt->type);
+    auto handler = m_factory.Create(pkt->type);
+    PacketContext ctx;
+    ctx.client = cli;
+    ctx.clients = &m_clients;
+    ctx.payload = (char *)pkt->payload.c_str();
+    ctx.payload_len = pkt->payload.size(); 
+    ctx.broadcast = [&](const std::string &nick,
+                        const std::string &msg,
+                        const int execptFD)
+    {
+        this->BroadCast(nick, msg, execptFD);
+    };
     if (handler)
     {
-        handler->Execute(cli, pkt->payload.c_str(), pkt->payload.size(), m_clients,
-                         [&](const std::string &nick, const std::string &msg, const int execptFD)
-                         {
-                             this->BroadCast(nick, msg, execptFD);
-                         });
+        handler->Execute(&ctx);
     }
     K_slog_trace(K_SLOG_DEBUG, "[%s][%d] ProcessClient fd=%d done", __FUNCTION__, __LINE__, cli->GetFD());
 }
 
 void Server::BroadCast(const std::string &nick, const std::string &msg, const int exceptFd)
 {
-    std::string body = PacketParser::MakeChatBody(nick, msg);
+    std::vector<std::string> datas;
+    datas.push_back(nick);
+    datas.push_back(msg);
+    std::string body = PacketParser::MakeBody(datas);
     std::string packet = PacketParser::MakePacket(PKT_CHAT, body);
     K_slog_trace(K_SLOG_TRACE, "[%s][%d] BroadCast msg[nick:%s][%s]", __FUNCTION__, __LINE__, nick.c_str(), msg.c_str());
 

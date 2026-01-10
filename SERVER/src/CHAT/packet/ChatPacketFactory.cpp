@@ -1,8 +1,8 @@
-#include "CHAT/packet/PacketFactory.h"
-#include "CHAT/packet/ChatInitHandler.h"
-#include "CHAT/packet/ChatMsgHandler.h"
+#include "ChatPacketFactory.h"
+#include "ChatInitHandler.h"
+#include "ChatMsgHandler.h"
 
-std::unique_ptr<IPacketHandler> PacketFactory::Create(uint16_t type)
+std::unique_ptr<IPacketHandler> ChatPacketFactory::Create(uint16_t type)
 {
     switch(type)
     {
