@@ -22,7 +22,7 @@ SRCS_SLOG			= $(LIB_SLOG_DIR)/slog.cpp
 OBJS_SLOG			= $(SRCS_SLOG:$(LIB_SLOG_DIR)/%.cpp=$(OBJ_DIR_SLOG)/%.o)
 
 
-LDFLAGS				= -Wl,-rpath=$(PROJECT_ROOT)/lib/slog -L$(LIB_SLOG_PATH) -lslog -Wl,-rpath=$(PROJECT_ROOT)/lib/mysql -L$(LIB_MYSQL_PATH) -lmysqlclient -pthread
+LDFLAGS				= -Wl,-rpath=$(PROJECT_ROOT)/lib/slog -L$(LIB_SLOG_PATH) -lslog -Wl,-rpath=$(PROJECT_ROOT)/lib/mysql -L$(LIB_MYSQL_PATH) -lmysqlclient -lhiredis -pthread
 
 # 실행 파일
 CHANNELD			= $(BIN_DIR)/channelD
@@ -34,13 +34,14 @@ CORE_SRCS =\
 	core/MapManager.cpp \
 	core/MapInstance.cpp \
 	core/PlayerManager.cpp \
-	core/Player.cpp 
+	core/Player.cpp \
+	core/Monster.cpp 
 
 DB_SRCS =\
 	db/MySqlConnectionPool.cpp \
 	db/PlayerService.cpp \
 	db/RedisClient.cpp \
-	db/RRedisUtility.cpp
+	db/RedisUtility.cpp
 
 PACKET_SRCS =\
 	../COMMON/packet/PlayerHandler.cpp \

@@ -1,5 +1,6 @@
-#pragma once
 #include "CHANNEL/db/RedisUtility.h"
+#include "CHANNEL/util/PlayerData.h"
+#include <sstream>
 
 bool GetStr(const Map& map, const std::string& key, std::string& value)
 {
@@ -32,5 +33,21 @@ bool GetFloat(const Map& map, const std::string& key, float& value)
     }
 
     return true;
+}
+
+std::map<std::string, std::string> PlayerInfoToRedisMap(const PlayerInitData playerData)
+{
+    std::map<std::string, std::string> redisMap;
+    
+    redisMap["char_id"] = std::to_string(playerData.char_id);
+    redisMap["account_id"] = playerData.account_id;
+    redisMap["name"] = playerData.name;
+    redisMap["level"] = std::to_string(playerData.level);
+    redisMap["job"] = std::to_string(playerData.job);
+    redisMap["map_id"] = std::to_string(playerData.map_id);
+    redisMap["xPos"] = std::to_string(playerData.xPos);
+    redisMap["yPos"] = std::to_string(playerData.yPos);
+    
+    return redisMap;
 }
 

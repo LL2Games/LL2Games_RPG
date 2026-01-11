@@ -14,7 +14,6 @@ MapManager::~MapManager()
 
 int MapManager::CreateMap(int mapId)
 {
-    int result = 0;
     if(m_maps.find(mapId) != m_maps.end())  return -1;
 
     MapInitData mapData;
