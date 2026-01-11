@@ -19,6 +19,7 @@ class ChannelSession;
 class PlayerManager;
 
 
+#define BUFFER_SIZE 1024
 
 #pragma pack(push, 1)
 struct PacketHeader
@@ -41,7 +42,7 @@ enum PACKET_TYPE : uint16_t {
     PKT_CHANNEL_AUTH
 };
 
-struct ParsePacket
+struct ParsedPacket
 {
     uint16_t type;
     std::string payload;
@@ -69,3 +70,9 @@ struct PacketContext
 
 
 };
+
+typedef struct packet
+{
+    PacketHeader header{};
+    std::vector<uint8_t> payload;
+} Packet;

@@ -21,7 +21,7 @@ void ChannelSelectHandler::Execute(PacketContext* ctx)
         errMsg = "[" + std::to_string(rc) + "]ctx is nullptr";
         goto err;
     }
-    session = ctx->session;
+    session = ctx->world_session;
     if (session == nullptr)
     {
         K_slog_trace(K_SLOG_ERROR, "[%s][%d] session is nullptr\n", __FUNCTION__, __LINE__);

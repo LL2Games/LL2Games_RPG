@@ -4,9 +4,9 @@
 #include <cstring>
 #include "K_slog.h"
 
-std::optional<ParsePacket> PacketParser::Parse(std::vector<char>& buf)
+std::optional<ParsedPacket> PacketParser::Parse(std::vector<char>& buf)
 {
-    ParsePacket parsedPacket;
+    ParsedPacket parsedPacket;
     if(buf.size() < sizeof(PacketHeader))
     {
         K_slog_trace(K_SLOG_ERROR, "[%s][%d] buf.size() < sizeof(PacketHeader)", __FUNCTION__, __LINE__);

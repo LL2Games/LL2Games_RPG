@@ -156,7 +156,7 @@ int WorldServer::OnReceive(int fd)
 
     auto handler = m_factory.Create(pkt->type);
     PacketContext ctx;
-    ctx.session = m_sessions[fd];
+    ctx.world_session = m_sessions[fd];
     ctx.char_service = &m_char_service;
     ctx.channel_manager = &m_channel_manager;
     ctx.fd = fd;
