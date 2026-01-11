@@ -5,14 +5,20 @@
 #include <string>
 
 class Client;
+
+class RedisClient;
+class MySqlconnectionPool;
+
 class WorldServer;
 class WorldSession;
 class CharacterService;
 class ChannelManager;
-class RedisClient;
-class MySqlConnectionPool;
 
-#define BUFFER_SIZE 1024
+class ChannelServer;
+class ChannelSession;
+class PlayerManager;
+
+
 
 #pragma pack(push, 1)
 struct PacketHeader
@@ -31,9 +37,11 @@ enum PACKET_TYPE : uint16_t {
     PKT_INIT_WORLD,
     PKT_SELECT_CHARACTER,
     PKT_SELECT_CHANNEL,
+    PKT_INIT_CHANNEL,
+    PKT_CHANNEL_AUTH
 };
 
-struct ParsedPacket
+struct ParsePacket
 {
     uint16_t type;
     std::string payload;
@@ -44,18 +52,20 @@ struct PacketContext
     Client* client = nullptr;
     int fd = -1;
     char *payload = nullptr;
-    size_t payload_len = 0;
+    int payload_len = 0;
 
-    //Login
-
-    //Chat
+    // Chat에서 사용
     std::vector<Client*>* clients = nullptr;
-    std::function<void(const std::string&, const std::string&, int)> broadcast;
+    std::function<void(const std::string&, const std::string&, int)>broadcast;
 
     //World
-    WorldSession *session = nullptr;
+    WorldSession *world_session = nullptr;
     CharacterService *char_service = nullptr;
     ChannelManager *channel_manager = nullptr;
 
-    
+    //Channel에서 사용
+    ChannelSession *channel_session = nullptr;
+    PlayerManager* player_manager =nullptr;
+
+
 };
