@@ -1,8 +1,8 @@
 #include "CHANNEL/core/ChannelSession.h"
 #include "CHANNEL/core/ChannelServer.h"
-#include "COMMON/packet/PacketParser.h"
-#include "COMMON/packet/PacketFactory.h"
-#include "COMMON/packet/Packet.h"
+#include "PacketParser.h"
+#include "IPacketFactory.h"
+#include "Packet.h"
 
 ChannelSession::ChannelSession(int fd, ChannelServer* server) : m_fd(fd), m_server(server)
 {
@@ -28,7 +28,7 @@ bool ChannelSession::OnBytes(const uint8_t* data, size_t len)
             break;
         }
 
-        auto handler = PacketFactory::Create(pkt->type);
+        auto handler = m_factory.Create(pkt->type);
         if(handler)
         {
             PacketContext ctx;

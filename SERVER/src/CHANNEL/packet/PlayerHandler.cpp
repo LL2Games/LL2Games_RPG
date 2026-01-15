@@ -84,7 +84,7 @@ void PlayerHandler::HandleChannelAuth(PacketContext *ctx)
     K_slog_trace(K_SLOG_TRACE, "HandleChannelAuth: 플레이어 로드 성공 [%d]", characterId);
 
     // 세션에 플레이어 연결
-    ctx->session->SetPlayer(player.get());
+    ctx->channel_session->SetPlayer(player.get());
 
     // PlayerManager에 등록 (안전 체크)
     if (ctx->player_manager) {
@@ -101,6 +101,6 @@ void PlayerHandler::HandleChannelAuth(PacketContext *ctx)
     // 성공 응답
     K_slog_trace(K_SLOG_TRACE, "HandleChannelAuth: 인증 완료");
 
-    ctx->session->SendOk(PKT_CHANNEL_AUTH);
+    ctx->channel_session->SendOk(PKT_CHANNEL_AUTH);
   
 }

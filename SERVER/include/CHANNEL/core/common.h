@@ -14,7 +14,7 @@
 #include <sys/epoll.h>
 #include <vector>
 #include <deque>
-#include <slog/K_slog.h>
+#include "K_slog.h"
 
 #include "COMMON/packet/Packet.h"
 

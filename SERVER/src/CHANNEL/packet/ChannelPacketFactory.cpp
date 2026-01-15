@@ -1,8 +1,8 @@
-#include "COMMON/packet/Packet.h"
-#include "COMMON/packet/PacketFactory.h"
-#include "CHANNEL/packet/PlayerHandler.h"
+#include "Packet.h"
+#include "ChannelPacketFactory.h"
+#include "PlayerHandler.h"
 
-std::unique_ptr<IPacketHandler> PacketFactory::Create(uint16_t type)
+std::unique_ptr<IPacketHandler> ChannelPacketFactory::Create(uint16_t type)
 {
     switch(type)
     {

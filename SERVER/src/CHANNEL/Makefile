@@ -1,90 +1,118 @@
-CXX					= g++
-CXXFLAGS			= -std=c++17 -O2 -Wall -Wextra -Werror -MMD -MP
-INC_DIR				= ../../include
-OBJ_DIR				= ../../obj/channel
-BIN_DIR				= ../../bin
-LIB_DIR				= ../../lib
+# ==================================
+# Project Root & Common
+# ==================================
+PROJECT_ROOT := ../..
+include $(PROJECT_ROOT)/common.mk
 
-INCLUDES			= -I$(INC_DIR) -I$(INC_DIR)/slog
+# ==================================
+# Build Config
+# ==================================
+INC_DIR				:= $(PROJECT_ROOT)/include
+SRC_DIR				:= $(PROJECT_ROOT)/src
+OBJ_DIR 			:= $(PROJECT_ROOT)/obj/channel
+BIN_DIR				:= $(PROJECT_ROOT)/bin
+LIB_DIR				:= $(PROJECT_ROOT)/lib
+LOG_DIR				:= $(PROJECT_ROOT)/logs/channel
 
-# 라이브러리
-PROJECT_ROOT		= $(shell cd ../.. && pwd)
-LIB_MYSQL_PATH		= $(PROJECT_ROOT)/lib/mysql
-LIB_SLOG_PATH		= $(PROJECT_ROOT)/lib/slog
+# ==================================
+# Compiler / Linker
+# ==================================
+CXX          := $(COMMON_CXX)
+CXXFLAGS     := $(COMMON_CXXFLAGS)
+LFLAGS		 := $(COMMON_LFLAGS)
+LDFLAGS      := -pthread \
+                -Wl,-rpath=$(LIB_DIR)/mysql \
+                -Wl,-rpath=$(LIB_DIR)/hiredis
 
-LIB_INCLUDE			= -I../../include/slog
-LIB_SLOG_DIR		= ../../lib/slog
-OBJ_DIR_SLOG		= ../../obj/slog
+# ==================================
+# Includes / Libs
+# ==================================
+INCLUDES := \
+    -I$(INC_DIR) \
+    -I$(INC_DIR)/COMMON \
+    -I$(INC_DIR)/COMMON/packet \
+	-I$(INC_DIR)/COMMON/slog \
+    -I$(INC_DIR)/CHANNEL \
+    -I$(INC_DIR)/CHANNEL/core \
+    -I$(INC_DIR)/CHANNEL/db \
+    -I$(INC_DIR)/CHANNEL/packet
 
-LIB_SLOG			= $(LIB_SLOG_DIR)/libslog.so
-SRCS_SLOG			= $(LIB_SLOG_DIR)/slog.cpp
+LIB_PATH := \
+    -L$(LIB_DIR)/common \
+    -L$(LIB_DIR)/mysql \
+    -L$(LIB_DIR)/hiredis
 
-OBJS_SLOG			= $(SRCS_SLOG:$(LIB_SLOG_DIR)/%.cpp=$(OBJ_DIR_SLOG)/%.o)
+# ==================================
+# Target
+# ==================================
+TARGET := $(BIN_DIR)/channelD
 
-
-LDFLAGS				= -Wl,-rpath=$(PROJECT_ROOT)/lib/slog -L$(LIB_SLOG_PATH) -lslog -Wl,-rpath=$(PROJECT_ROOT)/lib/mysql -L$(LIB_MYSQL_PATH) -lmysqlclient -lhiredis -pthread
-
-# 실행 파일
-CHANNELD			= $(BIN_DIR)/channelD
-
-# 소스 파일
-CORE_SRCS =\
+# ==================================
+# Source Files
+# ==================================
+SRCS := \
 	core/ChannelServer.cpp \
 	core/ChannelSession.cpp \
 	core/MapManager.cpp \
 	core/MapInstance.cpp \
 	core/PlayerManager.cpp \
 	core/Player.cpp \
-	core/Monster.cpp 
-
-DB_SRCS =\
-	db/MySqlConnectionPool.cpp \
+	core/Monster.cpp \
+    \
+	packet/ChannelPacketFactory.cpp \
+	packet/PlayerHandler.cpp \
+    \
+    db/MySqlConnectionPool.cpp \
 	db/PlayerService.cpp \
 	db/RedisClient.cpp \
-	db/RedisUtility.cpp
+	db/RedisUtility.cpp \
+    \
+    main.cpp
 
-PACKET_SRCS =\
-	../COMMON/packet/PlayerHandler.cpp \
-	../COMMON/packet/PacketFactory.cpp \
-	../COMMON/packet/PacketParse.cpp
+# ==================================
+# Objects / Deps (경로 미러링)
+# ==================================
+OBJS := $(SRCS:%.cpp=$(OBJ_DIR)/%.o)
+DEPS := $(OBJS:.o=.d)
 
-COMMON_SRCS =\
-	../COMMON/K_slog.cpp
+# ==================================
+# Build Rules
+# ==================================
+.PHONY: all clean fclean re
 
-MAIN_SRC = main.cpp
+all: $(TARGET)
 
-ALL_SRCS = $(CORE_SRCS) $(DB_SRCS) $(PACKET_SRCS) $(COMMON_SRCS) $(MAIN_SRC)
-
-# 오브젝트 파일
-OBJS = $(ALL_SRCS:%.cpp=$(OBJ_DIR)/%.o)
-DEPS = $(OBJS:.o=.d)
-
-
-.PHONY: all clean
-
-all: $(CHANNELD)
-
-$(CHANNELD): $(OBJS) $(LIB_SLOG)
-	@mkdir -p $(BIN_DIR)
+$(TARGET): $(OBJS) | $(BIN_DIR) $(LOG_DIR)
 	@echo " [LD] $@"
-	$(CXX) $(CXXFLAGS) -o $@ $(OBJS) $(LDFLAGS)
+	$(CXX) -o $@ $^ $(LIB_PATH) $(LFLAGS) $(LDFLAGS)
 
 $(OBJ_DIR)/%.o: %.cpp
 	@mkdir -p $(dir $@)
 	@echo " [CXX] $<"
-	$(CXX) $(CXXFLAGS) $(INCLUDES) $(LIB_INCLUDE) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@ $(LIB_PATH) $(LFLAGS) $(LDFLAGS)
 
-$(LIB_SLOG): $(OBJS_SLOG)
-	@echo " [LD] $@"
-	$(CXX) -shared -o $@ $^
+# ==================================
+# Directories
+# ==================================
+$(BIN_DIR):
+	mkdir -p $@
 
-$(OBJ_DIR_SLOG)/%.o: $(LIB_SLOG_DIR)/%.cpp
-	@mkdir -p $(dir $@)
-	@echo " [CXX] $<"
-	$(CXX) $(CXXFLAGS) -fPIC $(LIB_INCLUDE) -c $< -o $@
+$(LOG_DIR):
+	mkdir -p $@
 
-
+# ==================================
+# Clean
+# ==================================
 clean:
-	rm -rf $(OBJ_DIR) $(CHANNELD)
+	rm -rf $(OBJ_DIR)
 
+fclean: clean
+	rm -f $(TARGET)
+
+re: fclean all
+
+# ==================================
+# Dependency Include
+# ==================================
 -include $(DEPS)
+

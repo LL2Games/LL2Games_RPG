@@ -1,7 +1,7 @@
 #pragma once
 #include "CHANNEL/core/common.h"
 #include "CHANNEL/core/Player.h"
-
+#include "ChannelPacketFactory.h"
 
 class ChannelServer;
 
@@ -54,5 +54,5 @@ private:
     size_t m_sendOffset = 0;
 
     Player* m_player;
-
+    ChannelPacketFactory m_factory;
 };
