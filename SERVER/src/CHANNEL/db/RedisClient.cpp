@@ -31,7 +31,7 @@ int RedisClient::Init()
     }
 
     if (m_ctx->err) {
-        K_slog_trace(K_SLOG_ERROR, "[%s][%d] Redis Connect error(%d): %s",__FUNCTION__, __LINE__, m_ctx->errstr);
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] Redis Connect error(%d): %s",__FUNCTION__, __LINE__, m_ctx->err, m_ctx->errstr);
         redisFree(m_ctx);
         m_ctx = nullptr;
         return EXIT_FAILURE;
