@@ -3,10 +3,11 @@
 #include "LoginDaemon.h"
 #include "ChatDaemon.h"
 #include "WorldDaemon.h"
+#include "ChannelDaemon.h"
 
 //Factory
 
-enum class DaemonType { LOGIN, CHAT, WORLD };
+enum class DaemonType { LOGIN, CHAT, WORLD, CHANNEL };
 
 class DaemonFactory
 {

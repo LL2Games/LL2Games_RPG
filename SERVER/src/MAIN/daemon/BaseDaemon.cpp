@@ -40,12 +40,12 @@ pid_t BaseDaemon::Run()
         close(fd[1]); //write close;
         m_pid = getpid();
 
-        // 🔥 FD 닫기
+        // FD 닫기
         close(STDIN_FILENO);
         close(STDOUT_FILENO);
         close(STDERR_FILENO);
 
-        // 🔥 /dev/null로 연결
+        // /dev/null로 연결
         open("/dev/null", O_RDONLY);
         open("/dev/null", O_RDWR);
         open("/dev/null", O_RDWR);

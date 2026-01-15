@@ -22,7 +22,7 @@ private:
 
 private:
     static ProcessManager *s_Instance;
-    std::unique_ptr<BaseDaemon> m_login, m_chat, m_world;
+    std::unique_ptr<BaseDaemon> m_login, m_chat, m_world, m_channel;
     ProcessMonitor m_monitor;
 
 public:

@@ -10,6 +10,8 @@ std::unique_ptr<BaseDaemon> DaemonFactory::Create(DaemonType type)
         return std::make_unique<ChatDaemon>();
     case DaemonType::WORLD:
         return std::make_unique<WorldDaemon>();
+    case DaemonType::CHANNEL:
+        return std::make_unique<ChannelDaemon>();
     }
 
     return nullptr;
