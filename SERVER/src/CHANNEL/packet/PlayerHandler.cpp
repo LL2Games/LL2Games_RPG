@@ -40,7 +40,6 @@ void PlayerHandler::HandleChannelAuth(PacketContext *ctx)
     uint8_t value_len = 0;
     int characterId =0;
     std::string ch_id;
-    PlayerService playerService;
     
     data = ctx->payload;
     len = ctx->payload_len;
@@ -74,7 +73,7 @@ void PlayerHandler::HandleChannelAuth(PacketContext *ctx)
 
     K_slog_trace(K_SLOG_TRACE, "HandleChannelAuth: 캐릭터 ID [%d] 인증 시도", characterId);
 
-    auto player = playerService.LoadPlayer(characterId);
+    auto player = PlayerService::LoadPlayer(characterId);
 
     if(!player) {
         errMsg = "[" + std::to_string(rc) + "]HandleChannelAuth: 플레이어 로드 실패 [" + std::to_string(characterId) + "]";

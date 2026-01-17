@@ -5,11 +5,11 @@
 #include <sstream>
 #include <string>
 
+MySqlConnectionPool *PlayerService::m_mySql = MySqlConnectionPool::GetInstance();
+RedisClient *PlayerService::m_redis = RedisClient::GetInstance();
+
 PlayerService::PlayerService()
 {
-    m_mySql = MySqlConnectionPool::GetInstance();
-    m_redis = RedisClient::GetInstance();
-  
 }
 
 PlayerService::~PlayerService()

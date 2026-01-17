@@ -14,12 +14,11 @@ public:
     PlayerService();
     ~PlayerService();
     
-    std::unique_ptr<Player> LoadPlayer(int characterId);
-    bool SavePlayer(std::unique_ptr<Player> player);
-    bool UpdatePlayerPosition(int playerId, float x, float y);
+    static std::unique_ptr<Player> LoadPlayer(int characterId);
+    static bool SavePlayer(std::unique_ptr<Player> player);
+    static bool UpdatePlayerPosition(int playerId, float x, float y);
 
 private:
-    MySqlConnectionPool* m_mySql;
-    RedisClient* m_redis;
-
+    static MySqlConnectionPool* m_mySql;
+    static RedisClient* m_redis;
 };
