@@ -9,6 +9,8 @@ public:
     ~Monster(){};
 
     void SetPos(Vec2 Pos){this->m_Pos.xPos = Pos.xPos; this->m_Pos.yPos = Pos.yPos;}
+
+    
 private:
     MonsterType m_type;
     Vec2 m_Pos;

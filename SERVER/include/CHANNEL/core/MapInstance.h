@@ -3,6 +3,7 @@
 #include "CHANNEL/core/PlayerManager.h"
 #include "COMMON/CommonEnum.h"
 #include "CHANNEL/core/Monster.h"
+#include <nlohmann/json.hpp>
 
 
 class MapInstance 
@@ -14,7 +15,8 @@ public:
     int Init(const MapInitData& data);
     int InitSpawnMonster();
     int SetMonster(MonsterType monsterType);
-    int Update(float deltaTime);
+    int LoadMonsters(int monster_id);
+    int Update();
     int SpawnMonster();
     int RemoveMonster();
 
@@ -22,6 +24,7 @@ private:
     //uint16_t  m_map_id;
     bool  m_has_player;
     MapRegion m_mapID;
+   
     std::vector<MonsterSpawnData> m_monsterSpawnList;
     std::vector<MonsterSpawnData>::iterator m_monsterSpawnListIter;
 

@@ -1,0 +1,8 @@
+{
+  "mapId": 100000000,
+  "name": "Henesys",
+  "monsters": [
+    { "monsterId": 100100, "x": -300, "y": 0, "group": 1 },
+    { "monsterId": 100101, "x":  250, "y": 0, "group": 2 }
+  ]
+}

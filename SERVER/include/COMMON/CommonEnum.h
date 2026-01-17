@@ -26,9 +26,19 @@ struct MonsterSpawnData {
     Vec2 spawnPos;
     float respawnRemain;
     float respawnDelay;
+    int monsterId;
     int ItemId;
 };
 
+struct MonsterTemplate {
+    int monsterId;
+    int level;
+    int hp;
+    int attackDamage;
+    float exp;
+    float moveSpeed;
+    char name;
+};
 
 
 typedef struct MapInitData{
