@@ -17,7 +17,7 @@ public:
     bool Init(const int port);
     void Run();
 
-    void OnReceive(int fd, char* buf, size_t len);
+    void OnReceive(int fd);
     void OnDisconnect(int fd);
     void BroadCast(); // 매개변수로 packet 받아야함
     PlayerManager* GetPlayerManager() { return &m_player_mamager; }
