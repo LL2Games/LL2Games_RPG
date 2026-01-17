@@ -32,15 +32,16 @@ void PlayerHandler::Execute(PacketContext* ctx)
 
 void PlayerHandler::HandleChannelAuth(PacketContext *ctx)
 {
+    int rc = EXIT_SUCCESS;
+    std::string errMsg;
     const char* data = nullptr;
     size_t len = 0;
     size_t offset = 0;
     uint8_t value_len = 0;
-
     int characterId =0;
-
     std::string ch_id;
-
+    PlayerService playerService;
+    
     data = ctx->payload;
     len = ctx->payload_len;
 
@@ -73,12 +74,13 @@ void PlayerHandler::HandleChannelAuth(PacketContext *ctx)
 
     K_slog_trace(K_SLOG_TRACE, "HandleChannelAuth: 캐릭터 ID [%d] 인증 시도", characterId);
 
-    PlayerService playerService;
     auto player = playerService.LoadPlayer(characterId);
 
     if(!player) {
-        K_slog_trace(K_SLOG_ERROR, "HandleChannelAuth: 플레이어 로드 실패 [%d]", characterId);
-        return;
+        errMsg = "[" + std::to_string(rc) + "]HandleChannelAuth: 플레이어 로드 실패 [" + std::to_string(characterId) + "]";
+        K_slog_trace(K_SLOG_ERROR, "[%d][%s]%s", __LINE__, __FUNCTION__, errMsg.c_str());
+        rc = EXIT_FAILURE;
+        goto err;
     }
 
     K_slog_trace(K_SLOG_TRACE, "HandleChannelAuth: 플레이어 로드 성공 [%d]", characterId);
@@ -101,6 +103,10 @@ void PlayerHandler::HandleChannelAuth(PacketContext *ctx)
     // 성공 응답
     K_slog_trace(K_SLOG_TRACE, "HandleChannelAuth: 인증 완료");
 
-    ctx->channel_session->SendOk(PKT_CHANNEL_AUTH);
-  
+err:
+    if (rc != EXIT_SUCCESS) {
+        ctx->channel_session->SendNok(PKT_CHANNEL_AUTH, errMsg);
+    } else {
+        ctx->channel_session->SendOk(PKT_CHANNEL_AUTH);
+    }
 }

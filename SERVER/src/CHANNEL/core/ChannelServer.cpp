@@ -168,28 +168,7 @@ void ChannelServer::GameLoop()
 
             if(e & EPOLLIN)
             {
-                while(true)
-                {
-                    char buf[4096 + 1];
-                    ssize_t r = recv(fd, buf, 4096, 0);
-
-                    if( r == 0)
-                    {
-                        OnDisconnect(fd);
-                        break;
-                    }
-
-                    if(r < 0)
-                    {
-                        if(errno == EAGAIN || errno == EWOULDBLOCK)
-                            break;
-                        OnDisconnect(fd);
-                        break;
-                    }
-
-                    buf[r] = '\0';
-                    OnReceive(fd, buf, static_cast<size_t>(r));
-                }
+                OnReceive(fd);
             }
         }
     }
@@ -242,8 +221,29 @@ void ChannelServer::OnAccept()
     }
 }
 
-void ChannelServer::OnReceive(int fd, char* buf, size_t len)
+void ChannelServer::OnReceive(int fd)
 {
+    char temp[BUFFER_SIZE];
+    int tempLen = 0;
+    std::string buf;
+
+    do
+    {
+        memset(temp, 0x00, sizeof(temp));
+        tempLen = recv(fd, temp, sizeof(temp), 0);
+        if (tempLen <= 0)
+        {
+            OnDisconnect(fd);
+            K_slog_trace(K_SLOG_TRACE, "Client %d disconnected\n", fd);
+            close(fd);
+            delete m_sessions[fd];
+            m_sessions.erase(fd);
+            return ;
+        }
+        buf.append(temp, tempLen);
+    } while (tempLen == BUFFER_SIZE);
+
+
     auto it = m_sessions.find(fd);
     if(it == m_sessions.end())
     {
@@ -251,7 +251,7 @@ void ChannelServer::OnReceive(int fd, char* buf, size_t len)
     }
 
      ChannelSession* session = it->second;
-     if(!session->OnBytes((const uint8_t*)buf, len))
+     if(!session->OnBytes((const uint8_t*)buf.c_str(), buf.size()))
      {
         OnDisconnect(fd);
      }
