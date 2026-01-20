@@ -1,4 +1,5 @@
 #include <vector>
+#include <string>
 #pragma once
 enum class MapRegion{
     HENESYS,
@@ -24,8 +25,7 @@ struct Vec2{
 struct MonsterSpawnData {
     MonsterType type;
     Vec2 spawnPos;
-    float respawnRemain;
-    float respawnDelay;
+    int respawnDelay;
     int monsterId;
     int ItemId;
 };
@@ -37,7 +37,7 @@ struct MonsterTemplate {
     int attackDamage;
     float exp;
     float moveSpeed;
-    char name;
+    std::string name;
 };
 
 

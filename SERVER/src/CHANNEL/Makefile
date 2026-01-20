@@ -58,6 +58,7 @@ SRCS := \
 	core/PlayerManager.cpp \
 	core/Player.cpp \
 	core/Monster.cpp \
+	core/MonsterManager.cpp \
     \
 	packet/ChannelPacketFactory.cpp \
 	packet/PlayerHandler.cpp \

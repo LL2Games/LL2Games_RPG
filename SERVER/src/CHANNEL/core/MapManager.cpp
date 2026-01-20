@@ -4,6 +4,9 @@
 #include <nlohmann/json.hpp>
 #include <fstream>
 
+#define MAP_PATH "./data/Maps/"
+
+
 MapManager::MapManager()
 {
 }
@@ -32,7 +35,7 @@ int MapManager::CreateMap(int mapId)
 
     MapInitData mapData;
 
-    std::string path= "./data/maps/" + std::to_string(mapId) +".json";
+    std::string path = MAP_PATH + std::to_string(mapId) +".json";
     std::ifstream file(path);
 
     if(!file.is_open()) {
@@ -57,7 +60,7 @@ int MapManager::CreateMap(int mapId)
     return 1;
 }
 
- void MapManager::LoadMaps(nlohmann::json& j, std::vector<MonsterSpawnData> MonstersData)
+void MapManager::LoadMaps(nlohmann::json& j, std::vector<MonsterSpawnData> MonstersData)
  {
     /*
     struct MonsterSpawnData {
