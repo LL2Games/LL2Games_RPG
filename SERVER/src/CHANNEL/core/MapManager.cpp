@@ -47,8 +47,12 @@ int MapManager::CreateMap(int mapId)
     nlohmann::json j;
     file >> j;
 
+	mapData.name = j["name"];
+	mapData.mapID = j["mapId"];
+	
+	
     // Json 파일에서 몬스터 데이터 읽어오기
-    LoadMaps(j, mapData.MonstersData);
+    LoadMonster(j, mapData.MonstersData);
 
     MapInstance* newMap = new MapInstance();
 
@@ -60,7 +64,7 @@ int MapManager::CreateMap(int mapId)
     return 1;
 }
 
-void MapManager::LoadMaps(nlohmann::json& j, std::vector<MonsterSpawnData> MonstersData)
+void MapManager::LoadMonster(nlohmann::json& j, std::vector<MonsterSpawnData> MonstersData)
  {
     /*
     struct MonsterSpawnData {
@@ -70,13 +74,14 @@ void MapManager::LoadMaps(nlohmann::json& j, std::vector<MonsterSpawnData> Monst
     float respawnDelay;
 };
     */
+	
     auto MonsterCount = j["Monster"].size();
 
     MonstersData.resize(MonsterCount);
     // Json 파일에서 Monster 배열의 정보들을 반복문을 통해 설정
     for(const auto& Monster : j["monsters"]){
         MonsterSpawnData data;
-
+	
         data.monsterId = Monster["monsterId"];
         data.spawnPos.xPos = Monster["x"];
         data.spawnPos.yPos = Monster["y"];

@@ -23,13 +23,18 @@ public:
     int RemoveMonster();
 	
 	int checkPlayer();
+	
+	// 플레이어 들어왔을 때
+	void OnEnter();
+	// 플레이어 나갔을 때
+	void OnLeave();
 
 private:
    	// 플레이어 존재 여부
-    bool  m_has_player;
+    bool m_has_player;
 	
 	// 현재 맵에 플레이어 수
-	uint16_t  m_playerCount;
+	uint16_t m_playerCount;
     uint16_t m_mapID;
    
     std::vector<MonsterSpawnData> m_monsterSpawnList;
@@ -39,4 +44,8 @@ private:
     std::vector<Monster>::iterator m_monsterListIter;
 	
 	MonsterManager* m_monsterManager;
+	
+	// Map에 아무것도 없을 상황에서의 시간
+	std::chrono::steady_clock::time_point m_emptyTime;
+
 };

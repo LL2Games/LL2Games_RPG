@@ -21,16 +21,12 @@ int MapInstance::Init(const MapInitData& data)
     this->m_mapID = data.mapID;
 	// 여기서 Map Json 파일에서 읽어온 몬스터 정보 저장
     this->m_monsterSpawnList = data.MonstersData;
-
     return 1;
 }
 
 int MapInstance::Update()
 {
-	
 	SpawnMonster();
-	
-	
 	
     return 1;
 }
@@ -60,10 +56,7 @@ int MapInstance::InitSpawnMonster()
 			K_slog_trace(K_SLOG_ERROR, "[%s][%d] MonsterTemplate Get Failed Monster_Id[%d] FILE", __FUNCTION__, __LINE__, m_monsterSpawnListIter->monsterId);
 			return -1;
 		}
-		
-
-		monster.SetPos(m_monsterSpawnListIter->spawnPos);
-		
+			
         m_monsterList.push_back(monster);
     }
 
@@ -74,7 +67,7 @@ int MapInstance::SpawnMonster()
 {
 	auto now = std::chrono::steady_clock::now();
 	
-	K_slog_trace(K_SLOG_ERROR, "[%s][%d] 몬스터 리스폰 시작 FILE", __FUNCTION__, __LINE__);
+	K_slog_trace(K_SLOG_ERROR, "[%s][%d] 몬스터 리스폰 시작", __FUNCTION__, __LINE__);
 	
 	
 	for(auto& Monsters : m_monsterList) 
@@ -90,8 +83,24 @@ int MapInstance::SpawnMonster()
     return 1;
 }
 
+void MapInstance::OnEnter()
+{
+	m_playerCount++;
+	m_emptyTime = {};
+}
+
+void MapInstance::OnLeave()
+{
+	m_playerCount--;
+	if(m_playerCount == 0)
+	{
+		m_emptyTime = std::chrono::steady_clock::now();
+	}
+}
+
 // 맵이 사라지는 경우 호출
 int MapInstance::RemoveMonster()
 {
+	
     return 1;
 }
