@@ -10,7 +10,7 @@
 #define LOG_PATH "../logs/channel"
 
 
-int main()
+int main(int ac, char** av)
 {
     //log
     K_slog_init(LOG_PATH, DAEMON_NAME);
@@ -19,7 +19,12 @@ int main()
     bool Start = false;
     ChannelServer channelServer;
 
-    Start = channelServer.Init(PORT);
+    if (ac == 2)
+    {
+        Start = channelServer.Init(PORT + atoi(av[1]));
+    }
+    else
+        Start = channelServer.Init(PORT);
 
     if(Start == false)
     {

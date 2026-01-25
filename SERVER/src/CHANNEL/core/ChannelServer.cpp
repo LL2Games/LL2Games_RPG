@@ -40,8 +40,6 @@ bool ChannelServer::Init(const int port)
    }
 
    return true;
-
-
 }
 
 bool ChannelServer::InitListenSocket(int port)

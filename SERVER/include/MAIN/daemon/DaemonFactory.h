@@ -12,5 +12,5 @@ enum class DaemonType { LOGIN, CHAT, WORLD, CHANNEL };
 class DaemonFactory
 {
 public:
-    static std::unique_ptr<BaseDaemon> Create(DaemonType type);
+    static std::unique_ptr<BaseDaemon> Create(DaemonType type, const int flag = 0);
 };
