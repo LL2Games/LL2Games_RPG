@@ -55,13 +55,16 @@ SRCS := \
 	core/ChannelSession.cpp \
 	core/MapManager.cpp \
 	core/MapInstance.cpp \
+	core/MapService.cpp \
 	core/PlayerManager.cpp \
 	core/Player.cpp \
 	core/Monster.cpp \
 	core/MonsterManager.cpp \
+	core/Item.cpp \
     \
 	packet/ChannelPacketFactory.cpp \
 	packet/PlayerHandler.cpp \
+	packet/MapHandler.cpp \
     \
     db/MySqlConnectionPool.cpp \
 	db/PlayerService.cpp \

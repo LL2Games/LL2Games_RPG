@@ -1,7 +1,7 @@
 #include "CHANNEL/core/ChannelServer.h"
 #include "CHANNEL/core/common.h"
 
-ChannelServer::ChannelServer() : m_channel_id(0), m_listen_fd(0), m_epfd(0), m_running(false)
+ChannelServer::ChannelServer() : m_channel_id(0), m_listen_fd(0), m_epfd(0), m_running(false), m_map_service(m_player_mamager, m_map_manager)
 {
     
 }

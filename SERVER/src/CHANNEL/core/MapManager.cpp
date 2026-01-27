@@ -27,11 +27,13 @@ void MapManager::Update()
         if(iter->second != nullptr)
             iter->second->Update();
     }
+
+    RemoveMap();
 }
 
-int MapManager::CreateMap(int mapId)
+MapInstance* MapManager::GetOrCreate(int mapId)
 {
-    if(m_maps.find(mapId) != m_maps.end())  return -1;
+    if(m_maps.find(mapId) != m_maps.end())  return nullptr;
 
     MapInitData mapData;
 
@@ -40,7 +42,7 @@ int MapManager::CreateMap(int mapId)
 
     if(!file.is_open()) {
         K_slog_trace(K_SLOG_ERROR, "[%s][%d] FAILED OPEN [%s] FILE", __FUNCTION__, __LINE__, path.c_str());
-        return -1;
+        return nullptr;
     }
 
     // JSON 파일 파싱
@@ -61,8 +63,14 @@ int MapManager::CreateMap(int mapId)
         m_maps[mapId]= newMap;
     }
 
-    return 1;
+    // 맵 생성 후 삭제 예약을 걸어둔다. 맵에 플레이어가 없는 경우에 일정 시간이 지나면 맵을 삭제할 수 있도록 설정
+    newMap->SetDestroyCallback([this](int id){
+        m_destroyQueue.push(id);
+    });
+
+    return newMap;
 }
+
 
 void MapManager::LoadMonster(nlohmann::json& j, std::vector<MonsterSpawnData> MonstersData)
  {
@@ -90,4 +98,23 @@ void MapManager::LoadMonster(nlohmann::json& j, std::vector<MonsterSpawnData> Mo
     }
 
     K_slog_trace(K_SLOG_TRACE, "[%s][%d] MonsterLoad Success", __FUNCTION__, __LINE__);
+ }
+
+
+ void MapManager::RemoveMap()
+ {
+    while(!m_destroyQueue.empty())
+    {
+        int mapId = m_destroyQueue.front();
+        m_destroyQueue.pop();
+
+        auto it = m_maps.find(mapId);
+        if(it != m_maps.end())
+        {
+            K_slog_trace(K_SLOG_TRACE, "[%s][%d] Map Delete [%d]", __FUNCTION__, __LINE__, mapId);
+            delete it->second;
+            it->second = nullptr;
+            m_maps.erase(it);
+        }
+    }
  }

@@ -27,6 +27,7 @@ bool ChannelSession::OnBytes(const uint8_t* data, size_t len)
     }
     K_slog_trace(K_SLOG_DEBUG, "[%s][%d] parsed packet type=%x, payload len=%d", __FUNCTION__, __LINE__, pkt->type, (int)pkt->payload.size());
 
+
     auto handler = m_factory.Create(pkt->type);
     if(handler)
     {
@@ -39,10 +40,16 @@ bool ChannelSession::OnBytes(const uint8_t* data, size_t len)
         // PlayerManager 설정
         if (m_server) {
             ctx.player_manager = m_server->GetPlayerManager();
+            ctx.map_service = m_server->GetMapService();
+            ctx.player_service = m_server->GetPlayerService();
         }
         
         handler->Execute(&ctx);
     }
+
+#if 0 /*LJH TEST */
+    m_recvBuf.erase(m_recvBuf.begin(), m_recvBuf.begin() + pkt->payload.size());
+#endif
 
     return true;
 }

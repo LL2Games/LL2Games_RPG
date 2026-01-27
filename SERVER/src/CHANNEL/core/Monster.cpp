@@ -20,11 +20,26 @@ int Monster::Init(const MonsterTemplate& monsterTemplate, const MonsterSpawnData
 	m_spawnPos.yPos = monsterspawnData.spawnPos.yPos;
 	
 	m_respawnDelay = std::chrono::seconds(monsterspawnData.respawnDelay);
-	
+	m_itemGroup = monsterspawnData.ItemId;
 	return 1;	
 }
 
+int Monster::Update()
+{
+	return 0;
+}
 
+int Monster::Dead()
+{
+	if(m_isAlive && !m_deadRequest)
+	{
+		m_deadRequest = true;
+		m_deadTime = std::chrono::steady_clock::now();
+		m_isAlive = false;	
+	}
+	
+	return 0;
+}
 
 bool Monster::CheckRespawnTime(std::chrono::steady_clock::time_point now)
 {
@@ -42,4 +57,18 @@ int Monster::Reset()
 	m_hp = m_maxhp;
 	m_isAlive = true;
 	return 1;
+}
+
+
+void Monster::OnDamaged(int attackerId, int damage)
+{
+	// 죽은 뒤 / 죽는 중이라면 무시
+	if(!m_isAlive || m_deadRequest) return;
+
+	m_lastAttacker = attackerId;
+
+	m_hp -= damage;
+
+	if(m_hp <= 0)
+		Dead();
 }

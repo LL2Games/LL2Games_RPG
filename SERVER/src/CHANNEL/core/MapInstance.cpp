@@ -4,9 +4,9 @@
 #include <nlohmann/json.hpp>
 #include <fstream>
 
+#define MAPDELETELIMIT 5
 
-
-MapInstance::MapInstance()
+MapInstance::MapInstance() : m_limit(std::chrono::minutes{MAPDELETELIMIT})
 {
 	m_monsterManager = MonsterManager::GetInstance();
 }
@@ -27,6 +27,11 @@ int MapInstance::Init(const MapInitData& data)
 int MapInstance::Update()
 {
 	SpawnMonster();
+
+	if(!m_has_player)
+	{
+		RemoveMap();
+	}
 	
     return 1;
 }
@@ -83,24 +88,70 @@ int MapInstance::SpawnMonster()
     return 1;
 }
 
-void MapInstance::OnEnter()
+void MapInstance::OnEnter(int PlayerID, Player* player)
 {
+	auto it = m_playerList.find(PlayerID);
+
+	if(it == m_playerList.end()) return;
+
+	m_playerList[PlayerID] = player;
+	
+	if (m_playerCount == 0) {
+        m_has_player = true;
+        m_destroyRequested = false; // 혹시 남아있던 요청 초기화
+        m_emptyTime = {};
+    }
 	m_playerCount++;
-	m_emptyTime = {};
 }
 
-void MapInstance::OnLeave()
+void MapInstance::OnLeave(int PlayerID)
 {
+	auto it = m_playerList.find(PlayerID);
+
+	if(it == m_playerList.end()) return;
+
+	m_playerList.erase(it);
+
 	m_playerCount--;
 	if(m_playerCount == 0)
 	{
 		m_emptyTime = std::chrono::steady_clock::now();
+		m_has_player = false;
+		m_destroyRequested = false;
 	}
 }
 
-// 맵이 사라지는 경우 호출
-int MapInstance::RemoveMonster()
+void MapInstance::HandleMonsterDead(Monster& monster)
 {
+	int killer = monster.GetLastAttackerID();
 	
-    return 1;
+	GiveExp(killer, monster.GetExp());
+	GiveItem(monster.GetItemGroup());
+}
+
+void MapInstance::GiveExp(int playerID, float exp)
+{
+	(void)playerID;
+	(void)exp;
+}
+
+
+void MapInstance::GiveItem(int ItemGroup)
+{
+	(void)ItemGroup;
+}
+
+
+// 맵이 사라지는 경우 호출
+void MapInstance::RemoveMap()
+{
+	auto now = std::chrono::steady_clock::now();
+
+	if(!m_destroyRequested && (now - m_emptyTime) >= m_limit)
+	{
+		m_destroyRequested = true;
+		K_slog_trace(K_SLOG_TRACE, "[%s][%d] [%d]맵 삭제", __FUNCTION__, __LINE__, m_mapID);
+		if(m_onDestroyReq) m_onDestroyReq(m_mapID);
+		
+	}
 }

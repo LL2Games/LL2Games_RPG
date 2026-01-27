@@ -1,9 +1,10 @@
-#include "CHANNEL/core/common.h"
-#include "CHANNEL/packet/PlayerHandler.h"
-#include "CHANNEL/core/ChannelSession.h"
-#include "CHANNEL/db/PlayerService.h"
-#include "CHANNEL/core/Player.h"
-#include "CHANNEL/core/PlayerManager.h"
+#include "common.h"
+#include "PlayerHandler.h"
+#include "ChannelSession.h"
+#include "PlayerService.h"
+#include "Player.h"
+#include "PlayerManager.h"
+#include "PacketParser.h"
 #include "K_slog.h"
 #include <sstream>
 
@@ -13,6 +14,7 @@ void PlayerHandler::Execute(PacketContext* ctx)
 {
     //std::string payload(ctx->payload, ctx->payload_len);
     //auto tokens = ParsePayload(payload);
+
 
     // 패킷 타입에 따른 처리 (임시로 주석 처리)
     /*
@@ -32,48 +34,49 @@ void PlayerHandler::Execute(PacketContext* ctx)
 
 void PlayerHandler::HandleChannelAuth(PacketContext *ctx)
 {
+    ChannelSession* session;
+    std::unique_ptr<Player> player;
     int rc = EXIT_SUCCESS;
     std::string errMsg;
-    const char* data = nullptr;
-    size_t len = 0;
     size_t offset = 0;
-    uint8_t value_len = 0;
     int characterId =0;
     std::string ch_id;
     
-    data = ctx->payload;
-    len = ctx->payload_len;
-
-    K_slog_trace(K_SLOG_TRACE, " [%s][%d] LJH TEST", __FUNCTION__ , __LINE__); 
-    if(offset >= len)
+    if(ctx == nullptr)
     {
-         K_slog_trace(K_SLOG_TRACE, " [%s][%d] 데이터 값 없음", __FUNCTION__ , __LINE__);  
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] ctx is nullptr\n", __FILE__, __FUNCTION__, __LINE__);
+        rc = EXIT_FAILURE;
+        errMsg = "[" + std::to_string(rc) + "]ctx is nullptr";
+        goto err;
     }
 
-    value_len = static_cast<uint8_t>(data[offset]);
-    offset +=1;
+     // 받은 정보에서 playerID 추출 
+    if(!PacketParser::ParseLengthPrefixedString(
+        ctx->payload,
+        ctx->payload_len,
+        offset,
+        ch_id,
+        errMsg
+    ))
+    {
+        rc = EXIT_FAILURE;
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] ParseLengthPrefixedString fail", __FILE__, __FUNCTION__, __LINE__);
+        goto err;
+    }
 
-    if(offset < len && data[offset] == 0x00)
+    session = ctx->channel_session;
+    if(session == nullptr)
     {
-        offset +=1 ;
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] session is nullptr\n", __FILE__, __FUNCTION__, __LINE__);
+        rc = EXIT_FAILURE;
+        errMsg = "[" + std::to_string(rc) + "]session is nullptr";
+        goto err;
     }
-    K_slog_trace(K_SLOG_TRACE, " [%s][%d] LJH TEST", __FUNCTION__ , __LINE__); 
-    if(offset+value_len > len)
-    {
-        K_slog_trace(K_SLOG_TRACE, "데이터 값 없음");     
-    }
-    K_slog_trace(K_SLOG_TRACE, " [%s][%d] LJH TEST", __FUNCTION__ , __LINE__);  
-    ch_id.assign(data+offset, value_len);
-    K_slog_trace(K_SLOG_TRACE, " [%s][%d] LJH TEST", __FUNCTION__ , __LINE__); 
+
+
     characterId = stoi(ch_id);
 
-    K_slog_trace(K_SLOG_TRACE, "HandleChannelAuth: characterid 설정");
-    //int characterId = std::stoi(tokens[0]);
-    //int characterId = std::atoi(tokens[0].c_str());
-
-    K_slog_trace(K_SLOG_TRACE, "HandleChannelAuth: 캐릭터 ID [%d] 인증 시도", characterId);
-
-    auto player = PlayerService::LoadPlayer(characterId);
+    player = PlayerService::LoadPlayer(characterId);
 
     if(!player) {
         errMsg = "[" + std::to_string(rc) + "]HandleChannelAuth: 플레이어 로드 실패 [" + std::to_string(characterId) + "]";
