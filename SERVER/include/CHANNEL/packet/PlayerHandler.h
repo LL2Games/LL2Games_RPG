@@ -12,5 +12,4 @@ public:
     void Execute(PacketContext * ctx) override;
     void HandleChannelAuth(PacketContext *ctx);
 
-
 };

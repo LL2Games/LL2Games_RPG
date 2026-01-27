@@ -4,7 +4,11 @@
 #include "CommonEnum.h"
 #include "Monster.h"
 #include "MonsterManager.h"
+#include "Item.h"
+#include "Player.h"
+
 #include <nlohmann/json.hpp>
+#include <functional>
 
 
 
@@ -20,32 +24,60 @@ public:
     //int LoadMonsters(int monster_id);
     int Update();
     int SpawnMonster();
-    int RemoveMonster();
+
+    void RemoveMap();
 	
-	int checkPlayer();
+	int checkPlayer(int PlayerID);
 	
-	// ÇÃ·¹ÀÌ¾î µé¾î¿ÔÀ» ¶§
-	void OnEnter();
-	// ÇÃ·¹ÀÌ¾î ³ª°¬À» ¶§
-	void OnLeave();
+	// í”Œë ˆì´ì–´ ë“¤ì–´ì™”ì„ ë•Œ ì²˜ë¦¬ í•¨ìˆ˜
+	void OnEnter(int PlayerID, Player* player);
+	// í”Œë ˆì´ì–´ ë‚˜ê°”ì„ ë•Œ ì²˜ë¦¬ í•¨ìˆ˜
+	void OnLeave(int PlayerID);
+
+    // ëª¬ìŠ¤í„° ì£½ì—ˆì„ ë–„ ê´€ë¦¬
+    void HandleMonsterDead(Monster& monster);
+
+    void GiveExp(int platerID, float exp);
+
+    void GiveItem(int ItemGroup);
+
+public:
+
+    // int ë§¤ê°œë³€ìˆ˜ë¥¼ ë°›ëŠ” ì½œë°± í•¨ìˆ˜ ì´ë¦„ ì§€ì •
+    using DestroyReqFn = std::function<void(int m_mapID)>;
+
+    // ë‚˜ì¤‘ì— í˜¸ì¶œí•  ì½œë°± í•¨ìˆ˜ë¥¼ ë³€ìˆ˜ì— ì €ì¥í•˜ëŠ” í•¨ìˆ˜
+    void SetDestroyCallback(DestroyReqFn cb) {m_onDestroyReq = std::move(cb);}
+
+    uint16_t GetMapId() {return m_mapID;}
 
 private:
-   	// ÇÃ·¹ÀÌ¾î Á¸Àç ¿©ºÎ
+   	// í”Œë ˆì´ì–´ê°€ ë§µì— ìˆëŠ”ì§€ ì—†ëŠ”ì§€ íŒë‹¨ ë³€ìˆ˜
     bool m_has_player;
+    bool m_destroyRequested;
 	
-	// ÇöÀç ¸Ê¿¡ ÇÃ·¹ÀÌ¾î ¼ö
+	// í”Œë ˆì´ì–´ ìˆ˜ 
 	uint16_t m_playerCount;
     uint16_t m_mapID;
+
+    std::unordered_map<int, Player*> m_playerList;
    
     std::vector<MonsterSpawnData> m_monsterSpawnList;
     std::vector<MonsterSpawnData>::iterator m_monsterSpawnListIter;
 
     std::vector<Monster> m_monsterList;
     std::vector<Monster>::iterator m_monsterListIter;
+
+    std::vector<Item> m_itemList;
 	
 	MonsterManager* m_monsterManager;
 	
-	// Map¿¡ ¾Æ¹«°Íµµ ¾øÀ» »óÈ²¿¡¼­ÀÇ ½Ã°£
+	// Mapì— í”Œë ˆì´ì–´ê°€ ì—†ì„ ë•Œ ë”± ì‹œê°„ ì°ëŠ” ë³€ìˆ˜
 	std::chrono::steady_clock::time_point m_emptyTime;
+    // Map ì‚¬ë¼ì§€ëŠ” ì œí•œ ì‹œê°„
+    std::chrono::minutes m_limit;
+
+    DestroyReqFn m_onDestroyReq;
+
 
 };

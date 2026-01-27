@@ -3,6 +3,7 @@
 #include "COMMON/CommonEnum.h"
 #include "CHANNEL/core/MapInstance.h"
 #include <nlohmann/json.hpp>
+#include <queue>
 
 class MapManager
 {
@@ -12,11 +13,12 @@ public:
 
     void Init();
     void Update();
-    int CreateMap(int mapId);
+    MapInstance* GetOrCreate(int mapId);
     void LoadMonster(nlohmann::json& j, std::vector<MonsterSpawnData> MonstersData);
+    void RemoveMap();
 private:
     // key : map_id value : map
     std::unordered_map<int, MapInstance*> m_maps;
- 
+    std::queue<uint16_t> m_destroyQueue;
 
 };
