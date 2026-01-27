@@ -40,6 +40,14 @@ void ChatMsgHandler::Execute(PacketContext *ctx)
 
     K_slog_trace(K_SLOG_TRACE, "[ChatMsg: %d] %s", client->GetFD(), msg.c_str());
 
+#if 1 /* gunoo22 260127 channelD로 메시지 보내는 경우 */
+/*
+/교환신청
+/파티초대
+등의 메시지 들어올시 channelD로 messageQueue형식으로 전송하기
+*/
+#endif
+
 err:
     if (rc != EXIT_SUCCESS)
     {
