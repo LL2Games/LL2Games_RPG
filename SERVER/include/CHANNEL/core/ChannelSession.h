@@ -47,7 +47,7 @@ private:
     int m_fd = -1;
     ChannelServer* m_server = nullptr;
 
-    std::vector<uint8_t> m_recvBuf;
+    std::vector<char> m_recvBuf;
 
     std::deque<std::vector<uint8_t>> m_sendQueue;
 
