@@ -6,8 +6,8 @@
 #include "K_slog.h"
 #include "db/MySQLManager.h"
 #include "PacketParser.h"
+#include "CommandDispatcher.h"
 
-// void ChatMsgHandler::Execute(Client *client, const char *payload, const int data_len, const std::vector<Client *> &clients, std::function<void(const std::string&, const std::string &, const int)>(broadcast))
 void ChatMsgHandler::Execute(PacketContext *ctx)
 {
     int rc = EXIT_SUCCESS;
@@ -17,6 +17,7 @@ void ChatMsgHandler::Execute(PacketContext *ctx)
     std::vector<Client *> clients = *ctx->clients;
     std::function<void(const std::string &, const std::string &, const int)> &broadcast = ctx->broadcast;
     std::string msg;
+    CommandDispatcher *dispatcher = nullptr;
 
     client = ctx->client;
     if (client == nullptr)
@@ -24,6 +25,15 @@ void ChatMsgHandler::Execute(PacketContext *ctx)
         K_slog_trace(K_SLOG_ERROR, "[%s][%d] client is nullptr\n", __FUNCTION__, __LINE__);
         rc = EXIT_FAILURE;
         errMsg = "[" + std::to_string(rc) + "]client is nullptr";
+        goto err;
+    }
+
+    dispatcher = ctx->dispatcher;
+    if (dispatcher == nullptr)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] dispatcher is nullptr\n", __FUNCTION__, __LINE__);
+        rc = EXIT_FAILURE;
+        errMsg = "[" + std::to_string(rc) + "]dispatcher is nullptr";
         goto err;
     }
 
@@ -41,6 +51,13 @@ void ChatMsgHandler::Execute(PacketContext *ctx)
     K_slog_trace(K_SLOG_TRACE, "[ChatMsg: %d] %s", client->GetFD(), msg.c_str());
 
 #if 1 /* gunoo22 260127 channelD로 메시지 보내는 경우 */
+    if (dispatcher->Dispatch(msg)) //커맨드인경우
+    {
+        //커맨드 응답? 등 수행
+    }
+    else    //일반채팅인경우
+    {
+    }
 /*
 /교환신청
 /파티초대

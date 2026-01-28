@@ -38,7 +38,9 @@ INCLUDES := \
     -I$(INC_DIR)/CHAT/core \
     -I$(INC_DIR)/CHAT/db \
     -I$(INC_DIR)/CHAT/packet \
-    -I$(INC_DIR)/CHAT/util
+    -I$(INC_DIR)/CHAT/util \
+    -I$(INC_DIR)/CHAT/command \
+    -I$(INC_DIR)/CHAT/ipc
 
 LIB_PATH := \
     -L$(LIB_DIR)/common \
@@ -64,6 +66,11 @@ SRCS := \
     db/MySQLManager.cpp \
     \
     util/StringUtil.cpp \
+    \
+    command/FindUserCommand.cpp \
+    command/CommandDispatcher.cpp \
+    \
+    ipc/ChannelCommandSender.cpp \
     \
     main.cpp
 

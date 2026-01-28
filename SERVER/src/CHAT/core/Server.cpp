@@ -139,6 +139,7 @@ void Server::ProcessClient(Client *cli)
 
     auto handler = m_factory.Create(pkt->type);
     PacketContext ctx;
+    ctx.dispatcher = &m_dispatcher;
     ctx.client = cli;
     ctx.clients = &m_clients;
     ctx.payload = (char *)pkt->payload.c_str();

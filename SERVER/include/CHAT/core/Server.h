@@ -3,6 +3,7 @@
 #include <sys/select.h>
 #include "Client.h"
 #include "ChatPacketFactory.h"
+#include "CommandDispatcher.h"
 
 class Server {
     public:
@@ -13,6 +14,7 @@ class Server {
     int m_listenFd;
     std::vector<Client *> m_clients;
     ChatPacketFactory m_factory;
+    CommandDispatcher m_dispatcher;
 
     void AcceptNewClient();
     void ProcessClient(Client* cli);
