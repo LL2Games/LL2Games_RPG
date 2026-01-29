@@ -2,10 +2,10 @@
 #include <memory>
 #include "FindUserCommand.h"
 
-CommandDispatcher::CommandDispatcher()
+CommandDispatcher::CommandDispatcher(const int msgKey, const int typeSend, const int typeRecv) : m_mq(msgKey, typeSend, typeRecv)
 {
     // /찾기
-    this->Add(std::make_unique<FindUserCommand>(m_sender));
+    this->Add(std::make_unique<FindUserCommand>(m_mq));
 }
 
 void CommandDispatcher::Add(std::unique_ptr<ICommand> cmd)

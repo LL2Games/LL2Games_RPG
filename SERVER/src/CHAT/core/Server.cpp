@@ -13,6 +13,14 @@
 #define DAEMON_NAME "CHAT_DAEMON"
 #define BUFFER_SIZE 1024
 
+#define MSG_KEY 1234
+#define MSG_COMMAND_SEND 0
+#define MSG_COMMAND_RECV 1
+
+Server::Server() : m_dispatcher(MSG_KEY, MSG_COMMAND_SEND, MSG_COMMAND_RECV)
+{
+}
+
 bool Server::Init(const int port)
 {
     m_listenFd = socket(AF_INET, SOCK_STREAM, 0);

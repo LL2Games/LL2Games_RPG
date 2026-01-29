@@ -40,7 +40,9 @@ INCLUDES := \
 	-I$(INC_DIR)/COMMON \
 	-I$(INC_DIR)/COMMON/db \
 	-I$(INC_DIR)/COMMON/packet \
-	-I$(INC_DIR)/COMMON/slog
+	-I$(INC_DIR)/COMMON/slog\
+	-I$(INC_DIR)/COMMON/command\
+	-I$(INC_DIR)/COMMON/ipc
 
 LIB_PATH := \
     -L$(LIB_DIR)/mysql \
@@ -55,6 +57,8 @@ SRCS := \
 	\
 	db/MySqlConnectionPool.cpp \
 	db/RedisClient.cpp \
+	\
+	ipc/CommandMsgQueue.cpp\
 	\
 	packet/PacketParser.cpp
 	

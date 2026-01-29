@@ -5,12 +5,14 @@
 #include "ChatPacketFactory.h"
 #include "CommandDispatcher.h"
 
+
 class Server {
-    public:
+public:
+    Server();
     bool Init(const int port);
     void Run();
     
-    private:
+private:
     int m_listenFd;
     std::vector<Client *> m_clients;
     ChatPacketFactory m_factory;

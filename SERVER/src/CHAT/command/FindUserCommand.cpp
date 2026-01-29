@@ -1,7 +1,7 @@
 #include "FindUserCommand.h"
 #include "K_slog.h"
 
-FindUserCommand::FindUserCommand(ChannelCommandSender& sender) : m_sender(sender)
+FindUserCommand::FindUserCommand(CommandMsgQueue& mq) : m_mq(mq)
 {
 }
 
@@ -12,5 +12,5 @@ bool FindUserCommand::Match(const std::string& msg) const
 
 void FindUserCommand::Execute(const std::string &msg)
 {
-    m_sender.Send(msg);
+    m_mq.Send(msg);
 }
