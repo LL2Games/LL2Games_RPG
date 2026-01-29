@@ -40,6 +40,7 @@ bool ChannelSession::OnBytes(const uint8_t* data, size_t len)
         // PlayerManager 설정
         if (m_server) {
             ctx.player_manager = m_server->GetPlayerManager();
+            K_slog_trace(K_SLOG_DEBUG, "Player_Manager [%p]\n", ctx.player_manager);
             ctx.map_service = m_server->GetMapService();
             ctx.player_service = m_server->GetPlayerService();
         }

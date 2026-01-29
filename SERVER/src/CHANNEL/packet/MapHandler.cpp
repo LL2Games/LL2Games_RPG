@@ -89,7 +89,7 @@ err:
     if (rc != EXIT_SUCCESS) {
         session->SendNok(PKT_ENTER_MAP, errMsg);
     } else {
-        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] MAP HANDLER END", __FILE__, __FUNCTION__, __LINE__);
+        K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] MAP HANDLER END", __FILE__, __FUNCTION__, __LINE__);
         session->SendOk(PKT_ENTER_MAP);
     }
 }

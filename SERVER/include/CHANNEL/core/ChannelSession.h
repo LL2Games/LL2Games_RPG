@@ -34,6 +34,7 @@ public:
     void SetPlayer(Player* player) {m_player = player;}
     Player* GetPlayer() const {return m_player;}
 
+    
 
 private:
     bool TryPopOnePacket(Packet& outpkt);

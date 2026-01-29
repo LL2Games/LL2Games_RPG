@@ -43,6 +43,10 @@ enum PACKET_TYPE : uint16_t {
     PKT_INIT_CHANNEL = 0x08,
     PKT_CHANNEL_AUTH = 0x09,
     PKT_ENTER_MAP = 0x0A,
+    PKT_PLAYER_MOVE = 0x0B,
+    PKT_PLAYER_ATTACK = 0x0C,
+    PKT_PLAYER_SKILL = 0x0D,
+    PKT_PLAYER_USE_ITEM = 0x0E,
 };
 
 struct ParsedPacket

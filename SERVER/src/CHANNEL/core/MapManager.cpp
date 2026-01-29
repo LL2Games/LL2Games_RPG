@@ -4,7 +4,7 @@
 #include <nlohmann/json.hpp>
 #include <fstream>
 
-#define MAP_PATH "./data/Maps/"
+#define MAP_PATH "../src/CHANNEL/data/Maps/"
 
 
 MapManager::MapManager()

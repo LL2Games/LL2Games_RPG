@@ -63,6 +63,7 @@ SRCS := \
 	core/Item.cpp \
     \
 	packet/ChannelPacketFactory.cpp \
+	packet/ChannelInitHandler.cpp \
 	packet/PlayerHandler.cpp \
 	packet/MapHandler.cpp \
     \

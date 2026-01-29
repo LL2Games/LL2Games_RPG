@@ -32,7 +32,7 @@ private:
     void GameLoop();
     void OnAccept();
 
-    static int SerNonblocking(int fd);
+    static int SetNonblocking(int fd);
 
 private:
     int m_channel_id;
