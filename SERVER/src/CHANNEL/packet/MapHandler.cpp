@@ -75,6 +75,7 @@ void MapHandler::Execute(PacketContext * ctx)
         errMsg = "map_service is NULL";
         goto err;
     }
+
     rc = ctx->map_service->HandlePortalUse(playerid, mapId);
 
     if(rc != EXIT_SUCCESS)

@@ -6,6 +6,7 @@
 #include "MonsterManager.h"
 #include "Item.h"
 #include "Player.h"
+#include "ChannelSession.h"
 
 #include <nlohmann/json.hpp>
 #include <functional>
@@ -31,6 +32,7 @@ public:
 	
 	// 플레이어 들어왔을 때 처리 함수
 	void OnEnter(int PlayerID, Player* player);
+
 	// 플레이어 나갔을 때 처리 함수
 	void OnLeave(int PlayerID);
 
@@ -40,6 +42,10 @@ public:
     void GiveExp(int platerID, float exp);
 
     void GiveItem(int ItemGroup);
+
+    void HandleMove(Player* sender, Vec2 pos, float speed);
+
+    void BroadcastMoveExcept(Player* sender, Vec2 pos, float speed);
 
 public:
 
