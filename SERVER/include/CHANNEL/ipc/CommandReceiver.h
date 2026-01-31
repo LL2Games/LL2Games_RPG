@@ -10,8 +10,8 @@
 #include "CommandMsgQueue.h"
 
 #define MSG_KEY 1234
-#define MSG_COMMAND_SEND 1
-#define MSG_COMMAND_RECV 0
+#define MSG_COMMAND_SEND 2
+#define MSG_COMMAND_RECV 1
 
 class CommandReceiver {
 public:
