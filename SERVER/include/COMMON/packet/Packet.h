@@ -39,7 +39,9 @@ enum PACKET_TYPE : uint16_t {
     PKT_SELECT_CHARACTER,
     PKT_SELECT_CHANNEL,
     PKT_INIT_CHANNEL,
-    PKT_CHANNEL_AUTH
+    PKT_CHANNEL_AUTH,
+    PKT_STAT_VIEW,
+    PKT_STAT_UP,
 };
 
 struct ParsedPacket
@@ -50,6 +52,8 @@ struct ParsedPacket
 
 struct PacketContext
 {
+    uint16_t type;
+
     Client* client = nullptr;
     int fd = -1;
     char *payload = nullptr;
