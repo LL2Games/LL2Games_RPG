@@ -1,4 +1,5 @@
 #include "CommandReceiver.h"
+#include "K_slog.h"
 
 CommandReceiver::CommandReceiver(): m_mq(MSG_KEY, MSG_COMMAND_SEND, MSG_COMMAND_RECV)
 {
@@ -11,6 +12,7 @@ CommandReceiver::~CommandReceiver() {
 void CommandReceiver::Start() {
     m_running = true;
     m_thread = std::thread(&CommandReceiver::Run, this);
+    K_slog_trace(K_SLOG_DEBUG, "[%s][%d] CommandReceiver Start", __FILE__, __LINE__);
 }
 
 void CommandReceiver::Stop() {
@@ -27,6 +29,7 @@ void CommandReceiver::Stop() {
 
 void CommandReceiver::Run() {
     while (m_running) {
+
         // MQMessage msg{};
         // ssize_t ret = msgrcv(
         //     m_msgid,
@@ -35,13 +38,17 @@ void CommandReceiver::Run() {
         //     MSG_TYPE_CHAT_TO_CHANNEL,
         //     0   // blocking
         // );
+
+        K_slog_trace(K_SLOG_DEBUG, "[%s][%d] recv wait...", __FILE__, __LINE__);
         std::string msg;
         ssize_t ret = m_mq.Recv(msg);
-
+        K_slog_trace(K_SLOG_DEBUG, "[%s][%d] MQ recv[%s]", __FILE__, __LINE__, msg.c_str()); 
+        
         if (ret <= 0)
             continue;
 
-        std::cout << "[ChannelD] MQ recv: " << msg.c_str() << std::endl;
+        K_slog_trace(K_SLOG_DEBUG, "[%s][%d] TEST", __FILE__, __LINE__); 
+
 
         // TODO:
         // 1. Command 변환

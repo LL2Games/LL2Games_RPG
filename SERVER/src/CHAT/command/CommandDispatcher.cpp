@@ -1,6 +1,7 @@
 #include "CommandDispatcher.h"
 #include <memory>
 #include "FindUserCommand.h"
+#include "K_slog.h"
 
 CommandDispatcher::CommandDispatcher(const int msgKey, const int typeSend, const int typeRecv) : m_mq(msgKey, typeSend, typeRecv)
 {
@@ -20,6 +21,7 @@ bool CommandDispatcher::Dispatch(const std::string& msg)
         if (cmd->Match(msg))
         {
             cmd->Execute(msg);
+            K_slog_trace(K_SLOG_DEBUG, "[%s][%d] MQ send[%s]", __FILE__, __LINE__, msg.c_str()); 
             return true;
         }
     }

@@ -18,10 +18,12 @@ class CommandMsgQueue
 {
 public:
     CommandMsgQueue(const int msgKey, const int typeSend, const int typeRecv);
+    ~CommandMsgQueue();
     int Send(const std::string& payload);
     int Recv(std::string& payload);
 
 private:
+    int m_msqId;
     int m_msgKey;
     int m_typeSend;
     int m_typeRecv;
