@@ -5,9 +5,8 @@
 #include "CHANNEL/core/Player.h"
 #include "CHANNEL/core/PlayerManager.h"
 #include "K_slog.h"
+#include "PacketParser.h"
 #include <sstream>
-
-
 
 void PlayerHandler::Execute(PacketContext* ctx)
 {
@@ -18,12 +17,16 @@ void PlayerHandler::Execute(PacketContext* ctx)
             HandleChannelAuth(ctx);
             break;
         case PKT_STAT_VIEW:
+            HandleStatView(ctx);
+            break;
         case PKT_STAT_UP:
+            HandleStatUp(ctx);
             break;
         default:
             break;
     }
 }
+
 
 void PlayerHandler::HandleChannelAuth(PacketContext *ctx)
 {

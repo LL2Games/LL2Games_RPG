@@ -61,6 +61,7 @@ SRCS := \
     \
 	packet/ChannelPacketFactory.cpp \
 	packet/PlayerHandler.cpp \
+	packet/HandleStat.cpp \
     \
     db/MySqlConnectionPool.cpp \
 	db/PlayerService.cpp \

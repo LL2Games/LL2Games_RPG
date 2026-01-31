@@ -10,7 +10,9 @@ class PlayerHandler : public IPacketHandler
 {
 public:
     void Execute(PacketContext * ctx) override;
+    
+    
     void HandleChannelAuth(PacketContext *ctx);
-
-
+    void HandleStatView(PacketContext* ctx);
+    void HandleStatUp(PacketContext* ctx);
 };
