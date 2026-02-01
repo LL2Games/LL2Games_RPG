@@ -6,7 +6,8 @@
 #include "CHANNEL/db/MySqlConnectionPool.h"
 #include "CHANNEL/db/RedisClient.h"
 #include "CHANNEL/core/common.h"
-
+#include "ThreadPool.h"
+#include "CommandReceiver.h"
 
 class ChannelServer
 {
@@ -43,6 +44,7 @@ private:
     //MySqlConnectionPool m_db;
     RedisClient m_redis;
     MapManager m_map_manager;
-    
+    ThreadPool m_pool;
+    CommandReceiver m_cmd_receiver;
 
 };
