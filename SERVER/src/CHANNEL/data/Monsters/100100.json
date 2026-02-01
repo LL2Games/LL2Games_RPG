@@ -1,0 +1,10 @@
+{
+    "monster_id" : 100100,
+    "name" : "Slime",
+    "hp" : 100,
+    "attackDamage" : 2,
+    "level" : 10,
+    "exp" : 5,
+    "moveSpeed" : 10
+}
+

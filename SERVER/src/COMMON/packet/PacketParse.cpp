@@ -1,6 +1,6 @@
-#include "COMMON/packet/Packet.h"
-#include "COMMON/packet/PacketParser.h"
-#include "COMMON/packet/PacketFactory.h"
+#include "Packet.h"
+#include "PacketParser.h"
+#include "PacketFactory.h"
 #include <cstring>
 #include "K_slog.h"
 

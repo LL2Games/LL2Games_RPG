@@ -1,4 +1,5 @@
 #include <vector>
+#include <string>
 #pragma once
 enum class MapRegion{
     HENESYS,
@@ -24,15 +25,25 @@ struct Vec2{
 struct MonsterSpawnData {
     MonsterType type;
     Vec2 spawnPos;
-    float respawnRemain;
-    float respawnDelay;
+    int respawnDelay;
+    int monsterId;
     int ItemId;
 };
 
+struct MonsterTemplate {
+    int monsterId;
+    int level;
+    int hp;
+    int attackDamage;
+    float exp;
+    float moveSpeed;
+    std::string name;
+};
 
 
 typedef struct MapInitData{
-    MapRegion mapID;
+    uint16_t mapID;
+	std::string name;
     std::vector<MonsterSpawnData> MonstersData;
 
 }mapData;

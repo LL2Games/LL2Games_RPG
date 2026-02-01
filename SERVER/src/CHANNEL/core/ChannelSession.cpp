@@ -18,14 +18,15 @@ bool ChannelSession::OnBytes(const uint8_t* data, size_t len)
 {
     m_recvBuf.insert(m_recvBuf.end(), data, data+len);
 
-    std::vector<char> buf(m_recvBuf.begin(), m_recvBuf.end());
-    auto pkt = PacketParser::Parse(buf);
+    //std::vector<char> buf(m_recvBuf.begin(), m_recvBuf.end());
+    auto pkt = PacketParser::Parse(m_recvBuf);
     if (!pkt.has_value())
     {
         K_slog_trace(K_SLOG_ERROR, "[%s][%d] Packet Parse failed", __FUNCTION__, __LINE__);
         return false;
     }
     K_slog_trace(K_SLOG_DEBUG, "[%s][%d] parsed packet type=%x, payload len=%d", __FUNCTION__, __LINE__, pkt->type, (int)pkt->payload.size());
+
 
     auto handler = m_factory.Create(pkt->type);
     if(handler)
@@ -39,10 +40,14 @@ bool ChannelSession::OnBytes(const uint8_t* data, size_t len)
         // PlayerManager 설정
         if (m_server) {
             ctx.player_manager = m_server->GetPlayerManager();
+            K_slog_trace(K_SLOG_DEBUG, "Player_Manager [%p]\n", ctx.player_manager);
+            ctx.map_service = m_server->GetMapService();
+            ctx.player_service = m_server->GetPlayerService();
         }
         
         handler->Execute(&ctx);
     }
+
 
     return true;
 }

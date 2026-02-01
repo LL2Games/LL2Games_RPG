@@ -1,111 +1,33 @@
-#include "CHANNEL/core/common.h"
-#include "CHANNEL/packet/PlayerHandler.h"
-#include "CHANNEL/core/ChannelSession.h"
-#include "CHANNEL/db/PlayerService.h"
-#include "CHANNEL/core/Player.h"
-#include "CHANNEL/core/PlayerManager.h"
-#include "K_slog.h"
-#include <sstream>
+#include "PlayerHandler.h"
 
 
-
-void PlayerHandler::Execute(PacketContext* ctx)
+PlayerHandler::PlayerHandler(uint16_t type) : m_type(type)
 {
-    //std::string payload(ctx->payload, ctx->payload_len);
-    //auto tokens = ParsePayload(payload);
 
-    // 패킷 타입에 따른 처리 (임시로 주석 처리)
-    /*
-    switch(패킷타입) {
-        case PKT_CHANNEL_AUTH:
-            HandleChannelAuth(ctx, tokens);
-            break;
-        default:
-            break;
-    }
-    */
-    
-    // 임시로 인증 처리
-    K_slog_trace(K_SLOG_TRACE, " [%s][%d] LJH TEST", __FUNCTION__ , __LINE__);   
-    HandleChannelAuth(ctx);
 }
 
-void PlayerHandler::HandleChannelAuth(PacketContext *ctx)
+
+void PlayerHandler::Execute(PacketContext * ctx)
 {
-    int rc = EXIT_SUCCESS;
-    std::string errMsg;
-    const char* data = nullptr;
-    size_t len = 0;
-    size_t offset = 0;
-    uint8_t value_len = 0;
-    int characterId =0;
-    std::string ch_id;
-    
-    data = ctx->payload;
-    len = ctx->payload_len;
+    (void)ctx;
+}
 
-    K_slog_trace(K_SLOG_TRACE, " [%s][%d] LJH TEST", __FUNCTION__ , __LINE__); 
-    if(offset >= len)
-    {
-         K_slog_trace(K_SLOG_TRACE, " [%s][%d] 데이터 값 없음", __FUNCTION__ , __LINE__);  
-    }
+void PlayerHandler::Move(PacketContext * ctx)
+{
+     (void)ctx;
+}
 
-    value_len = static_cast<uint8_t>(data[offset]);
-    offset +=1;
+void PlayerHandler::Attack(PacketContext * ctx)
+{   
+     (void)ctx;
+}
 
-    if(offset < len && data[offset] == 0x00)
-    {
-        offset +=1 ;
-    }
-    K_slog_trace(K_SLOG_TRACE, " [%s][%d] LJH TEST", __FUNCTION__ , __LINE__); 
-    if(offset+value_len > len)
-    {
-        K_slog_trace(K_SLOG_TRACE, "데이터 값 없음");     
-    }
-    K_slog_trace(K_SLOG_TRACE, " [%s][%d] LJH TEST", __FUNCTION__ , __LINE__);  
-    ch_id.assign(data+offset, value_len);
-    K_slog_trace(K_SLOG_TRACE, " [%s][%d] LJH TEST", __FUNCTION__ , __LINE__); 
-    characterId = stoi(ch_id);
+void PlayerHandler::OnDamaged(PacketContext * ctx)
+{
+     (void)ctx;
+}
 
-    K_slog_trace(K_SLOG_TRACE, "HandleChannelAuth: characterid 설정");
-    //int characterId = std::stoi(tokens[0]);
-    //int characterId = std::atoi(tokens[0].c_str());
-
-    K_slog_trace(K_SLOG_TRACE, "HandleChannelAuth: 캐릭터 ID [%d] 인증 시도", characterId);
-
-    auto player = PlayerService::LoadPlayer(characterId);
-
-    if(!player) {
-        errMsg = "[" + std::to_string(rc) + "]HandleChannelAuth: 플레이어 로드 실패 [" + std::to_string(characterId) + "]";
-        K_slog_trace(K_SLOG_ERROR, "[%d][%s]%s", __LINE__, __FUNCTION__, errMsg.c_str());
-        rc = EXIT_FAILURE;
-        goto err;
-    }
-
-    K_slog_trace(K_SLOG_TRACE, "HandleChannelAuth: 플레이어 로드 성공 [%d]", characterId);
-
-    // 세션에 플레이어 연결
-    ctx->channel_session->SetPlayer(player.get());
-
-    // PlayerManager에 등록 (안전 체크)
-    if (ctx->player_manager) {
-        bool success = ctx->player_manager->AddPlayer(std::move(player));
-        if (success) {
-            K_slog_trace(K_SLOG_TRACE, "HandleChannelAuth: PlayerManager 등록 성공");
-        } else {
-            K_slog_trace(K_SLOG_ERROR, "HandleChannelAuth: PlayerManager 등록 실패 (중복?)");
-        }
-    } else {
-        K_slog_trace(K_SLOG_ERROR, "HandleChannelAuth: PlayerManager가 null입니다");
-    }
-
-    // 성공 응답
-    K_slog_trace(K_SLOG_TRACE, "HandleChannelAuth: 인증 완료");
-
-err:
-    if (rc != EXIT_SUCCESS) {
-        ctx->channel_session->SendNok(PKT_CHANNEL_AUTH, errMsg);
-    } else {
-        ctx->channel_session->SendOk(PKT_CHANNEL_AUTH);
-    }
+void PlayerHandler::UseItem(PacketContext * ctx)
+{
+     (void)ctx;
 }
