@@ -32,10 +32,14 @@ INCLUDES := \
     -I$(INC_DIR)/COMMON \
     -I$(INC_DIR)/COMMON/packet \
 	-I$(INC_DIR)/COMMON/slog \
+	-I$(INC_DIR)/COMMON/command \
+	-I$(INC_DIR)/COMMON/ipc \
+	-I$(INC_DIR)/COMMON/thread \
     -I$(INC_DIR)/CHANNEL \
     -I$(INC_DIR)/CHANNEL/core \
     -I$(INC_DIR)/CHANNEL/db \
-    -I$(INC_DIR)/CHANNEL/packet
+    -I$(INC_DIR)/CHANNEL/packet \
+	-I$(INC_DIR)/CHANNEL/ipc
 
 LIB_PATH := \
     -L$(LIB_DIR)/common \
@@ -71,6 +75,8 @@ SRCS := \
 	db/PlayerService.cpp \
 	db/RedisClient.cpp \
 	db/RedisUtility.cpp \
+	\
+	ipc/CommandReceiver.cpp \
     \
     main.cpp
 
