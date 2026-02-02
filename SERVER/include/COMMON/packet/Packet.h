@@ -33,11 +33,17 @@ struct PacketHeader
 enum PACKET_TYPE : uint16_t {
     PKT_LOGIN = 0x01,
     PKT_REGISTER = 0x02,
+
+
     PKT_CHAT_INIT,
     PKT_CHAT,
+
+
     PKT_INIT_WORLD,
     PKT_SELECT_CHARACTER,
     PKT_SELECT_CHANNEL,
+
+    
     PKT_INIT_CHANNEL,
     PKT_CHANNEL_AUTH,
     PKT_STAT_VIEW,
