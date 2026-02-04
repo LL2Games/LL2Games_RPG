@@ -1,13 +1,26 @@
 #pragma once
 
-struct BaseStat{};
-struct DerivedStat{};
+struct BaseStat
+{
+    int str;
+    int dex;
+    int intel;
+    int luck;
+};
+
+struct DerivedStat
+{
+    int maxHp;
+    int maxMp;
+};
 
 class CharacterStat {
 
 public:
+    CharacterStat(){}
     CharacterStat(const BaseStat& base, const DerivedStat& derived, int curHp, int curMp, int remainAp)
-    :;
+    :m_base(base), m_derived(derived), m_cur_hp(curHp), m_cur_mp(curMp), m_remain_ap(remainAp)
+    {}
 
     //조회용 인터페이스
     const BaseStat& GetBase() const { return m_base; }

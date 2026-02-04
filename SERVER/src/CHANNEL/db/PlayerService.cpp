@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <sstream>
 #include <string>
+#include "CharacterStat.h"
 
 MySqlConnectionPool *PlayerService::m_mySql = MySqlConnectionPool::GetInstance();
 RedisClient *PlayerService::m_redis = nullptr;
@@ -39,12 +40,30 @@ std::unique_ptr<Player> PlayerService::LoadPlayer(int characterId)
             GetInt(*redis_value,"map_id",playerInit.map_id);
             GetFloat(*redis_value,"xPos",playerInit.xPos);
             GetFloat(*redis_value,"yPos",playerInit.yPos);
+            //stat 가져오는 로직 추가
+            BaseStat base;
+            DerivedStat derived;
+            int curHp;
+            int curMp;
+            int remainAp;
 
-            player->SetInitData(playerInit);
+            GetInt(*redis_value,"base_str",base.str);
+            GetInt(*redis_value,"base_dex",base.dex);
+            GetInt(*redis_value,"base_intel",base.intel);
+            GetInt(*redis_value,"base_luck",base.luck);
+            GetInt(*redis_value,"derived_maxHp",derived.maxHp);
+            GetInt(*redis_value,"derived_maxMp",derived.maxMp);
+            GetInt(*redis_value,"curHp",curHp);
+            GetInt(*redis_value,"curMp",curMp);
+            GetInt(*redis_value,"remainAp",remainAp);
+
+            CharacterStat stat(base, derived, curHp, curMp, remainAp);
+            player->SetInitData(playerInit, stat);
+            K_slog_trace(K_SLOG_TRACE, "[Redis]LoadPlayer_stat SUCCESS [%d]", player->GetId());    
             return player;
         }
-
     }
+
     // redis에 저장된 값이 없는 경우 mySQL에서 조회해서 가지고 온다.
     MYSQL_RES *res = nullptr;
     MYSQL_ROW row;
@@ -78,12 +97,58 @@ std::unique_ptr<Player> PlayerService::LoadPlayer(int characterId)
         playerInit.level = std::atoi(row[3]);
         playerInit.job = std::atoi(row[4]);
 
-        player->SetInitData(playerInit);
         K_slog_trace(K_SLOG_TRACE, "LoadPlayer SUCCESS [%d]", player->GetId());    
     }
      K_slog_trace(K_SLOG_TRACE, "PlayerInfoToRedisMap Start"); 
 
-    redis_map = PlayerInfoToRedisMap(playerInit);
+    //stat
+    query = "SELECT * FROM character_stat WHERE char_id = " + std::to_string(characterId);
+    result = mysql_query(conn, query.c_str());
+    if(result != 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "LoadPlayer_stat ERROR [%s]", mysql_error(conn));
+        K_slog_trace(K_SLOG_ERROR, "SQL [%s]", query.c_str());
+        m_mySql->ReleaseConnection(conn);
+        return nullptr;
+    }
+    res = mysql_store_result(conn);
+    if(!res)
+    {
+        K_slog_trace(K_SLOG_ERROR, "LoadPlayer_stat ERROR [%s]", mysql_error(conn));
+        m_mySql->ReleaseConnection(conn);
+        return nullptr;
+    }
+
+    if((row = mysql_fetch_row(res)) != nullptr)
+    {
+        K_slog_trace(K_SLOG_TRACE, "LoadPlayer_stat SUCCESS");    
+        BaseStat base;
+        DerivedStat derived;
+        int curHp;
+        int curMp;
+        int remainAp;
+
+        //row[0] == char_id
+        base.str = std::atoi(row[1]);
+        base.dex = std::atoi(row[2]);
+        base.intel = std::atoi(row[3]);
+        base.luck = std::atoi(row[4]);
+
+        derived.maxHp = std::atoi(row[5]);
+        derived.maxMp = std::atoi(row[6]);
+
+        curHp = std::atoi(row[7]);
+        curMp = std::atoi(row[8]);
+        
+        remainAp = std::atoi(row[9]);
+        
+        CharacterStat stat(base, derived, curHp, curMp, remainAp);
+        
+        player->SetInitData(playerInit,stat);
+        redis_map = PlayerInfoToRedisMap(playerInit, stat);
+        K_slog_trace(K_SLOG_TRACE, "[MySQL]LoadPlayer_stat SUCCESS [%d]", player->GetId());    
+    }
+
 
     K_slog_trace(K_SLOG_TRACE, "PlayerInfoToRedisMap SUCCESS"); 
 

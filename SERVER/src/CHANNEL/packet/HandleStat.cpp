@@ -2,13 +2,15 @@
 #include "ChannelSession.h"
 #include "Player.h"
 #include "PacketParser.h"
+#include "CharacterStat.h"
+#include "StatPacketFactory.h"
 
 void PlayerHandler::HandleStatView(PacketContext* ctx)
 {
     int rc = EXIT_SUCCESS;
     ChannelSession *session = nullptr;
     Player *player = nullptr;
-    size_t char_id;
+    // size_t char_id;
     std::string errMsg;
     // size_t offset = 0;
 
@@ -36,16 +38,7 @@ void PlayerHandler::HandleStatView(PacketContext* ctx)
         errMsg = "[" + std::to_string(rc) + "]player is nullptr";
         goto err;
     }
-
-    char_id = player->GetId();
-    if (char_id == 0)
-    {
-        K_slog_trace(K_SLOG_ERROR, "[%s][%d] char_id is invalid\n", __FUNCTION__, __LINE__);
-        rc = EXIT_FAILURE;
-        errMsg = "[" + std::to_string(rc) + "]char_id is invalid";
-        goto err;
-    }
-    
+  
     //input 필요없을듯.
     // if (!PacketParser::ParseLengthPrefixedString(
     //         ctx->payload,
@@ -66,7 +59,24 @@ err:
     }
     else
     {
-        session->SendOk(PKT_STAT_VIEW);
+        CharacterStat &stat = player->GetStat();
+        StatInfoPacket statPkt = StatPacketFactory::MakeStatInfo(stat);
+        K_slog_trace(K_SLOG_DEBUG, "[%s][%d] str=%d\n", __FUNCTION__, __LINE__, statPkt.str);
+
+        std::vector<std::string> stat_info;
+        stat_info.push_back(std::to_string(statPkt.str));
+        stat_info.push_back(std::to_string(statPkt.dex));
+        stat_info.push_back(std::to_string(statPkt.intel));
+        stat_info.push_back(std::to_string(statPkt.luck));
+        stat_info.push_back(std::to_string(statPkt.maxHp));
+        stat_info.push_back(std::to_string(statPkt.maxMp));
+        stat_info.push_back(std::to_string(statPkt.curHp));
+        stat_info.push_back(std::to_string(statPkt.curMp));
+        stat_info.push_back(std::to_string(statPkt.remainAp));
+
+        session->SendOk(PKT_STAT_VIEW, stat_info);
+
+
         // auto opt = channel_manager->SelectChannel(channel_id);
         // if (!opt)
         // {
@@ -89,7 +99,7 @@ void PlayerHandler::HandleStatUp(PacketContext* ctx)
     int rc = EXIT_SUCCESS;
     ChannelSession *session = nullptr;
     Player *player = nullptr;
-    size_t char_id;
+    // size_t char_id;
     std::string errMsg;
     size_t offset = 0;
     std::string stat;
@@ -119,14 +129,14 @@ void PlayerHandler::HandleStatUp(PacketContext* ctx)
         goto err;
     }
 
-    char_id = player->GetId();
-    if (char_id == 0)
-    {
-        K_slog_trace(K_SLOG_ERROR, "[%s][%d] char_id is invalid\n", __FUNCTION__, __LINE__);
-        rc = EXIT_FAILURE;
-        errMsg = "[" + std::to_string(rc) + "]char_id is invalid";
-        goto err;
-    }
+    // char_id = player->GetId();
+    // if (char_id == 0)
+    // {
+    //     K_slog_trace(K_SLOG_ERROR, "[%s][%d] char_id is invalid\n", __FUNCTION__, __LINE__);
+    //     rc = EXIT_FAILURE;
+    //     errMsg = "[" + std::to_string(rc) + "]char_id is invalid";
+    //     goto err;
+    // }
     
     if (!PacketParser::ParseLengthPrefixedString(
             ctx->payload,

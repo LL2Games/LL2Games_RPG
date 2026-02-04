@@ -36,7 +36,7 @@ INCLUDES := \
     -I$(INC_DIR)/CHANNEL/core \
     -I$(INC_DIR)/CHANNEL/db \
     -I$(INC_DIR)/CHANNEL/packet \
-	
+	-I$(INC_DIR)/CHANNEL/stat
 
 LIB_PATH := \
     -L$(LIB_DIR)/common \
@@ -68,6 +68,7 @@ SRCS := \
 	packet/PlayerHandler.cpp \
 	packet/MapHandler.cpp \
 	packet/HandleStat.cpp \
+	packet/StatPacketFactory.cpp \
     \
     db/MySqlConnectionPool.cpp \
 	db/PlayerService.cpp \
