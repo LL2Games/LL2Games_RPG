@@ -34,6 +34,7 @@ public:
     void SetPlayer(Player* player) {m_player = player;}
     Player* GetPlayer() const {return m_player;}
 
+    
 
 private:
     bool TryPopOnePacket(Packet& outpkt);
@@ -47,7 +48,7 @@ private:
     int m_fd = -1;
     ChannelServer* m_server = nullptr;
 
-    std::vector<uint8_t> m_recvBuf;
+    std::vector<char> m_recvBuf;
 
     std::deque<std::vector<uint8_t>> m_sendQueue;
 

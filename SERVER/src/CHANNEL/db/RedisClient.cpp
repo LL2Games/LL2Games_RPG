@@ -1,7 +1,7 @@
 #include "CHANNEL/db/RedisClient.h"
 
 
-#define REDIS_HOST "127.0.0.1"
+#define REDIS_HOST "100.124.14.8"
 #define REDIS_PORT 6379
 
 RedisClient *RedisClient::m_instance =nullptr;
@@ -24,6 +24,7 @@ RedisClient::~RedisClient()
 
 int RedisClient::Init()
 {
+    K_slog_trace(K_SLOG_DEBUG, "[%s][%d] Redis Init START", __FUNCTION__, __LINE__);
     m_ctx = redisConnect(REDIS_HOST, REDIS_PORT);
     if (m_ctx == nullptr) {
         K_slog_trace(K_SLOG_ERROR, "[%s][%d] Redis Connect error: ctx is null", __FUNCTION__, __LINE__);
@@ -36,11 +37,14 @@ int RedisClient::Init()
         m_ctx = nullptr;
         return EXIT_FAILURE;
     }
+
+    K_slog_trace(K_SLOG_DEBUG, "[%s][%d] Redis Init END_SUCCESS", __FUNCTION__, __LINE__);
     return EXIT_SUCCESS;
 }
 
 RedisClient *RedisClient::GetInstance()
 {
+    K_slog_trace(K_SLOG_DEBUG, "[%s][%d] Redis GetInstance START", __FUNCTION__, __LINE__);
     if(m_instance == nullptr)
     {
         m_instance = new RedisClient();
@@ -50,6 +54,8 @@ RedisClient *RedisClient::GetInstance()
             m_instance = nullptr;
         }
     }
+
+    K_slog_trace(K_SLOG_DEBUG, "[%s][%d] Redis GetInstance END_SUCCESS", __FUNCTION__, __LINE__);
     return m_instance;
 }
 
@@ -102,7 +108,7 @@ int RedisClient::HSetAll(const std::string& key, std::map<std::string, std::stri
     std::vector<const char*> value;
     std::vector<size_t> valueLen;
     redisReply* reply = nullptr;
-
+    K_slog_trace(K_SLOG_TRACE, "[%s][%d] LJH TEST", __FUNCTION__, __LINE__);
     std::string cmd = "HSET";
 
     auto push = [&](const std::string& s)
@@ -110,6 +116,8 @@ int RedisClient::HSetAll(const std::string& key, std::map<std::string, std::stri
         value.push_back(s.c_str());
         valueLen.push_back(s.size());
     };
+    K_slog_trace(K_SLOG_TRACE, "[%s][%d] LJH TEST22", __FUNCTION__, __LINE__);
+    K_slog_trace(K_SLOG_TRACE, "[%s][%d] LJH TEST[m_ctx=%p]", __FUNCTION__, __LINE__, m_ctx);
 
     if(m_ctx == nullptr)
     {
@@ -117,6 +125,7 @@ int RedisClient::HSetAll(const std::string& key, std::map<std::string, std::stri
         rc = EXIT_FAILURE;
     
     }
+    K_slog_trace(K_SLOG_TRACE, "[%s][%d] LJH TEST", __FUNCTION__, __LINE__);
 
     if(redis_map.empty())
     {
@@ -125,6 +134,7 @@ int RedisClient::HSetAll(const std::string& key, std::map<std::string, std::stri
         goto err;
     }
 
+     K_slog_trace(K_SLOG_TRACE, "[%s][%d] LJH TEST", __FUNCTION__, __LINE__);
     value.reserve(2 + redis_map.size() *2);
     valueLen.reserve(2 + redis_map.size() *2);
 
@@ -139,6 +149,8 @@ int RedisClient::HSetAll(const std::string& key, std::map<std::string, std::stri
         push(field);
         push(value);
     }
+
+    K_slog_trace(K_SLOG_TRACE, "[%s][%d] LJH TEST", __FUNCTION__, __LINE__);
 
     reply = (redisReply*)redisCommandArgv(m_ctx, (int)value.size(), value.data(), valueLen.data());
 

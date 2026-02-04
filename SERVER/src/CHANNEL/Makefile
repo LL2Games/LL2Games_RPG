@@ -35,7 +35,8 @@ INCLUDES := \
     -I$(INC_DIR)/CHANNEL \
     -I$(INC_DIR)/CHANNEL/core \
     -I$(INC_DIR)/CHANNEL/db \
-    -I$(INC_DIR)/CHANNEL/packet
+    -I$(INC_DIR)/CHANNEL/packet \
+	
 
 LIB_PATH := \
     -L$(LIB_DIR)/common \
@@ -55,12 +56,17 @@ SRCS := \
 	core/ChannelSession.cpp \
 	core/MapManager.cpp \
 	core/MapInstance.cpp \
+	core/MapService.cpp \
 	core/PlayerManager.cpp \
 	core/Player.cpp \
 	core/Monster.cpp \
+	core/MonsterManager.cpp \
+	core/Item.cpp \
     \
 	packet/ChannelPacketFactory.cpp \
+	packet/ChannelInitHandler.cpp \
 	packet/PlayerHandler.cpp \
+	packet/MapHandler.cpp \
 	packet/HandleStat.cpp \
     \
     db/MySqlConnectionPool.cpp \

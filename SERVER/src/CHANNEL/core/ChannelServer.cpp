@@ -1,7 +1,7 @@
-#include "CHANNEL/core/ChannelServer.h"
-#include "CHANNEL/core/common.h"
+#include "ChannelServer.h"
+#include "common.h"
 
-ChannelServer::ChannelServer() : m_channel_id(0), m_listen_fd(0), m_epfd(0), m_running(false)
+ChannelServer::ChannelServer() : m_channel_id(0), m_listen_fd(0), m_epfd(0), m_running(false), m_map_service(m_player_mamager, m_map_manager)
 {
     
 }
@@ -11,7 +11,7 @@ ChannelServer::~ChannelServer()
 
 }
 
-int ChannelServer::SerNonblocking(int fd)
+int ChannelServer::SetNonblocking(int fd)
 {
     // fd의 현재 설정된 값을 가지고 온다.
     int flags = fcntl(fd, F_GETFL, 0);
@@ -84,7 +84,7 @@ bool ChannelServer::InitListenSocket(int port)
         return false;
     }
 
-    if(SerNonblocking(m_listen_fd) < 0)
+    if(SetNonblocking(m_listen_fd) < 0)
     {
         K_slog_trace(K_SLOG_ERROR, "[%s] SerNonblocking Error %d\n", "ChannelServer", port);
         close(m_listen_fd);
@@ -191,7 +191,7 @@ void ChannelServer::OnAccept()
             break;
         }
 
-        if(SerNonblocking(cfd) < 0)
+        if(SetNonblocking(cfd) < 0)
         {
             close(cfd);
             continue;
@@ -243,7 +243,7 @@ void ChannelServer::OnReceive(int fd)
         buf.append(temp, tempLen);
     } while (tempLen == BUFFER_SIZE);
 
-
+     K_slog_trace(K_SLOG_DEBUG, "fd %d\n", fd);
     auto it = m_sessions.find(fd);
     if(it == m_sessions.end())
     {

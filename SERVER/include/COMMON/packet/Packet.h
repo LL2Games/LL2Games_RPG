@@ -17,6 +17,8 @@ class ChannelManager;
 class ChannelServer;
 class ChannelSession;
 class PlayerManager;
+class PlayerService;
+class MapService;
 
 
 #define BUFFER_SIZE 1024
@@ -33,20 +35,20 @@ struct PacketHeader
 enum PACKET_TYPE : uint16_t {
     PKT_LOGIN = 0x01,
     PKT_REGISTER = 0x02,
+    PKT_CHAT_INIT = 0x03,
+    PKT_CHAT = 0x04,
+    PKT_INIT_WORLD = 0x05,
+    PKT_SELECT_CHARACTER = 0x06,
+    PKT_SELECT_CHANNEL = 0x07,
+    PKT_INIT_CHANNEL = 0x08,
+    PKT_CHANNEL_AUTH = 0x09,
+    PKT_ENTER_MAP = 0x0A,
+    PKT_PLAYER_MOVE = 0x0B,
+    PKT_PLAYER_ATTACK = 0x0C,
+    PKT_PLAYER_ONDAMAGED = 0x0D,
+    PKT_PLAYER_USE_ITEM = 0x0E,
 
-
-    PKT_CHAT_INIT,
-    PKT_CHAT,
-
-
-    PKT_INIT_WORLD,
-    PKT_SELECT_CHARACTER,
-    PKT_SELECT_CHANNEL,
-
-    
-    PKT_INIT_CHANNEL,
-    PKT_CHANNEL_AUTH,
-    PKT_STAT_VIEW,
+    PKT_STAT_VIEW=0x1000,
     PKT_STAT_UP,
 };
 
@@ -61,6 +63,7 @@ struct PacketContext
     uint16_t type;
 
     Client* client = nullptr;
+    ParsedPacket pkt;
     int fd = -1;
     char *payload = nullptr;
     int payload_len = 0;
@@ -76,8 +79,9 @@ struct PacketContext
 
     //Channel에서 사용
     ChannelSession *channel_session = nullptr;
+    PlayerService* player_service = nullptr;
     PlayerManager* player_manager =nullptr;
-
+    MapService* map_service = nullptr;
 
 };
 

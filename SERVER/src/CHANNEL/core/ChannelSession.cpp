@@ -1,5 +1,5 @@
-#include "CHANNEL/core/ChannelSession.h"
-#include "CHANNEL/core/ChannelServer.h"
+#include "ChannelSession.h"
+#include "ChannelServer.h"
 #include "PacketParser.h"
 #include "IPacketFactory.h"
 #include "Packet.h"
@@ -18,14 +18,15 @@ bool ChannelSession::OnBytes(const uint8_t* data, size_t len)
 {
     m_recvBuf.insert(m_recvBuf.end(), data, data+len);
 
-    std::vector<char> buf(m_recvBuf.begin(), m_recvBuf.end());
-    auto pkt = PacketParser::Parse(buf);
+    //std::vector<char> buf(m_recvBuf.begin(), m_recvBuf.end());
+    auto pkt = PacketParser::Parse(m_recvBuf);
     if (!pkt.has_value())
     {
         K_slog_trace(K_SLOG_ERROR, "[%s][%d] Packet Parse failed", __FUNCTION__, __LINE__);
         return false;
     }
     K_slog_trace(K_SLOG_DEBUG, "[%s][%d] parsed packet type=%x, payload len=%d", __FUNCTION__, __LINE__, pkt->type, (int)pkt->payload.size());
+
 
     auto handler = m_factory.Create(pkt->type);
     if(handler)
@@ -34,16 +35,21 @@ bool ChannelSession::OnBytes(const uint8_t* data, size_t len)
         ctx.type = pkt->type;
         ctx.channel_session = this;
         ctx.fd = m_fd;
+        ctx.pkt.type = pkt->type;
         ctx.payload = const_cast<char*>(pkt->payload.c_str());
         ctx.payload_len = pkt->payload.size();
         
         // PlayerManager 설정
         if (m_server) {
             ctx.player_manager = m_server->GetPlayerManager();
+            K_slog_trace(K_SLOG_DEBUG, "Player_Manager [%p]\n", ctx.player_manager);
+            ctx.map_service = m_server->GetMapService();
+            ctx.player_service = m_server->GetPlayerService();
         }
         
         handler->Execute(&ctx);
     }
+
 
     return true;
 }
@@ -170,7 +176,9 @@ bool ChannelSession::FlushSend()
 // 지금 방식은 클라이언트 하나에 해당해서 Send를 하는 방식인데 Player 클래스를 vector로 가지고 있고
 // 같은 맵, 시야 범위 등등 환경요소들을 확인해서 보내는 방식으로 변경 필요
 
+//[L][V] [L][V] [L][V]
 
+//클라입력 $  [L][V]
 int ChannelSession::Send(int type, const std::vector<std::string>& payload)
 {
     std::string body = PacketParser::MakeBody(payload);

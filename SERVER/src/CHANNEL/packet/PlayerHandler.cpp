@@ -1,109 +1,165 @@
-#include "CHANNEL/core/common.h"
-#include "CHANNEL/packet/PlayerHandler.h"
-#include "CHANNEL/core/ChannelSession.h"
-#include "CHANNEL/db/PlayerService.h"
-#include "CHANNEL/core/Player.h"
-#include "CHANNEL/core/PlayerManager.h"
+#include "PlayerHandler.h"
+#include "CommonEnum.h"
+#include "PacketParser.h"
+#include "ChannelSession.h"
+#include "PlayerManager.h"
+#include "MapInstance.h"
 #include "K_slog.h"
 #include "PacketParser.h"
-#include <sstream>
 
-void PlayerHandler::Execute(PacketContext* ctx)
+
+
+PlayerHandler::PlayerHandler(uint16_t type) : m_type(type)
 {
-    switch(ctx->type) 
-    {
-        case PKT_INIT_CHANNEL:
-        case PKT_CHANNEL_AUTH:
-            HandleChannelAuth(ctx);
-            break;
-        case PKT_STAT_VIEW:
-            HandleStatView(ctx);
-            break;
-        case PKT_STAT_UP:
-            HandleStatUp(ctx);
-            break;
-        default:
-            break;
-    }
+
 }
 
 
-void PlayerHandler::HandleChannelAuth(PacketContext *ctx)
+void PlayerHandler::Execute(PacketContext * ctx)
 {
-    int rc = EXIT_SUCCESS;
-    std::string errMsg;
-    const char* data = nullptr;
-    size_t len = 0;
-    size_t offset = 0;
-    uint8_t value_len = 0;
-    int characterId =0;
-    std::string ch_id;
+     switch(ctx->pkt.type)
+     {
+          case PKT_PLAYER_MOVE:
+               MovePacket(ctx);
+               break;
+          case PKT_PLAYER_ATTACK:
+               AttackPacket(ctx);
+               break;
+          case PKT_PLAYER_ONDAMAGED:
+               OnDamagedPacket(ctx);
+               break;
+          case PKT_PLAYER_USE_ITEM:
+               UseItemPacket(ctx);
+               break;
+          case PKT_STAT_VIEW:
+                HandleStatView(ctx);
+                break;
+          case PKT_STAT_UP:
+                HandleStatUp(ctx);
+                break;
+          default :
+               break;
+     }
     
-    data = ctx->payload;
-    len = ctx->payload_len;
+}
 
-    K_slog_trace(K_SLOG_TRACE, " [%s][%d] LJH TEST", __FUNCTION__ , __LINE__); 
-    if(offset >= len)
+void PlayerHandler::MovePacket(PacketContext * ctx)
+{
+     ChannelSession *session = nullptr;
+     Player* player = nullptr;
+     MapInstance* map = nullptr;
+     std::string errMsg;
+     size_t offset = 0;
+     int rc = EXIT_SUCCESS;
+     float speed = 0;
+
+     std::string playerXPos;
+     std::string playerYPos;
+     std::string str_speed;
+     Vec2 PlayerPos = {0,0};
+     
+    if(ctx == nullptr)
     {
-         K_slog_trace(K_SLOG_TRACE, " [%s][%d] 데이터 값 없음", __FUNCTION__ , __LINE__);  
-    }
-
-    value_len = static_cast<uint8_t>(data[offset]);
-    offset +=1;
-
-    if(offset < len && data[offset] == 0x00)
-    {
-        offset +=1 ;
-    }
-    K_slog_trace(K_SLOG_TRACE, " [%s][%d] LJH TEST", __FUNCTION__ , __LINE__); 
-    if(offset+value_len > len)
-    {
-        K_slog_trace(K_SLOG_TRACE, "데이터 값 없음");     
-    }
-    K_slog_trace(K_SLOG_TRACE, " [%s][%d] LJH TEST", __FUNCTION__ , __LINE__);  
-    ch_id.assign(data+offset, value_len);
-    K_slog_trace(K_SLOG_TRACE, " [%s][%d] LJH TEST", __FUNCTION__ , __LINE__); 
-    characterId = stoi(ch_id);
-
-    K_slog_trace(K_SLOG_TRACE, "HandleChannelAuth: characterid 설정");
-    //int characterId = std::stoi(tokens[0]);
-    //int characterId = std::atoi(tokens[0].c_str());
-
-    K_slog_trace(K_SLOG_TRACE, "HandleChannelAuth: 캐릭터 ID [%d] 인증 시도", characterId);
-
-    auto player = PlayerService::LoadPlayer(characterId);
-
-    if(!player) {
-        errMsg = "[" + std::to_string(rc) + "]HandleChannelAuth: 플레이어 로드 실패 [" + std::to_string(characterId) + "]";
-        K_slog_trace(K_SLOG_ERROR, "[%d][%s]%s", __LINE__, __FUNCTION__, errMsg.c_str());
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] ctx is nullptr\n", __FILE__, __FUNCTION__, __LINE__);
         rc = EXIT_FAILURE;
+        errMsg = "[" + std::to_string(rc) + "]ctx is nullptr";
         goto err;
     }
 
-    K_slog_trace(K_SLOG_TRACE, "HandleChannelAuth: 플레이어 로드 성공 [%d]", characterId);
-
-    // 세션에 플레이어 연결
-    ctx->channel_session->SetPlayer(player.get());
-
-    // PlayerManager에 등록 (안전 체크)
-    if (ctx->player_manager) {
-        bool success = ctx->player_manager->AddPlayer(std::move(player));
-        if (success) {
-            K_slog_trace(K_SLOG_TRACE, "HandleChannelAuth: PlayerManager 등록 성공");
-        } else {
-            K_slog_trace(K_SLOG_ERROR, "HandleChannelAuth: PlayerManager 등록 실패 (중복?)");
-        }
-    } else {
-        K_slog_trace(K_SLOG_ERROR, "HandleChannelAuth: PlayerManager가 null입니다");
+    session = ctx->channel_session;
+    if(session == nullptr)
+    {
+     K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] session is nullptr\n", __FILE__, __FUNCTION__, __LINE__);
+        rc = EXIT_FAILURE;
+        errMsg = "[" + std::to_string(rc) + "]session is nullptr";
+        goto err;
     }
 
-    // 성공 응답
-    K_slog_trace(K_SLOG_TRACE, "HandleChannelAuth: 인증 완료");
+    player = session->GetPlayer();
+    if(player == nullptr) 
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] Player is nullptr\n", __FILE__, __FUNCTION__, __LINE__);
+        return;
+    }
 
+    map = player->GetCurrentMap();
+     if(player == nullptr) 
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] current_map is nullptr\n", __FILE__, __FUNCTION__, __LINE__);
+        return;
+    }
+    // 받은 정보에서 Xpos 추출
+     if(!PacketParser::ParseLengthPrefixedString(
+        ctx->payload,
+        ctx->payload_len,
+        offset,
+        playerXPos,
+        errMsg
+    ))
+    {
+        rc = EXIT_FAILURE;
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] ParseLengthPrefixedString fail", __FILE__, __FUNCTION__, __LINE__);
+        goto err;
+    }
+
+     // 받은 정보에서 Ypos 추출
+     if(!PacketParser::ParseLengthPrefixedString(
+        ctx->payload,
+        ctx->payload_len,
+        offset,
+        playerYPos,
+        errMsg
+    ))
+    {
+        rc = EXIT_FAILURE;
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] ParseLengthPrefixedString fail", __FILE__, __FUNCTION__, __LINE__);
+        goto err;
+    }
+
+     // 받은 정보에서 speed 추출
+     if(!PacketParser::ParseLengthPrefixedString(
+        ctx->payload,
+        ctx->payload_len,
+        offset,
+        str_speed,
+        errMsg
+    ))
+    {
+        rc = EXIT_FAILURE;
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] ParseLengthPrefixedString fail", __FILE__, __FUNCTION__, __LINE__);
+        goto err;
+    }
+
+    // stoi 등 형식 변환은 위험 가능성이 높다
+   
+    PlayerPos.xPos = stof(playerXPos);
+    PlayerPos.yPos = stof(playerYPos);
+    speed = stof(str_speed);
+
+ 
+    // 플레이어가 속한 맵의 모든 플레이어한테 변경 정보 전달
+    map->HandleMove(player, PlayerPos, speed);
+   
 err:
     if (rc != EXIT_SUCCESS) {
-        ctx->channel_session->SendNok(PKT_CHANNEL_AUTH, errMsg);
+        session->SendNok(PKT_ENTER_MAP, errMsg);
     } else {
-        ctx->channel_session->SendOk(PKT_CHANNEL_AUTH);
+        K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] MAP HANDLER END", __FILE__, __FUNCTION__, __LINE__);
+        session->SendOk(PKT_ENTER_MAP);
     }
+}
+
+void PlayerHandler::AttackPacket(PacketContext * ctx)
+{   
+     (void)ctx;
+}
+
+void PlayerHandler::OnDamagedPacket(PacketContext * ctx)
+{
+     (void)ctx;
+}
+
+void PlayerHandler::UseItemPacket(PacketContext * ctx)
+{
+     (void)ctx;
 }

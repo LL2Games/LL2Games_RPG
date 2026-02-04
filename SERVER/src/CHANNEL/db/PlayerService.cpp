@@ -6,10 +6,11 @@
 #include <string>
 
 MySqlConnectionPool *PlayerService::m_mySql = MySqlConnectionPool::GetInstance();
-RedisClient *PlayerService::m_redis = RedisClient::GetInstance();
+RedisClient *PlayerService::m_redis = nullptr;
 
 PlayerService::PlayerService()
 {
+    m_redis = RedisClient::GetInstance();
 }
 
 PlayerService::~PlayerService()
@@ -80,11 +81,16 @@ std::unique_ptr<Player> PlayerService::LoadPlayer(int characterId)
         player->SetInitData(playerInit);
         K_slog_trace(K_SLOG_TRACE, "LoadPlayer SUCCESS [%d]", player->GetId());    
     }
+     K_slog_trace(K_SLOG_TRACE, "PlayerInfoToRedisMap Start"); 
 
     redis_map = PlayerInfoToRedisMap(playerInit);
-    
+
+    K_slog_trace(K_SLOG_TRACE, "PlayerInfoToRedisMap SUCCESS"); 
+
     result =  m_redis->HSetAll("characterID", redis_map, 600);
 
+    K_slog_trace(K_SLOG_TRACE, "HSetAll SUCCESS"); 
+    
     if(result != 0)
     {
         K_slog_trace(K_SLOG_ERROR, "HSetAll ERROR"); 

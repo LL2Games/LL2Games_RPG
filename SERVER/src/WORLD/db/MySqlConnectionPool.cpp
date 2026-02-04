@@ -2,7 +2,7 @@
 #include "K_slog.h"
 
 #define POOL_SIZE 8
-#define HOST "127.0.0.1"
+#define HOST "100.124.14.8"
 #define USER "root"
 #define PASSWD "1234"
 #define DB "game"

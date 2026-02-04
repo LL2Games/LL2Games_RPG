@@ -1,18 +1,26 @@
-#pragma once
-#include "COMMON/packet/Packet.h"
-#include "COMMON/packet/IPacketHandler.h"
-#include "CHANNEL/core/Player.h"
-#include "CHANNEL/db/MySqlConnectionPool.h"
+#include "common.h"
+#include "Packet.h"
+#include "IPacketHandler.h"
+#include "Player.h"
+#include "MySqlConnectionPool.h"
 #include <vector>
 #include <string>
 
 class PlayerHandler : public IPacketHandler
 {
 public:
+    PlayerHandler(uint16_t type);
     void Execute(PacketContext * ctx) override;
-    
-    
-    void HandleChannelAuth(PacketContext *ctx);
+
+    void MovePacket(PacketContext * ctx);
+    void AttackPacket(PacketContext * ctx);
+    void OnDamagedPacket(PacketContext * ctx);
+    void UseItemPacket(PacketContext * ctx);
+
+    //stat
     void HandleStatView(PacketContext* ctx);
     void HandleStatUp(PacketContext* ctx);
+  
+private:
+    uint16_t m_type;
 };
