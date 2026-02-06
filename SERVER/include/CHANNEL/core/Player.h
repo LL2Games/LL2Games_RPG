@@ -2,7 +2,9 @@
 #include "common.h"
 #include "CommonEnum.h"
 #include "util/PlayerData.h"
-
+#include "PlayerState.h"
+#include "Skill_Info.h"
+#include "time.h"
 
 class ChannelSession;
 class MapInstance;
@@ -35,19 +37,38 @@ public:
     MapInstance* GetCurrentMap() {return m_current_map;}
     ChannelSession* GetSession() {return m_session;}
 
+public:
+
+    // 현재 플레이어가 공격 가능 상태인지 확인한다.
+    bool CanAttack(SkillDef* skillDef);
+
 
 private:
     int m_char_id;
     std::string m_account_id;
     std::string m_name;
+    std::string root_job;
     int m_level;
     int m_job;
     int m_map_id;
     float m_xPos;
     float m_yPos;
 
+    int m_cur_hp;
+    int m_cur_mp;
+
+    int m_max_hp;
+    int m_max_mp;
+
     MapInstance* m_current_map;
     ChannelSession* m_session;
+
+    PlayerState m_CurrentState;
+
+    // 플레이어가 배운 스킬들 저장 string은 skillID, int는 스킬 레벨
+    std::unordered_map<std::string , int> m_learnedSkills;
+    // 사용한 스킬쿨들을 저장
+    std::unordered_map<std::string, int64_t> skillCooldownEndMs;
 private:
     bool m_isChangedInventory;
     bool m_isChangedStatas;

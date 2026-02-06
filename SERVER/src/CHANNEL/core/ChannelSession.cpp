@@ -34,7 +34,7 @@ bool ChannelSession::OnBytes(const uint8_t* data, size_t len)
         PacketContext ctx;
         ctx.channel_session = this;
         ctx.fd = m_fd;
-        ctx.pkt.type = pkt->type;
+        ctx.type = pkt->type;
         ctx.payload = const_cast<char*>(pkt->payload.c_str());
         ctx.payload_len = pkt->payload.size();
         

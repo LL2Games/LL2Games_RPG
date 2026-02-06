@@ -1,5 +1,7 @@
 #include <vector>
 #include <string>
+#include <cstdint>
+
 #pragma once
 enum class MapRegion{
     HENESYS,

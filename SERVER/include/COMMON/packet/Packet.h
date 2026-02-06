@@ -58,7 +58,7 @@ struct ParsedPacket
 struct PacketContext
 {
     Client* client = nullptr;
-    ParsedPacket pkt;
+    uint16_t type;
     int fd = -1;
     char *payload = nullptr;
     int payload_len = 0;

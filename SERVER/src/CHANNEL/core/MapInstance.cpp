@@ -167,7 +167,12 @@ void MapInstance::BroadcastMoveExcept(Player* sender, Vec2 pos, float speed)
 {
 	std::vector<std::string> payload;
 	payload.reserve(4);
+	K_slog_trace(K_SLOG_TRACE, "[%s][%d] playerID [%f]", __FUNCTION__, __LINE__, sender->GetId());
+	K_slog_trace(K_SLOG_TRACE, "[%s][%d] xPos [%f]", __FUNCTION__, __LINE__, pos.xPos);
+	K_slog_trace(K_SLOG_TRACE, "[%s][%d] yPos [%f]", __FUNCTION__, __LINE__, pos.yPos);
+	K_slog_trace(K_SLOG_TRACE, "[%s][%d] speed [%f]", __FUNCTION__, __LINE__, speed);
 	payload.push_back(std::to_string(sender->GetId()));
+
 	payload.push_back(std::to_string(pos.xPos));
 	payload.push_back(std::to_string(pos.yPos));
 	payload.push_back(std::to_string(speed));
@@ -195,4 +200,11 @@ void MapInstance::RemoveMap()
 		
 	}
 }
+
+
+void MapInstance::ResolveSkillHit(Player* Attacker, SkillDef *skillDef, std::string attack_dir)
+{
+	
+}
+
 

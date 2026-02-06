@@ -62,11 +62,17 @@ SRCS := \
 	core/Monster.cpp \
 	core/MonsterManager.cpp \
 	core/Item.cpp \
+	core/CombatService.cpp \
+	core/SkillService.cpp\
     \
 	packet/ChannelPacketFactory.cpp \
 	packet/ChannelInitHandler.cpp \
 	packet/PlayerHandler.cpp \
 	packet/MapHandler.cpp \
+	packet/MovePacket.cpp \
+	packet/AttackPacket.cpp \
+	packet/OnDamagedPacket.cpp \
+	packet/UseItemPacket.cpp \
     \
     db/MySqlConnectionPool.cpp \
 	db/PlayerService.cpp \

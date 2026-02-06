@@ -2,6 +2,7 @@
 #include "common.h"
 #include "PlayerManager.h"
 #include "CommonEnum.h"
+#include "Skill_Info.h"
 #include "Monster.h"
 #include "MonsterManager.h"
 #include "Item.h"
@@ -46,6 +47,8 @@ public:
     void HandleMove(Player* sender, Vec2 pos, float speed);
 
     void BroadcastMoveExcept(Player* sender, Vec2 pos, float speed);
+
+    void ResolveSkillHit(Player* Attacker, SkillDef *skillDef, std::string attack_dir);
 
 public:
 

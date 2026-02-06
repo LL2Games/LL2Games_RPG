@@ -73,6 +73,7 @@ std::unique_ptr<Player> PlayerService::LoadPlayer(int characterId)
         player = std::make_unique<Player>();
 
         playerInit.char_id = std::atoi(row[0]);
+        
         playerInit.account_id = row[1];
         playerInit.name = row[2];
         playerInit.level = std::atoi(row[3]);
