@@ -62,6 +62,7 @@ SRCS := \
 	core/Monster.cpp \
 	core/MonsterManager.cpp \
 	core/Item.cpp \
+	core/StatService.cpp \
     \
 	packet/ChannelPacketFactory.cpp \
 	packet/ChannelInitHandler.cpp \
@@ -75,6 +76,9 @@ SRCS := \
 	db/RedisClient.cpp \
 	db/RedisUtility.cpp \
     \
+	stat/PlayerStatRepository.cpp \
+	stat/CharacterStat.cpp \
+	\
     main.cpp
 
 # ==================================

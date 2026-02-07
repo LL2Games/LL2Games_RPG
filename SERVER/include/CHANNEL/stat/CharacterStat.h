@@ -1,4 +1,13 @@
 #pragma once
+#include <string>
+
+enum e_BaseStat
+{
+    E_STR = 0,
+    E_DEX,
+    E_INT,
+    E_LUCK,
+};
 
 struct BaseStat
 {
@@ -28,6 +37,9 @@ public:
     int GetCurHp() const {return m_cur_hp;}
     int GetCurMp() const {return m_cur_mp;}
     int GetRemainAp() const {return m_remain_ap;}
+
+public:
+    void Up(const std::string & statType);
 
 private:
     BaseStat m_base;

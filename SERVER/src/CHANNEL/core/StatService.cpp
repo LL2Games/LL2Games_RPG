@@ -1,0 +1,29 @@
+#include "StatService.h"
+#include <string>
+
+StatService::StatService()
+{
+
+}
+
+StatService::~StatService()
+{
+
+}
+
+int StatService::UpStat(Player &player, const std::string &statType, std::string &errMsg)
+{
+    int result = 0;
+    CharacterStat& stat = player.GetStat();
+
+    //db 업
+    result = m_repo.Update(std::to_string(player.GetId()), statType, errMsg);
+    if (result != 0)
+        goto err;
+
+    //객체 업
+    stat.Up(statType);
+
+err:
+    return result;
+}

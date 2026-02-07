@@ -45,6 +45,7 @@ bool ChannelSession::OnBytes(const uint8_t* data, size_t len)
             K_slog_trace(K_SLOG_DEBUG, "Player_Manager [%p]\n", ctx.player_manager);
             ctx.map_service = m_server->GetMapService();
             ctx.player_service = m_server->GetPlayerService();
+            ctx.stat_service = m_server->GetStatService();
         }
         
         handler->Execute(&ctx);

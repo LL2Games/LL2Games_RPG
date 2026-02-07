@@ -4,6 +4,7 @@
 #include "PacketParser.h"
 #include "CharacterStat.h"
 #include "StatPacketFactory.h"
+#include "StatService.h"
 
 void PlayerHandler::HandleStatView(PacketContext* ctx)
 {
@@ -103,6 +104,7 @@ void PlayerHandler::HandleStatUp(PacketContext* ctx)
     std::string errMsg;
     size_t offset = 0;
     std::string stat;
+    StatService* stat_service = nullptr;
 
     if (ctx == nullptr)
     {
@@ -129,6 +131,15 @@ void PlayerHandler::HandleStatUp(PacketContext* ctx)
         goto err;
     }
 
+    stat_service = ctx->stat_service;
+    if (stat_service == nullptr)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] stat_service is nullptr\n", __FUNCTION__, __LINE__);
+        rc = EXIT_FAILURE;
+        errMsg = "[" + std::to_string(rc) + "]stat_service is nullptr";
+        goto err;
+    }
+
     // char_id = player->GetId();
     // if (char_id == 0)
     // {
@@ -150,6 +161,8 @@ void PlayerHandler::HandleStatUp(PacketContext* ctx)
         goto err;
     }
 
+    rc = stat_service->UpStat(*player, stat, errMsg);
+    
 err:
     if (rc != EXIT_SUCCESS)
     {
@@ -158,19 +171,5 @@ err:
     else
     {
         session->SendOk(PKT_STAT_UP);
-        // auto opt = channel_manager->SelectChannel(channel_id);
-        // if (!opt)
-        // {
-        //     errMsg = std::string("channel(" + channel_id + ") is invalid");
-        //     session->SendNok(PKT_SELECT_CHANNEL, errMsg);
-        // }
-        // else
-        // {
-        //     ChannelInfo info = *opt;
-        //     std::vector<std::string> channel_info;
-        //     channel_info.push_back(info.ip);
-        //     channel_info.push_back(std::to_string(info.port));
-        //     session->SendOk(PKT_SELECT_CHANNEL, channel_info);
-        // }
     }
 }
