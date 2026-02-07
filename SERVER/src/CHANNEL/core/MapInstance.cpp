@@ -38,7 +38,7 @@ int MapInstance::Update()
 
 int MapInstance::InitSpawnMonster()
 {
-
+	int instanceId = 1;
     m_monsterList.reserve(m_monsterSpawnList.size());
 	
     for(m_monsterSpawnListIter = m_monsterSpawnList.begin(); m_monsterSpawnListIter < m_monsterSpawnList.end(); ++m_monsterListIter)
@@ -54,6 +54,10 @@ int MapInstance::InitSpawnMonster()
 		
 		auto monsterTemplate = m_monsterManager->GetMonsterData(m_monsterSpawnListIter->monsterId);
 		
+		// 맵에 스폰된 몬스터들 끼리 구별하기 위한 값
+		m_monsterSpawnListIter->instanceId = instanceId;
+		instanceId++;
+
 		if(monsterTemplate)
 		{
 			monster.Init(*monsterTemplate, *m_monsterSpawnListIter);
@@ -202,9 +206,7 @@ void MapInstance::RemoveMap()
 }
 
 
-void MapInstance::ResolveSkillHit(Player* Attacker, SkillDef *skillDef, std::string attack_dir)
+void MapInstance::ResolveSkillHit(Player* Attacker, SkillDef& skillDef, std::vector<Monster*> HitMonsters)
 {
-	
+
 }
-
-

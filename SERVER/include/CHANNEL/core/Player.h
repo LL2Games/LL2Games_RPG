@@ -37,6 +37,8 @@ public:
     MapInstance* GetCurrentMap() {return m_current_map;}
     ChannelSession* GetSession() {return m_session;}
 
+    Vec2 GetPosition() {return Vec2{m_xPos, m_yPos};}
+
 public:
 
     // 현재 플레이어가 공격 가능 상태인지 확인한다.

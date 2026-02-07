@@ -1,6 +1,6 @@
 #pragma once
-#include "CHANNEL/core/common.h"
-#include "COMMON/CommonEnum.h"
+#include "common.h"
+#include "CommonEnum.h"
 
 class Monster
 {
@@ -31,6 +31,8 @@ public:
 	// 몬스터 위치 설정
     void SetPos(Vec2 Pos){this->m_Pos.xPos = Pos.xPos; this->m_Pos.yPos = Pos.yPos;}
 	
+	Vec2 GetPos(){return m_Pos;}
+
 	bool IsAlive() {return m_isAlive;}
 
 	int GetLastAttackerID() {return m_lastAttacker;}
@@ -38,6 +40,8 @@ public:
 	float GetExp(){return m_exp;}
 
 	int GetItemGroup(){return m_itemGroup;}
+
+	int GetInstanceId() const {return m_instanceId;}
 
 private:
     MonsterType m_type;
@@ -57,6 +61,9 @@ private:
     float m_attackDamage;
     int m_level;
 	int m_moveSpeed;
+
+	// 같은 몬스터라도 구별할 수 있는 고유 값이 필요하기 때문에 추가
+	int m_instanceId;
 	
 	// 죽었을 때 찍히는 시간
 	std::chrono::steady_clock::time_point m_deadTime;

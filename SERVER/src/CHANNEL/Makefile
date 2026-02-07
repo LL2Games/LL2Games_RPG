@@ -36,6 +36,7 @@ INCLUDES := \
     -I$(INC_DIR)/CHANNEL/core \
     -I$(INC_DIR)/CHANNEL/db \
     -I$(INC_DIR)/CHANNEL/packet \
+	-I$(INC_DIR)/CHANNEL/util \
 	
 
 LIB_PATH := \
@@ -79,6 +80,8 @@ SRCS := \
 	db/RedisClient.cpp \
 	db/RedisUtility.cpp \
     \
+	util/Math.cpp \
+	\
     main.cpp
 
 # ==================================

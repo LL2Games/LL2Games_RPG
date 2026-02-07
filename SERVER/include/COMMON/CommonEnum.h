@@ -29,6 +29,7 @@ struct MonsterSpawnData {
     Vec2 spawnPos;
     int respawnDelay;
     int monsterId;
+    int instanceId;
     int ItemId;
 };
 

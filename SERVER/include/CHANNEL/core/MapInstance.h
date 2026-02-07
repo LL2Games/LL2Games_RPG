@@ -48,7 +48,7 @@ public:
 
     void BroadcastMoveExcept(Player* sender, Vec2 pos, float speed);
 
-    void ResolveSkillHit(Player* Attacker, SkillDef *skillDef, std::string attack_dir);
+    void ResolveSkillHit(Player* Attacker, SkillDef& skillDef, std::vector<Monster*> HitMonsters);
 
 public:
 
@@ -59,6 +59,9 @@ public:
     void SetDestroyCallback(DestroyReqFn cb) {m_onDestroyReq = std::move(cb);}
 
     uint16_t GetMapId() {return m_mapID;}
+
+
+    std::vector<Monster>& GetMonsterList(){ return m_monsterList;};
 
 private:
    	// 플레이어가 맵에 있는지 없는지 판단 변수

@@ -21,6 +21,7 @@ int Monster::Init(const MonsterTemplate& monsterTemplate, const MonsterSpawnData
 	
 	m_respawnDelay = std::chrono::seconds(monsterspawnData.respawnDelay);
 	m_itemGroup = monsterspawnData.ItemId;
+	m_instanceId = monsterspawnData.instanceId;
 	return 1;	
 }
 
