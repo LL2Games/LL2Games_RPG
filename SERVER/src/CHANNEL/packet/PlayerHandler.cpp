@@ -4,7 +4,8 @@
 #include "ChannelSession.h"
 #include "PlayerManager.h"
 #include "MapInstance.h"
-
+#include "K_slog.h"
+#include "PacketParser.h"
 
 
 
@@ -31,6 +32,12 @@ void PlayerHandler::Execute(PacketContext * ctx)
           case PKT_PLAYER_USE_ITEM:
                UseItemPacket(ctx);
                break;
+          case PKT_STAT_VIEW:
+                HandleStatView(ctx);
+                break;
+          case PKT_STAT_UP:
+                HandleStatUp(ctx);
+                break;
           default :
                break;
      }

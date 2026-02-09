@@ -19,6 +19,7 @@ class ChannelSession;
 class PlayerManager;
 class PlayerService;
 class MapService;
+class StatService;
 
 
 #define BUFFER_SIZE 1024
@@ -47,6 +48,9 @@ enum PACKET_TYPE : uint16_t {
     PKT_PLAYER_ATTACK = 0x0C,
     PKT_PLAYER_ONDAMAGED = 0x0D,
     PKT_PLAYER_USE_ITEM = 0x0E,
+
+    PKT_STAT_VIEW=0x1000,
+    PKT_STAT_UP,
 };
 
 struct ParsedPacket
@@ -57,6 +61,8 @@ struct ParsedPacket
 
 struct PacketContext
 {
+    uint16_t type;
+
     Client* client = nullptr;
     uint16_t type;
     int fd = -1;
@@ -77,7 +83,7 @@ struct PacketContext
     PlayerService* player_service = nullptr;
     PlayerManager* player_manager =nullptr;
     MapService* map_service = nullptr;
-
+    StatService* stat_service = nullptr;
 };
 
 typedef struct packet

@@ -2,6 +2,7 @@
 #include "common.h"
 #include "CommonEnum.h"
 #include "util/PlayerData.h"
+#include "CharacterStat.h"
 #include "PlayerState.h"
 #include "Skill_Info.h"
 #include "time.h"
@@ -28,6 +29,7 @@ public:
 
 
     void SetInitData(const PlayerInitData playerInitData);
+    void SetInitData(const PlayerInitData playerInitData, const CharacterStat &stat);
 
     void SetCurrentMap(MapInstance* map) {m_current_map = map;}
     void SetSession(ChannelSession* session) {m_session = session;}
@@ -37,6 +39,9 @@ public:
     MapInstance* GetCurrentMap() {return m_current_map;}
     ChannelSession* GetSession() {return m_session;}
 
+    //stat
+    CharacterStat& GetStat() {return m_stat;}
+    const CharacterStat& GetStat() const {return m_stat;}    
     Vec2 GetPosition() {return Vec2{m_xPos, m_yPos};}
 
 public:
@@ -75,6 +80,7 @@ private:
     bool m_isChangedInventory;
     bool m_isChangedStatas;
     bool m_isChangedPositon;
+    CharacterStat m_stat;
    
 
 };

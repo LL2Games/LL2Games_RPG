@@ -18,13 +18,13 @@ int MapService::HandlePortalUse(int playerID, int mapID)
         K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] Player is nullptr", __FILE__, __FUNCTION__, __LINE__);
         return EXIT_FAILURE;
     }
-    // ¸Ê Á¤º¸ ·Îµå ¹× »ý¼º
+    // ë§µ ì •ë³´ ë¡œë“œ ë° ìƒì„±
     map = m_MapManger.GetOrCreate(mapID);
 
-    // ÇÃ·¹ÀÌ¾î ÇöÀç ¸Ê ¼³Á¤
+    // í”Œë ˆì´ì–´ í˜„ìž¬ ë§µ ì„¤ì •
     player->SetCurrentMap(map);
 
-    // ¸Ê Enter ·ÎÁ÷ ¼öÇà
+    // ë§µ Enter ë¡œì§ ìˆ˜í–‰
     map->OnEnter(playerID, player);
 
     return EXIT_SUCCESS;

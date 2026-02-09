@@ -35,7 +35,7 @@ bool GetFloat(const Map& map, const std::string& key, float& value)
     return true;
 }
 
-std::map<std::string, std::string> PlayerInfoToRedisMap(const PlayerInitData playerData)
+std::map<std::string, std::string> PlayerInfoToRedisMap(const PlayerInitData playerData, const CharacterStat stat)
 {
     std::map<std::string, std::string> redisMap;
     
@@ -47,6 +47,19 @@ std::map<std::string, std::string> PlayerInfoToRedisMap(const PlayerInitData pla
     redisMap["map_id"] = std::to_string(playerData.map_id);
     redisMap["xPos"] = std::to_string(playerData.xPos);
     redisMap["yPos"] = std::to_string(playerData.yPos);
+
+    // CharacterStat 정보 추가
+    const BaseStat& base = stat.GetBase();
+    const DerivedStat& derived = stat.GetDerived();
+    redisMap["base_str"] = std::to_string(base.str);
+    redisMap["base_dex"] = std::to_string(base.dex);
+    redisMap["base_intel"] = std::to_string(base.intel);
+    redisMap["base_luck"] = std::to_string(base.luck);
+    redisMap["derived_maxHp"] = std::to_string(derived.maxHp);
+    redisMap["derived_maxMp"] = std::to_string(derived.maxMp);
+    redisMap["curHp"] = std::to_string(stat.GetCurHp());
+    redisMap["curMp"] = std::to_string(stat.GetCurMp());
+    redisMap["remainAp"] = std::to_string(stat.GetRemainAp());
     
     return redisMap;
 }

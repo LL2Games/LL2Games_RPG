@@ -37,7 +37,7 @@ INCLUDES := \
     -I$(INC_DIR)/CHANNEL/db \
     -I$(INC_DIR)/CHANNEL/packet \
 	-I$(INC_DIR)/CHANNEL/util \
-	
+	-I$(INC_DIR)/CHANNEL/stat
 
 LIB_PATH := \
     -L$(LIB_DIR)/common \
@@ -63,6 +63,7 @@ SRCS := \
 	core/Monster.cpp \
 	core/MonsterManager.cpp \
 	core/Item.cpp \
+	core/StatService.cpp \
 	core/CombatService.cpp \
 	core/SkillService.cpp\
     \
@@ -70,6 +71,8 @@ SRCS := \
 	packet/ChannelInitHandler.cpp \
 	packet/PlayerHandler.cpp \
 	packet/MapHandler.cpp \
+	packet/HandleStat.cpp \
+	packet/StatPacketFactory.cpp \
 	packet/MovePacket.cpp \
 	packet/AttackPacket.cpp \
 	packet/OnDamagedPacket.cpp \
@@ -79,6 +82,10 @@ SRCS := \
 	db/PlayerService.cpp \
 	db/RedisClient.cpp \
 	db/RedisUtility.cpp \
+    \
+	stat/PlayerStatRepository.cpp \
+	stat/CharacterStat.cpp \
+	\
     \
 	util/Math.cpp \
 	\

@@ -20,6 +20,8 @@ std::unique_ptr<IPacketHandler> ChannelPacketFactory::Create(uint16_t type)
         case PKT_PLAYER_ATTACK:
         case PKT_PLAYER_ONDAMAGED:
         case PKT_PLAYER_USE_ITEM:
+        case PKT_STAT_VIEW:
+        case PKT_STAT_UP:
             return std::make_unique<PlayerHandler>(type);
         default:
             break;
