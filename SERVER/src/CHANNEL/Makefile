@@ -39,7 +39,7 @@ INCLUDES := \
     -I$(INC_DIR)/CHANNEL/core \
     -I$(INC_DIR)/CHANNEL/db \
     -I$(INC_DIR)/CHANNEL/packet \
-	-I$(INC_DIR)/CHANNEL/stat
+	-I$(INC_DIR)/CHANNEL/stat \
 	-I$(INC_DIR)/CHANNEL/ipc
 
 LIB_PATH := \
