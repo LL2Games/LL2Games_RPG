@@ -8,8 +8,11 @@
 #include "MySqlConnectionPool.h"
 #include "RedisClient.h"
 #include "common.h"
+
+#include "StatService.h"
 #include "ThreadPool.h"
 #include "CommandReceiver.h"
+
 
 
 class ChannelServer
@@ -27,6 +30,7 @@ public:
     PlayerManager* GetPlayerManager() { return &m_player_mamager; }
     MapService* GetMapService() {return &m_map_service;}
     PlayerService* GetPlayerService() {return &m_player_service;}
+    StatService* GetStatService() {return &m_stat_service;}
 private:
     bool InitListenSocket(int port);
     bool InitEpoll();
@@ -51,6 +55,7 @@ private:
     RedisClient m_redis;
 
     MapService m_map_service;
+    StatService m_stat_service;
     
 
     MapManager m_map_manager;

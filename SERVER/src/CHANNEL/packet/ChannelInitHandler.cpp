@@ -89,6 +89,7 @@ void ChannelInitHandler::HandleChannelAuth(PacketContext *ctx)
 
     // 세션에 플레이어 연결
     ctx->channel_session->SetPlayer(player.get());
+    player->SetSession(ctx->channel_session);
 
     K_slog_trace(K_SLOG_DEBUG, " [%s][%d] player_manager [%p]", __FUNCTION__ , __LINE__, ctx->player_manager);  
     // PlayerManager에 등록 (안전 체크)

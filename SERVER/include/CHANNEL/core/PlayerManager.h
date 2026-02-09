@@ -1,8 +1,9 @@
 #pragma once
-#include "CHANNEL/core/common.h"
-#include "CHANNEL/core/Player.h"
+#include "common.h"
+#include "CommonEnum.h"
 #include <unordered_map>
 #include <memory>
+#include "Player.h"
 
 class PlayerManager
 {   
@@ -13,6 +14,7 @@ public:
     bool Init();
     bool AddPlayer(std::unique_ptr<Player> player);
 
+    bool MovePlayer(int playerID, Vec2 pos, float speed);
 public:
     Player* GetPlayer(int playerID);
 

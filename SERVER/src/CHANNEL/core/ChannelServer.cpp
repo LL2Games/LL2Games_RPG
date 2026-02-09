@@ -1,6 +1,8 @@
-#include "CHANNEL/core/ChannelServer.h"
-#include "CHANNEL/core/common.h"
+
+#include "ChannelServer.h"
+#include "common.h"
 #include "thread"
+
 
 #define THREAD_POOL_COUNT 4
 

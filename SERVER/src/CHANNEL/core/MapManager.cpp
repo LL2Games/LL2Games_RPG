@@ -33,7 +33,15 @@ void MapManager::Update()
 
 MapInstance* MapManager::GetOrCreate(int mapId)
 {
-    if(m_maps.find(mapId) != m_maps.end())  return nullptr;
+    auto it = m_maps.find(mapId);
+
+    if(it != m_maps.end())  
+    {
+        K_slog_trace(K_SLOG_TRACE, "[%s][%d] alreay Map is Maked", __FUNCTION__, __LINE__);
+        return it->second;
+    }
+
+    K_slog_trace(K_SLOG_ERROR, "[%s][%d] MAPINIT START", __FUNCTION__, __LINE__);
 
     MapInitData mapData;
 
@@ -58,7 +66,7 @@ MapInstance* MapManager::GetOrCreate(int mapId)
 
     MapInstance* newMap = new MapInstance();
 
-    if(newMap->Init(mapData) == 0)
+    if(newMap->Init(mapData) == 1)
     {
         m_maps[mapId]= newMap;
     }

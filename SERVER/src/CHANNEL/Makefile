@@ -39,6 +39,7 @@ INCLUDES := \
     -I$(INC_DIR)/CHANNEL/core \
     -I$(INC_DIR)/CHANNEL/db \
     -I$(INC_DIR)/CHANNEL/packet \
+	-I$(INC_DIR)/CHANNEL/stat
 	-I$(INC_DIR)/CHANNEL/ipc
 
 LIB_PATH := \
@@ -65,11 +66,14 @@ SRCS := \
 	core/Monster.cpp \
 	core/MonsterManager.cpp \
 	core/Item.cpp \
+	core/StatService.cpp \
     \
 	packet/ChannelPacketFactory.cpp \
 	packet/ChannelInitHandler.cpp \
 	packet/PlayerHandler.cpp \
 	packet/MapHandler.cpp \
+	packet/HandleStat.cpp \
+	packet/StatPacketFactory.cpp \
     \
     db/MySqlConnectionPool.cpp \
 	db/PlayerService.cpp \
@@ -78,6 +82,9 @@ SRCS := \
 	\
 	ipc/CommandReceiver.cpp \
     \
+	stat/PlayerStatRepository.cpp \
+	stat/CharacterStat.cpp \
+	\
     main.cpp
 
 # ==================================

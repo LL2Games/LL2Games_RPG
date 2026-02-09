@@ -92,10 +92,10 @@ void MapInstance::OnEnter(int PlayerID, Player* player)
 {
 	auto it = m_playerList.find(PlayerID);
 
-	if(it == m_playerList.end()) return;
+	if(it != m_playerList.end()) return;
 
 	m_playerList[PlayerID] = player;
-	
+
 	if (m_playerCount == 0) {
         m_has_player = true;
         m_destroyRequested = false; // 혹시 남아있던 요청 초기화
@@ -142,6 +142,46 @@ void MapInstance::GiveItem(int ItemGroup)
 }
 
 
+
+void MapInstance::HandleMove(Player* sender, Vec2 pos, float speed)
+{
+	if(!sender) return;
+
+	K_slog_trace(K_SLOG_TRACE, "[%s][%d] 플레이어 ID [%d]", __FUNCTION__, __LINE__, sender->GetId());
+	
+	auto it = m_playerList.find(sender->GetId());
+
+	if(it == m_playerList.end())
+	{
+		K_slog_trace(K_SLOG_ERROR, "[%s][%d] [%d]해당 맵에 존재하지 않은 플레이어 입니다.", __FUNCTION__, __LINE__, m_mapID);
+		return;
+	}
+
+	sender->SetPosition(pos);
+
+	BroadcastMoveExcept(sender, pos, speed);
+}
+
+// 각 플레이어한테 이동 정보 전달
+void MapInstance::BroadcastMoveExcept(Player* sender, Vec2 pos, float speed)
+{
+	std::vector<std::string> payload;
+	payload.reserve(4);
+	payload.push_back(std::to_string(sender->GetId()));
+	payload.push_back(std::to_string(pos.xPos));
+	payload.push_back(std::to_string(pos.yPos));
+	payload.push_back(std::to_string(speed));
+
+	for(auto it = m_playerList.begin(); it != m_playerList.end(); ++it)
+	{
+		if(it->second == sender) continue;
+		
+		auto session = it->second->GetSession();
+		
+		session->Send(PKT_PLAYER_MOVE, payload);
+	}
+}
+
 // 맵이 사라지는 경우 호출
 void MapInstance::RemoveMap()
 {
@@ -155,3 +195,4 @@ void MapInstance::RemoveMap()
 		
 	}
 }
+
