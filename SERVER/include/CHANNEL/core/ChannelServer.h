@@ -8,7 +8,11 @@
 #include "MySqlConnectionPool.h"
 #include "RedisClient.h"
 #include "common.h"
+
 #include "StatService.h"
+#include "ThreadPool.h"
+#include "CommandReceiver.h"
+
 
 
 class ChannelServer
@@ -49,6 +53,14 @@ private:
     MapManager m_map_manager;
     //MySqlConnectionPool m_db;
     RedisClient m_redis;
+
     MapService m_map_service;
     StatService m_stat_service;
+    
+
+    MapManager m_map_manager;
+    ThreadPool m_pool;
+    CommandReceiver m_cmd_receiver;
+
+
 };

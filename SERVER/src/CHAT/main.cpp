@@ -17,7 +17,7 @@ int main(int ac, char **av)
 
     if (ac == 2)
     {
-        if (!server.Init(atoi(av[1])))
+        if (!server.Init(PORT + atoi(av[1])))
             return -1;
     }
     else
