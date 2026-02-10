@@ -1,0 +1,32 @@
+@startuml
+class MySqlConnectionPool
+class RedisClient
+class ChannelServer
+class ChannelSession
+class PlayerManager
+class Player
+class MapManager
+class MapInstance
+class ChannelCache
+class PersistenceService
+
+ChannelServer "1" *-- "*" ChannelSession
+ChannelServer "1" *-- "1" PlayerManager
+ChannelServer "1" *-- "1" MapManager
+
+PlayerManager "1" *-- "*" Player
+MapManager   "1" *-- "*" MapInstance
+
+ChannelSession --> Player
+
+ChannelServer ..> MySqlConnectionPool
+ChannelServer ..> RedisClient
+
+ChannelCache ..> RedisClient
+
+PersistenceService ..> MySqlConnectionPool
+PersistenceService ..> ChannelCache
+
+ChannelServer ..> PersistenceService
+ChannelServer ..> ChannelCache
+@enduml

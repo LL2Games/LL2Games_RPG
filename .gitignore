@@ -2,11 +2,18 @@
 # C / C++ build artifacts
 #############################################
 
+#test
+
+*test/
+
+# Log
+*logs/
+
 # GCC / Clang build
 *.o
 *.a
-*.so
-*.so.*
+#*.so
+#*.so.*
 *.out
 *.obj
 *.dll
