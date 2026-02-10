@@ -58,7 +58,7 @@ private:
     StatService m_stat_service;
     
 
-    MapManager m_map_manager;
+    //MapManager m_map_manager;
     ThreadPool m_pool;
     CommandReceiver m_cmd_receiver;
 
