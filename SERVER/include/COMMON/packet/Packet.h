@@ -48,6 +48,8 @@ enum PACKET_TYPE : uint16_t {
     PKT_PLAYER_ATTACK = 0x0C,
     PKT_PLAYER_ONDAMAGED = 0x0D,
     PKT_PLAYER_USE_ITEM = 0x0E,
+    PKT_MONSTER_MOVE = 0x0F,
+    PKT_MONSTER_ONDAMAGED = 0x10,
 
     PKT_STAT_VIEW=0x1000,
     PKT_STAT_UP,
@@ -61,8 +63,6 @@ struct ParsedPacket
 
 struct PacketContext
 {
-    uint16_t type;
-
     Client* client = nullptr;
     uint16_t type;
     int fd = -1;

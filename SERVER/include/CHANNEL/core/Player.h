@@ -4,6 +4,7 @@
 #include "util/PlayerData.h"
 #include "CharacterStat.h"
 #include "PlayerState.h"
+#include "PlayerData.h"
 #include "Skill_Info.h"
 #include "time.h"
 
@@ -23,7 +24,10 @@ public:
     
     void SetJob(int m_job){this->m_job = m_job;}
     void SetMapId(int m_map_id){this->m_map_id = m_map_id;}
+
     void SetLevel(int m_level){this->m_level = m_level;}
+    int GetLevel() const {return m_level;}
+
     void SetPosition(float m_xPos, float m_yPos) {this->m_xPos = m_xPos; this->m_yPos = m_yPos;}\
     void SetPosition(Vec2 Pos) {m_xPos = Pos.xPos, m_yPos = Pos.yPos;}
 
@@ -44,17 +48,21 @@ public:
     const CharacterStat& GetStat() const {return m_stat;}    
     Vec2 GetPosition() {return Vec2{m_xPos, m_yPos};}
 
+    RootJob GetRootJob() const {return m_root_job;}
+
 public:
 
     // 현재 플레이어가 공격 가능 상태인지 확인한다.
     bool CanAttack(SkillDef* skillDef);
 
-
+    int GetSkillLevel(std::string skill_id) const ;
 private:
     int m_char_id;
     std::string m_account_id;
     std::string m_name;
-    std::string root_job;
+   
+    RootJob m_root_job;
+
     int m_level;
     int m_job;
     int m_map_id;

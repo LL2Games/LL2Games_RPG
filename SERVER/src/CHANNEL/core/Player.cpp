@@ -27,6 +27,7 @@ void Player::SetInitData(const PlayerInitData playerInitData)
     this->m_name = playerInitData.name;
     this->m_level = playerInitData.level;
     this->m_job = playerInitData.job;
+    this->m_root_job = ToRootJob(playerInitData.root_job);
     this->m_map_id = playerInitData.map_id;
     this->m_xPos = playerInitData.xPos;
     this->m_yPos = playerInitData.yPos;
@@ -50,11 +51,13 @@ void Player::SetInitData(const PlayerInitData playerInitData, const CharacterSta
     this->m_name = playerInitData.name;
     this->m_level = playerInitData.level;
     this->m_job = playerInitData.job;
+    this->m_root_job = ToRootJob(playerInitData.root_job);
     this->m_map_id = playerInitData.map_id;
     this->m_xPos = playerInitData.xPos;
     this->m_yPos = playerInitData.yPos;
-
     this->m_stat = stat;
+
+
 }
 
 
@@ -70,7 +73,7 @@ bool Player::CanAttack(SkillDef* skillDef)
     // 스킬의 키 값을 통해서 해당 플레이어의 직업과 연관있는지 확인한다.
 
     // 플레이어의 출신과 스킬 사용 가능 출신이 동일한지 확인
-    if(root_job != skillDef->Requirements.root)
+    if(m_root_job != skillDef->Requirements.root_job)
     {
          K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] 플레이어가 사용 가능한 스킬이 아닙니다.\n", __FILE__, __FUNCTION__, __LINE__);
         return false;
@@ -103,7 +106,7 @@ bool Player::CanAttack(SkillDef* skillDef)
     int64_t now = NowMs();
     if(now <= coolit->second)
     {
-         K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] 아직 쿨타임입니다.\n", __FILE__, __FUNCTION__, __LINE__);
+        K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] 아직 쿨타임입니다.\n", __FILE__, __FUNCTION__, __LINE__);
         return false;
     }
 
@@ -114,3 +117,16 @@ bool Player::CanAttack(SkillDef* skillDef)
 
 }
 
+
+int Player::GetSkillLevel(std::string skill_id) const
+{
+    auto it = m_learnedSkills.find(skill_id);
+
+    if(it == m_learnedSkills.end())
+    {
+        K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] 배우지 않은 스킬입니다.\n", __FILE__, __FUNCTION__, __LINE__);
+        return 0;
+    }
+
+    return it->second;
+}

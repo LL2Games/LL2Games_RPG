@@ -84,7 +84,7 @@ void SkillService::LoadSkill(nlohmann::json& j, SkillDef& skillDef)
     // Skill Json 파일에서 Skill 배열의 정보들을 반복문을 통해 설정
     for(const auto& require : j["requirements"])
     {
-        skillDef.Requirements.root = require["root"];
+        skillDef.Requirements.root_job = require["root"];
         skillDef.Requirements.min_tier= require["min_tier"];
         skillDef.Requirements.min_skill_level= require["min_skill_levelrequires"];
     }

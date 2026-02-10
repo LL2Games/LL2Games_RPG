@@ -1,10 +1,11 @@
 #pragma once
 #include "common.h"
+#include "PlayerData.h"
 
-enum class SkillType {MELEE_ARC};
-enum class HitShape  {ARC };
+enum class SkillType {MELEE_ARC,};
+enum class HitShape  {ARC, };
 
-enum class EffectType {KNOCKBACK };
+enum class EffectType {KNOCKBACK, };
 
 struct EffectDef
 {
@@ -36,7 +37,7 @@ struct SkillDef
 
     struct Requirements
     {
-        std::string root;
+        RootJob root_job;
         int min_tier;
         int min_skill_level;
         

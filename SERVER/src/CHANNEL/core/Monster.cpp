@@ -1,5 +1,5 @@
 #include "Monster.h"
-
+#include "Player.h"
 
 int Monster::Init(const MonsterTemplate& monsterTemplate, const MonsterSpawnData& monsterspawnData)
 {
@@ -38,6 +38,8 @@ int Monster::Dead()
 		m_deadTime = std::chrono::steady_clock::now();
 		m_isAlive = false;	
 	}
+
+
 	
 	return 0;
 }
@@ -61,15 +63,24 @@ int Monster::Reset()
 }
 
 
-void Monster::OnDamaged(int attackerId, int damage)
+bool Monster::OnDamaged(Player* Attacker, int damage)
 {
 	// 죽은 뒤 / 죽는 중이라면 무시
-	if(!m_isAlive || m_deadRequest) return;
-
-	m_lastAttacker = attackerId;
+	if(!m_isAlive || m_deadRequest) return false;
+	if (damage <= 0) return false;
+	
+	m_lastAttacker = Attacker->GetId();
 
 	m_hp -= damage;
 
 	if(m_hp <= 0)
+	{
+		m_hp = 0;
 		Dead();
+		return true;
+	}
+
+	return false;
+	
+		
 }

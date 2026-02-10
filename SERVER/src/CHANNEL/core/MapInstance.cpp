@@ -206,7 +206,46 @@ void MapInstance::RemoveMap()
 }
 
 
-void MapInstance::ResolveSkillHit(Player* Attacker, SkillDef& skillDef, std::vector<Monster*> HitMonsters)
+void MapInstance::ResolveSkillHit(Player* Attacker, SkillDef& skillDef, std::vector<std::pair<Monster*, int>> hits)
 {
+	//skillDef는 상태이상 적용 시 필요한 정보 : 현재는 필요 없지만 후에 필요할지 몰라서 일단 매개변수로 추가해놓음
+	(void)skillDef;
+
+	std::vector<MonsterHitResult> results;
+    results.reserve(hits.size());
+
+	for (auto& [m, dmg] : hits)
+	{
+		bool isDead = m->OnDamaged(Attacker, dmg);	
+		results.push_back({m->GetInstanceId(), dmg, m->GetCurrentHP(), m->GetMaxHP(), isDead});
+	}
+        
+	BroadcastMonsterHit(Attacker, skillDef.skill_id, results);
+}
+
+void MapInstance::BroadcastMonsterHit(Player* Attacker, std::string SkillID, std::vector<MonsterHitResult> result)
+{
+	std::vector<std::string> payload;
+	payload.reserve(4);
+
+	payload.push_back(std::to_string(Attacker->GetId()));
+	payload.push_back(SkillID);
+
+	for (const auto& r : result)
+	{
+    	payload.push_back(std::to_string(r.monster_instance_id));
+    	payload.push_back(std::to_string(r.damage));
+    	payload.push_back(std::to_string(r.cur_hp));
+    	payload.push_back(std::to_string(r.max_hp));
+    	payload.push_back(r.dead ? "1" : "0");
+	}
+	for(auto it = m_playerList.begin(); it != m_playerList.end(); ++it)
+	{
+		if(it->second == Attacker) continue;
+		
+		auto session = it->second->GetSession();
+		
+		session->Send(PKT_MONSTER_ONDAMAGED, payload);
+	}
 
 }

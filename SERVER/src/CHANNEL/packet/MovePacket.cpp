@@ -46,7 +46,7 @@ void MovePacket(PacketContext * ctx)
     }
 
     map = player->GetCurrentMap();
-     if(player == nullptr) 
+     if(map == nullptr) 
     {
         K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] current_map is nullptr\n", __FILE__, __FUNCTION__, __LINE__);
         return;

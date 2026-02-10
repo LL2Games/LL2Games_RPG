@@ -1,5 +1,31 @@
 #pragma once
 #include <string>
+#include "Monster.h"
+
+enum class RootJob : int
+{
+    Knight = 20000,
+    Mage   = 21000,
+    Archer = 22000,
+    Thief  = 23000,
+    Common = 29000,
+    Unknown = 0
+};
+
+
+inline RootJob ToRootJob(int code)
+{
+    switch(code)
+    {
+        case 20000: return RootJob::Knight;
+        case 21000: return RootJob::Mage;
+        case 22000: return RootJob::Archer;
+        case 23000: return RootJob::Thief;
+        case 29000: return RootJob::Common;
+        default:    return RootJob::Unknown;
+    }
+};
+
 
 struct PlayerInitData{
     int char_id;
@@ -7,10 +33,14 @@ struct PlayerInitData{
     std::string name;
     int level;
     int job;
+    int root_job;
     int map_id;
     float xPos;
     float yPos;
 };
+
+
+
 
 
 // 임시로 여기에 구현 /*2026.02.07 LJH */

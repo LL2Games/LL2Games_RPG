@@ -8,6 +8,7 @@
 #include "Item.h"
 #include "Player.h"
 #include "ChannelSession.h"
+#include "Skill_Info.h"
 
 #include <nlohmann/json.hpp>
 #include <functional>
@@ -48,7 +49,9 @@ public:
 
     void BroadcastMoveExcept(Player* sender, Vec2 pos, float speed);
 
-    void ResolveSkillHit(Player* Attacker, SkillDef& skillDef, std::vector<Monster*> HitMonsters);
+    void BroadcastMonsterHit(Player* Attacker, std::string SkillID, std::vector<MonsterHitResult> result);
+
+    void ResolveSkillHit(Player* Attacker, SkillDef& skillDef, std::vector<std::pair<Monster*, int>> hits);
 
 public:
 

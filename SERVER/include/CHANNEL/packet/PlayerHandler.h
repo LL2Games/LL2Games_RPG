@@ -16,11 +16,6 @@ public:
     PlayerHandler(uint16_t type);
     void Execute(PacketContext * ctx) override;
 
-    void MovePacket(PacketContext * ctx);
-    void AttackPacket(PacketContext * ctx);
-    void OnDamagedPacket(PacketContext * ctx);
-    void UseItemPacket(PacketContext * ctx);
-
     //stat
     void HandleStatView(PacketContext* ctx);
     void HandleStatUp(PacketContext* ctx);

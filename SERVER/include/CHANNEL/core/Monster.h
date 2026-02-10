@@ -1,6 +1,19 @@
 #pragma once
 #include "common.h"
 #include "CommonEnum.h"
+//#include "Player.h"
+
+class Player;
+
+struct MonsterHitResult {
+    int monster_instance_id;
+    int damage;
+    int cur_hp;
+    int max_hp;
+    bool dead;
+};
+
+
 
 class Monster
 {
@@ -20,7 +33,7 @@ public:
 	// 몬스터가 죽고 리스폰 됐을 때 사용
 	int Reset();
 
-	void OnDamaged(int attackerId, int damage);
+	bool OnDamaged(Player* Attacker, int damage);
 	
 	// 죽고난 후 시간 확인 
 	bool CheckRespawnTime(std::chrono::steady_clock::time_point now);
@@ -30,8 +43,9 @@ public:
 public:
 	// 몬스터 위치 설정
     void SetPos(Vec2 Pos){this->m_Pos.xPos = Pos.xPos; this->m_Pos.yPos = Pos.yPos;}
-	
 	Vec2 GetPos(){return m_Pos;}
+
+	int GetLevel() const {return m_level;}
 
 	bool IsAlive() {return m_isAlive;}
 
@@ -43,6 +57,8 @@ public:
 
 	int GetInstanceId() const {return m_instanceId;}
 
+	int GetCurrentHP() {return m_hp;}
+	int GetMaxHP() {return m_maxhp;}
 private:
     MonsterType m_type;
     Vec2 m_Pos;
