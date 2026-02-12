@@ -20,6 +20,7 @@ class PlayerManager;
 class PlayerService;
 class MapService;
 class StatService;
+class ItemManager;
 
 
 #define BUFFER_SIZE 1024
@@ -84,6 +85,7 @@ struct PacketContext
     PlayerManager* player_manager =nullptr;
     MapService* map_service = nullptr;
     StatService* stat_service = nullptr;
+    ItemManager* item_manager =nullptr;
 };
 
 typedef struct packet

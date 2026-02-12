@@ -38,7 +38,7 @@ void MapHandler::Execute(PacketContext * ctx)
     }
 
     
-   // ¹ŞÀº Á¤º¸¿¡¼­ playerID ÃßÃâ 
+   // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ playerID ï¿½ï¿½ï¿½ï¿½ 
     if(!PacketParser::ParseLengthPrefixedString(
         ctx->payload,
         ctx->payload_len,
@@ -54,7 +54,7 @@ void MapHandler::Execute(PacketContext * ctx)
 
     K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] PlayerID [%s]", __FILE__, __FUNCTION__, __LINE__, player_id.c_str());
 
-    // ¹ŞÀº Á¤º¸¿¡¼­ mapID ÃßÃâ
+    // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ mapID ï¿½ï¿½ï¿½ï¿½
      if(!PacketParser::ParseLengthPrefixedString(
         ctx->payload,
         ctx->payload_len,

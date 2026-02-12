@@ -17,6 +17,8 @@ public:
     // 몬스터 정보가 없으면 로드, 있으면 True로 반환
     bool EnsureLoaded(int monster_id);
 
+    bool PreLoadAll();
+
     // 몬스터 정보가 반드시 존재한다는 가정하에 사용하는 함수 
     // 없으면 nullptr 반환
     std::optional<MonsterTemplate> GetMonsterData(int monster_id);

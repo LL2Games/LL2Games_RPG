@@ -1,0 +1,14 @@
+{
+  "item_id": 4001001,
+  "name": "Small HP Potion",
+  "type": "consumable",
+  "stackable": true,
+  "max_stack": 100,
+  "sell_price": 10,
+
+  "use_effect": {
+    "hp_restore": 50,
+    "mp_restore": 0,
+    "cooldown_ms": 0
+  }
+}

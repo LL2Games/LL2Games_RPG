@@ -143,6 +143,8 @@ void MapInstance::GiveExp(int playerID, float exp)
 void MapInstance::GiveItem(int ItemGroup)
 {
 	(void)ItemGroup;
+
+
 }
 
 
@@ -200,8 +202,7 @@ void MapInstance::RemoveMap()
 	{
 		m_destroyRequested = true;
 		K_slog_trace(K_SLOG_TRACE, "[%s][%d] [%d]맵 삭제", __FUNCTION__, __LINE__, m_mapID);
-		if(m_onDestroyReq) m_onDestroyReq(m_mapID);
-		
+		if(m_onDestroyReq) m_onDestroyReq(m_mapID);	
 	}
 }
 
@@ -241,7 +242,7 @@ void MapInstance::BroadcastMonsterHit(Player* Attacker, std::string SkillID, std
 	}
 	for(auto it = m_playerList.begin(); it != m_playerList.end(); ++it)
 	{
-		if(it->second == Attacker) continue;
+		//if(it->second == Attacker) continue;
 		
 		auto session = it->second->GetSession();
 		

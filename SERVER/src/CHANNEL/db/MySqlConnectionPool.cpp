@@ -1,4 +1,4 @@
-#include "CHANNEL/db/MySqlConnectionPool.h"
+#include "MySqlConnectionPool.h"
 
 #define POOL_SIZE 8
 
@@ -14,6 +14,7 @@ int MySqlConnectionPool::Init(const int pool_size)
         MYSQL* result;
         conn = mysql_init(nullptr);
 
+        mysql_options(conn, MYSQL_READ_DEFAULT_FILE, "/home/ljh/.my.cnf");
         mysql_options(conn, MYSQL_READ_DEFAULT_GROUP, "CHANNEL");
 
         if(!conn)
@@ -22,10 +23,13 @@ int MySqlConnectionPool::Init(const int pool_size)
              continue;
         }
                                     //host, user, passwd, db, port, unix_socket, clientflag
-        
+#if 1 
+        result = mysql_real_connect(conn, nullptr, nullptr, nullptr, nullptr, 0, nullptr,0);
+#else
         //result = mysql_real_connect(conn, nullptr, nullptr, nullptr, nullptr, 0, nullptr,0);
         //("127.0.0.1", "root", "1234", "testdb", 3306);
-        result = mysql_real_connect(conn, "100.124.14.8", "dyddlswogh","dyddlswogh","game", 3306, nullptr, 0);
+        result = mysql_real_connect(conn, "100.114.42.54", "dyddlswogh","dyddlswogh","game", 3306, nullptr, 0);
+#endif
         if(result == nullptr)
         {
             K_slog_trace(K_SLOG_ERROR, "[%s][%d] myslq_real_connect failed : %s", __FUNCTION__, __LINE__, mysql_error(conn));

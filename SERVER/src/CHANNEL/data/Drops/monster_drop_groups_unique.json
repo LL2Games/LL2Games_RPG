@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "drop_groups": {
+    "UNIQUE_SLIME": {
+      "min_drop": 0,
+      "max_drop": 1,
+      "allow_duplicate": false,
+      "entries": [
+        {
+          "item_id": 4001001,
+          "weight": 900,
+          "min_count": 1,
+          "max_count": 1,
+          "tag": "slime_gel"
+        },
+        {
+          "item_id": 4010100,
+          "weight": 100,
+          "min_count": 1,
+          "max_count": 1,
+          "tag": "rare_piece"
+        }
+      ] 
+    },
+
+    "UNIQUE_SNAIL": {
+      "min_drop": 0,
+      "max_drop": 1,
+      "allow_duplicate": false,
+      "entries": [
+        {
+          "item_id": 4001000,
+          "weight": 1000,
+          "min_count": 1,
+          "max_count": 1,
+          "tag": "snail_shell"
+        }
+      ]
+    }
+  }
+}
