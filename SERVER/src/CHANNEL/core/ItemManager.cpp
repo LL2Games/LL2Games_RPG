@@ -4,7 +4,7 @@
 namespace fs = std::filesystem;
 
 
-
+ItemManager *ItemManager::m_instance =nullptr;
 
 void ItemManager::Init()
 {
@@ -31,11 +31,16 @@ bool ItemManager::PreLoadAll()
         if (m_item_initData.find(item_id) != m_item_initData.end())
             continue;
 
-        ItemInitData itemData;
-        if (!LoadJsonFile(entry.path().string(), itemData))
+        ItemInitData* itemData = new ItemInitData();
+        if (!LoadJsonFile(entry.path().string(), *itemData))
+        {
+            delete itemData;
             return false;
+        }
 
-        m_item_initData.emplace(item_id, std::move(itemData));
+        K_slog_trace(K_SLOG_DEBUG, "[%s][%d] ITEM ID [%d]",__FUNCTION__, __LINE__, item_id);
+        K_slog_trace(K_SLOG_DEBUG, "[%s][%d] ITEM Manager Pointer [%p]",__FUNCTION__, __LINE__, this);
+        m_item_initData.emplace(item_id, itemData);
     }
     return true;
 }
@@ -66,12 +71,37 @@ bool ItemManager::LoadJsonFile(const std::string& path, ItemInitData& itemData)
     if (itemData.type == "consumable" && j.contains("use_effect"))
     {
         const auto& ue = j["use_effect"];
-        itemData.use_effect->hp_restore  = ue.value("hp_restore", 0);
-        itemData.use_effect->mp_restore  = ue.value("mp_restore", 0);
-        itemData.use_effect->cooldown_ms = ue.value("cooldown_ms", 0);
+        UseEffect effect;
+        effect.hp_restore  = ue.value("hp_restore", 0);
+        effect.mp_restore  = ue.value("mp_restore", 0);
+        effect.cooldown_ms = ue.value("cooldown_ms", 0);
+        itemData.use_effect = effect;
     }
 
-     K_slog_trace(K_SLOG_TRACE, "[%s][%d] ItemID [%d]",__FUNCTION__, __LINE__, itemData.item_id);
+    K_slog_trace(K_SLOG_TRACE, "[%s][%d] ItemID [%d]",__FUNCTION__, __LINE__, itemData.item_id);
 
     return true;
+}
+
+
+const ItemInitData* ItemManager::Find(int item_ID)
+{
+    auto it = m_item_initData.find(item_ID);
+
+    if(it == m_item_initData.end())
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] ItemID CANT FIND [%d]",__FUNCTION__, __LINE__, item_ID);
+        return nullptr;
+    }
+
+    return it->second;
+
+
+}
+
+ItemManager* ItemManager::GetInstance()
+{
+    if (m_instance == nullptr)
+        m_instance = new ItemManager();
+    return m_instance;
 }

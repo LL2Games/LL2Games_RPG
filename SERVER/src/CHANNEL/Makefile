@@ -67,6 +67,7 @@ SRCS := \
 	core/CombatService.cpp \
 	core/SkillService.cpp \
 	core/ItemManager.cpp \
+	core/ItemService.cpp \
     \
 	packet/ChannelPacketFactory.cpp \
 	packet/ChannelInitHandler.cpp \

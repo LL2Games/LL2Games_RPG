@@ -15,8 +15,12 @@ public:
     void Init();
     bool PreLoadAll();
     bool LoadJsonFile(const std::string& path, ItemInitData& itemData);
+
+    const ItemInitData* Find(int item_ID);
+
+    static ItemManager *GetInstance();
 private:
-    std::unordered_map<int, ItemInitData> m_item_initData;
+    std::unordered_map<int, ItemInitData*> m_item_initData;
 
-
+    static ItemManager *m_instance;
 };

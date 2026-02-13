@@ -8,7 +8,7 @@ public:
     MapService(PlayerManager& playerManager, MapManager& mapManager);
     ~MapService(){};
 
-    // player°¡ Æ÷Å»À» ÅëÇØ map¿¡ µé¾î¿ÔÀ» ¶§ ¼öÇàµÇ´Â ÇÔ¼ö
+    // playerï¿½ï¿½ ï¿½ï¿½Å»ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ mapï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ç´ï¿½ ï¿½Ô¼ï¿½
     int HandlePortalUse(int playerID, int mapID);
 
 private:

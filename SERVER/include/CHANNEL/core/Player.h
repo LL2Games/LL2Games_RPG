@@ -31,12 +31,14 @@ public:
     void SetPosition(float m_xPos, float m_yPos) {this->m_xPos = m_xPos; this->m_yPos = m_yPos;}\
     void SetPosition(Vec2 Pos) {m_xPos = Pos.xPos, m_yPos = Pos.yPos;}
 
-
     void SetInitData(const PlayerInitData playerInitData);
     void SetInitData(const PlayerInitData playerInitData, const CharacterStat &stat);
 
     void SetCurrentMap(MapInstance* map) {m_current_map = map;}
     void SetSession(ChannelSession* session) {m_session = session;}
+
+    int GetCurrHP(){return m_cur_hp;}
+    int GetCurrMP(){return m_cur_mp;}
 
     int GetId() {return m_char_id;}
     std::string GetName() {return m_name;}
@@ -55,7 +57,16 @@ public:
     // 현재 플레이어가 공격 가능 상태인지 확인한다.
     bool CanAttack(SkillDef* skillDef);
 
-    int GetSkillLevel(std::string skill_id) const ;
+    bool CanUseItem(int itemId, int useCount);
+
+    int GetSkillLevel(std::string skill_id) const;
+
+    bool UseItem(int itemId, int useCount);
+
+    void AddHP(int HP);
+    void AddMP(int MP);
+
+    int GetItemCount(int itemId) const;
 private:
     int m_char_id;
     std::string m_account_id;
@@ -84,6 +95,9 @@ private:
     std::unordered_map<std::string , int> m_learnedSkills;
     // 사용한 스킬쿨들을 저장
     std::unordered_map<std::string, int64_t> skillCooldownEndMs;
+
+    // 플레이어가 들고 있는 아이템 정보들
+    std::unordered_map<int, int> m_inven;
 private:
     bool m_isChangedInventory;
     bool m_isChangedStatas;
