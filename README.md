@@ -226,7 +226,8 @@ sudo apt-get install -y \
     g++ \
     make \
     libmysqlclient-dev \
-    libhiredis-dev
+    libhiredis-dev \
+    nlohmann-json3-dev
 ```
 
 ### 빌드
