@@ -1,0 +1,14 @@
+{
+  "item_id": 2000001,
+  "name": "Small MP Potion",
+  "type": "consumable",
+  "stackable": true,
+  "max_stack": 100,
+  "sell_price": 10,
+
+  "use_effect": {
+    "hp_restore": 0,
+    "mp_restore": 50,
+    "cooldown_ms": 0
+  }
+}

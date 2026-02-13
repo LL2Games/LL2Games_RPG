@@ -1,11 +1,9 @@
-#include "CHANNEL/core/common.h"
-#include "CHANNEL/core/MapManager.h"
-#include "CHANNEL/core/PlayerManager.h"
-#include <nlohmann/json.hpp>
-#include <fstream>
+#include "common.h"
+#include "MapManager.h"
+#include "PlayerManager.h"
 
 #define MAP_PATH "../src/CHANNEL/data/Maps/"
-
+namespace fs = std::filesystem;
 
 MapManager::MapManager()
 {
@@ -17,7 +15,8 @@ MapManager::~MapManager()
 
 void MapManager::Init()
 {
-
+    // 서버 구동 시 Map 데이터 전부 읽어서 미리 저장
+    PreLoadAll();
 }
 
 void MapManager::Update()
@@ -45,30 +44,26 @@ MapInstance* MapManager::GetOrCreate(int mapId)
 
     MapInitData mapData;
 
-    std::string path = MAP_PATH + std::to_string(mapId) +".json";
-    std::ifstream file(path);
-
-    if(!file.is_open()) {
-        K_slog_trace(K_SLOG_ERROR, "[%s][%d] FAILED OPEN [%s] FILE", __FUNCTION__, __LINE__, path.c_str());
-        return nullptr;
+    auto itInit = m_maps_initData.find(mapId);
+    if (itInit != m_maps_initData.end())
+    {
+        mapData = itInit->second; 
     }
-
-    // JSON 파일 파싱
-    nlohmann::json j;
-    file >> j;
-
-	mapData.name = j["name"];
-	mapData.mapID = j["mapId"];
-	
-	
-    // Json 파일에서 몬스터 데이터 읽어오기
-    LoadMonster(j, mapData.MonstersData);
+    else
+    {
+        
+        if (!LoadJsonFile(mapId, mapData))
+            return nullptr;
+    }
 
     MapInstance* newMap = new MapInstance();
 
     if(newMap->Init(mapData) == 1)
     {
         m_maps[mapId]= newMap;
+    }else {
+        delete newMap;
+        return nullptr;
     }
 
     // 맵 생성 후 삭제 예약을 걸어둔다. 맵에 플레이어가 없는 경우에 일정 시간이 지나면 맵을 삭제할 수 있도록 설정
@@ -79,6 +74,66 @@ MapInstance* MapManager::GetOrCreate(int mapId)
     return newMap;
 }
 
+bool MapManager::PreLoadAll()
+{
+    for(const auto& entry : fs::directory_iterator(MAP_PATH))
+    {
+        if(!entry.is_regular_file()) continue;
+        if(entry.path().extension() != ".json") continue;
+
+        /*
+            // entry.path() -> 파일 경로
+            // entry.path().filename() -> 파일명
+            // entry.path().stem() -> 확장자 제거한 파일명(예: "1001")
+        
+        */
+        int map_id = std::stoi(entry.path().stem().string());
+
+        auto it = m_maps_initData.find(map_id);
+        if(it != m_maps_initData.end()) continue;
+
+        MapInitData mapData;
+
+        bool is_Load = LoadJsonFile(map_id, mapData);
+        if(!is_Load) return false;
+
+        m_maps_initData.emplace(map_id, std::move(mapData));
+    }
+
+    return true;
+}
+
+bool MapManager::LoadJsonFile(int mapId, MapInitData& mapData)
+{
+
+    std::string path = MAP_PATH + std::to_string(mapId) +".json";
+    std::ifstream file(path);
+
+    if(!file.is_open()) {
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] FAILED OPEN [%s] FILE", __FUNCTION__, __LINE__, path.c_str());
+        return false;
+    }
+
+    // JSON 파일 파싱
+    nlohmann::json j;
+    try {
+        file >> j;
+    } catch (const nlohmann::json::parse_error& e) {
+        // JSON 문법 깨짐/파싱 실패
+        return false;
+    }
+
+    if (j.is_null()) return false;
+
+	mapData.name = j["name"];
+	mapData.mapID = j["mapId"];
+	
+    // Json 파일에서 몬스터 데이터 읽어오기
+    LoadMonster(j, mapData.MonstersData);
+
+    K_slog_trace(K_SLOG_TRACE, "[%s][%d] Map ID [%d]", __FUNCTION__, __LINE__, mapId);
+    return true;
+}
 
 void MapManager::LoadMonster(nlohmann::json& j, std::vector<MonsterSpawnData> MonstersData)
  {

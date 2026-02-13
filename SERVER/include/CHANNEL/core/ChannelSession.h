@@ -1,6 +1,6 @@
 #pragma once
-#include "CHANNEL/core/common.h"
-#include "CHANNEL/core/Player.h"
+#include "common.h"
+#include "Player.h"
 #include "ChannelPacketFactory.h"
 
 class ChannelServer;

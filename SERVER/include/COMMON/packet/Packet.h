@@ -20,6 +20,8 @@ class PlayerManager;
 class PlayerService;
 class MapService;
 class StatService;
+class ItemManager;
+class ItemService;
 
 class CommandDispatcher;
 
@@ -50,6 +52,8 @@ enum PACKET_TYPE : uint16_t {
     PKT_PLAYER_ATTACK = 0x0C,
     PKT_PLAYER_ONDAMAGED = 0x0D,
     PKT_PLAYER_USE_ITEM = 0x0E,
+    PKT_MONSTER_MOVE = 0x0F,
+    PKT_MONSTER_ONDAMAGED = 0x10,
 
     PKT_STAT_VIEW=0x1000,
     PKT_STAT_UP,
@@ -63,10 +67,8 @@ struct ParsedPacket
 
 struct PacketContext
 {
-    uint16_t type;
-
     Client* client = nullptr;
-    ParsedPacket pkt;
+    uint16_t type;
     int fd = -1;
     char *payload = nullptr;
     int payload_len = 0;
@@ -87,6 +89,8 @@ struct PacketContext
     PlayerManager* player_manager =nullptr;
     MapService* map_service = nullptr;
     StatService* stat_service = nullptr;
+    ItemManager* item_manager =nullptr;
+    ItemService* item_service = nullptr;
 };
 
 typedef struct packet

@@ -2,11 +2,13 @@
 #include "common.h"
 #include "PlayerManager.h"
 #include "CommonEnum.h"
+#include "Skill_Info.h"
 #include "Monster.h"
 #include "MonsterManager.h"
 #include "Item.h"
 #include "Player.h"
 #include "ChannelSession.h"
+#include "Skill_Info.h"
 
 #include <nlohmann/json.hpp>
 #include <functional>
@@ -47,6 +49,10 @@ public:
 
     void BroadcastMoveExcept(Player* sender, Vec2 pos, float speed);
 
+    void BroadcastMonsterHit(Player* Attacker, std::string SkillID, std::vector<MonsterHitResult> result);
+
+    void ResolveSkillHit(Player* Attacker, SkillDef& skillDef, std::vector<std::pair<Monster*, int>> hits);
+
 public:
 
     // int 매개변수를 받는 콜백 함수 이름 지정
@@ -56,6 +62,9 @@ public:
     void SetDestroyCallback(DestroyReqFn cb) {m_onDestroyReq = std::move(cb);}
 
     uint16_t GetMapId() {return m_mapID;}
+
+
+    std::vector<Monster>& GetMonsterList(){ return m_monsterList;};
 
 private:
    	// 플레이어가 맵에 있는지 없는지 판단 변수

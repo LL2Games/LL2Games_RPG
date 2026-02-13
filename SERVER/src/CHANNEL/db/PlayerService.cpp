@@ -37,6 +37,7 @@ std::unique_ptr<Player> PlayerService::LoadPlayer(int characterId)
             GetStr(*redis_value,"account_id",playerInit.account_id);
             GetInt(*redis_value,"level",playerInit.level);
             GetInt(*redis_value,"job",playerInit.job);
+            GetInt(*redis_value, "root_job", playerInit.root_job);
             GetInt(*redis_value,"map_id",playerInit.map_id);
             GetFloat(*redis_value,"xPos",playerInit.xPos);
             GetFloat(*redis_value,"yPos",playerInit.yPos);
@@ -92,10 +93,12 @@ std::unique_ptr<Player> PlayerService::LoadPlayer(int characterId)
         player = std::make_unique<Player>();
 
         playerInit.char_id = std::atoi(row[0]);
+        
         playerInit.account_id = row[1];
         playerInit.name = row[2];
         playerInit.level = std::atoi(row[3]);
         playerInit.job = std::atoi(row[4]);
+        playerInit.root_job = std::atoi(row[5]);
 
         K_slog_trace(K_SLOG_TRACE, "LoadPlayer SUCCESS [%d]", player->GetId());    
     }
