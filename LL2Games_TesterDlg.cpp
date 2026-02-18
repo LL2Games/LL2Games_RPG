@@ -64,8 +64,19 @@ BOOL CLL2GamesTesterDlg::OnInitDialog()
 	AfxSocketInit();
 	m_socket.m_hWndOwner = this->m_hWnd;
 
-	m_editIP.SetWindowTextW(_T("100.124.14.8"));
-	m_editPort.SetWindowTextW(_T("5500"));
+	//레지스트리에서 읽기
+	CString strIP = AfxGetApp()->GetProfileString(_T("Connection"), _T("IP"), _T(""));
+	CString strPort = AfxGetApp()->GetProfileString(_T("Connection"), _T("Port"), _T(""));
+
+	/*if (strIP.GetLength() == 0)
+		strIP = _T("100.114.42.54");
+	if (strPort.GetLength() == 0)
+		strPort = _T("1234");*/
+	m_editIP.SetWindowTextW(strIP);
+	m_editPort.SetWindowTextW(strPort);
+
+	/*m_editIP.SetWindowTextW(_T("100.124.14.8"));
+	m_editPort.SetWindowTextW(_T("5500"));*/
 
 
 	// TODO: 여기에 추가 초기화 작업을 추가합니다.
@@ -142,6 +153,10 @@ void CLL2GamesTesterDlg::OnBnClickedButtonConnect()
 	m_socket.m_bIsConnect = TRUE;
 	UpdateConnectionUI((WPARAM)ConnectionState::CONNECTED, 0);
 	AfxMessageBox(L"Connected to WorldServer");
+
+	//레지스트리에 저장
+	AfxGetApp()->WriteProfileString(_T("Connection"), _T("IP"), strIp);
+	AfxGetApp()->WriteProfileString(_T("Connection"), _T("Port"), strPort);
 }
 
 //DisConnect
