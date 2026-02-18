@@ -6,7 +6,7 @@
 
 #define MAPDELETELIMIT 5
 
-MapInstance::MapInstance() : m_limit(std::chrono::minutes{MAPDELETELIMIT})
+MapInstance::MapInstance() : m_playerCount(0), m_limit(std::chrono::minutes{MAPDELETELIMIT})
 {
 	m_monsterManager = MonsterManager::GetInstance();
 }
@@ -39,13 +39,16 @@ int MapInstance::Init(const MapInitData& data)
 
 int MapInstance::Update()
 {
-	SpawnMonster();
-	UpdateMonster();
 	if(!m_has_player)
 	{
 		RemoveMap();
 	}
-	BroadcastMapInfo();
+	else
+	{
+		SpawnMonster();
+		UpdateMonster();
+		BroadcastMapInfo();
+	}
 
     return 1;
 }
@@ -55,13 +58,11 @@ void MapInstance::BroadcastMapInfo()
 {
 	std::vector<std::string> payload;	
 
-	K_slog_trace(K_SLOG_TRACE, "[%s][%d]gunoo22_TEST11", __FUNCTION__, __LINE__);
+	K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d]m_monsterList[size:%d]", __FILE__, __FUNCTION__, __LINE__, m_monsterList.size());
 	for (auto& monster : m_monsterList)
 	{
-		K_slog_trace(K_SLOG_TRACE, "[%s][%d]gunoo22_TEST22", __FUNCTION__, __LINE__);
 		if (monster.IsAlive())
 		{
-			K_slog_trace(K_SLOG_TRACE, "[%s][%d]gunoo22_TEST33", __FUNCTION__, __LINE__);
 			payload.push_back(std::to_string(monster.GetInstanceId()));
 			payload.push_back(std::to_string(monster.GetPos().xPos));
 			payload.push_back(std::to_string(monster.GetPos().yPos));
@@ -69,8 +70,9 @@ void MapInstance::BroadcastMapInfo()
 			payload.push_back(std::to_string(monster.GetMaxHP()));
 		}
 	}
-
 	
+	
+	K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d]m_playerList[size:%d]", __FILE__, __FUNCTION__, __LINE__, m_playerList.size());
 	for(auto it = m_playerList.begin(); it != m_playerList.end(); ++it)
 	{	
 		auto session = it->second->GetSession();	
@@ -166,6 +168,8 @@ void MapInstance::OnEnter(int PlayerID, Player* player)
         m_emptyTime = {};
     }
 	m_playerCount++;
+	K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d] PlayerID(%d)", __FILE__, __FUNCTION__, __LINE__, PlayerID);
+	K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d] m_playerCount(%d)", __FILE__, __FUNCTION__, __LINE__, m_playerCount);
 }
 
 void MapInstance::OnLeave(int PlayerID)
@@ -183,6 +187,9 @@ void MapInstance::OnLeave(int PlayerID)
 		m_has_player = false;
 		m_destroyRequested = false;
 	}
+
+	K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d] PlayerID(%d)", __FILE__, __FUNCTION__, __LINE__, PlayerID);
+	K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d] m_playerCount(%d)", __FILE__, __FUNCTION__, __LINE__, m_playerCount);
 }
 
 void MapInstance::HandleMonsterDead(Monster& monster)
