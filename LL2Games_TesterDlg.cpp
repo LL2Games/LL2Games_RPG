@@ -152,7 +152,7 @@ void CLL2GamesTesterDlg::OnBnClickedButtonConnect()
 
 	m_socket.m_bIsConnect = TRUE;
 	UpdateConnectionUI((WPARAM)ConnectionState::CONNECTED, 0);
-	AfxMessageBox(L"Connected to WorldServer");
+	AfxMessageBox(L"Connected to SUCCESS");
 
 	//레지스트리에 저장
 	AfxGetApp()->WriteProfileString(_T("Connection"), _T("IP"), strIp);
