@@ -1,7 +1,9 @@
+#pragma once
+
 #include "common.h"
 #include "PlayerManager.h"
-#include "MapManager.h"
 
+class MapManager;
 class MapService
 {
 public:
