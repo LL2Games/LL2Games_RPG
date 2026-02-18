@@ -3,6 +3,7 @@
 #include "Monster.h"
 #include <nlohmann/json.hpp>
 #include <fstream>
+#include "CommonEnum.h"
 
 #define MAPDELETELIMIT 5
 
@@ -106,8 +107,9 @@ int MapInstance::InitSpawnMonster()
 		instanceId++;
 
 		//K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d]gunoo22_TEST", __FILE__, __FUNCTION__, __LINE__);
-		if(monsterTemplate)
+		if(monsterTemplate.has_value())
 		{
+			(*monsterTemplate).mapId = m_mapID;
 			monster.Init(*monsterTemplate, *m_monsterSpawnListIter);
 		}else {
 			K_slog_trace(K_SLOG_ERROR, "[%s][%d] MonsterTemplate Get Failed Monster_Id[%d] FILE", __FUNCTION__, __LINE__, m_monsterSpawnListIter->monsterId);

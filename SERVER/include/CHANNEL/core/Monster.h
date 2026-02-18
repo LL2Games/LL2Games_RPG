@@ -56,7 +56,8 @@ public:
 
 	bool IsAlive() {return m_isAlive;}
 
-	int GetLastAttackerID() {return m_lastAttacker;}
+	int GetLastAttackerID() {return m_lastAttackerId;}
+	Player* GetLastAttacker() {return m_lastAttacker;}
 
 	float GetExp(){return m_exp;}
 
@@ -100,6 +101,9 @@ private:
 	// 몬스터 아이템 드롭 그룹
 	int m_itemGroup;
 	
-	int m_lastAttacker;
+	int m_lastAttackerId;
+	Player *m_lastAttacker;
 
+	//스폰된 맵 ID
+	uint16_t m_mapId; 
 };
