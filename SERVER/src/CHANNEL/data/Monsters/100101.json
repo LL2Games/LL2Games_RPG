@@ -1,0 +1,13 @@
+{
+    "monster_id" : 100101,
+    "name" : "OrangeMushroom",
+    "hp" : 120,
+    "attackDamage" : 3,
+    "level" : 11,
+    "exp" : 7,
+    "moveSpeed" : 10,
+
+    "common_drop_group_id": "FIELD_COMMON_LV1_20",
+    "unique_drop_group_id": "UNIQUE_ORANGE_MUSHROOM"
+}
+
