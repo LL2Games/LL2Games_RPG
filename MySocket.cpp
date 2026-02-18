@@ -37,7 +37,7 @@ void MySocket::OnReceive(int nErrorCode)
         // 디버그용 출력
         CString msg;
         msg.Format(L"Recv %d bytes", buf.size());
-        AfxMessageBox(msg);
+        /*AfxMessageBox(msg);*/
 
         auto* recvData = new std::vector<char>(buf.begin(), buf.end());
         ::PostMessage(m_hWndOwner, WM_SOCKET_RECEIVE, recvData->size(), (LPARAM)recvData);
