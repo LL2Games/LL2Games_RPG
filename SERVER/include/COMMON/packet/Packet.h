@@ -22,6 +22,7 @@ class MapService;
 class StatService;
 class ItemManager;
 class ItemService;
+class CombatService;
 
 class CommandDispatcher;
 
@@ -91,6 +92,7 @@ struct PacketContext
     StatService* stat_service = nullptr;
     ItemManager* item_manager =nullptr;
     ItemService* item_service = nullptr;
+    CombatService* combat_service = nullptr;
 };
 
 typedef struct packet

@@ -1,11 +1,14 @@
 #include "common.h"
 #include "MapManager.h"
 #include "PlayerManager.h"
+#include "MapUpdateTask.h"
+#include "ChannelServer.h"
 
 #define MAP_PATH "../src/CHANNEL/data/Maps/"
+#define UPDATE_INTERVAL 2000 //2초
 namespace fs = std::filesystem;
 
-MapManager::MapManager()
+MapManager::MapManager(ChannelServer *server) : m_server(server)
 {
 }
 
@@ -19,83 +22,111 @@ void MapManager::Init()
     PreLoadAll();
 }
 
-void MapManager::Update()
+void MapManager::Start()
 {
-    for(auto iter = m_maps.begin(); iter != m_maps.end(); ++iter)
-    {
-        if(iter->second != nullptr)
-            iter->second->Update();
-    }
-
-    RemoveMap();
+    m_running = true;
+    m_thread = std::thread(&MapManager::Update, this);
+    K_slog_trace(K_SLOG_DEBUG, "[%s][%d] MapManager Update Start", __FILE__, __LINE__);
 }
 
-MapInstance* MapManager::GetOrCreate(int mapId)
+void MapManager::Stop()
+{
+    m_running = false;
+    if (m_thread.joinable())
+        m_thread.join();
+}
+
+void MapManager::Update()
+{
+    while (m_running)
+    {
+        for (auto iter = m_maps.begin(); iter != m_maps.end(); ++iter)
+        {
+            if (iter->second != nullptr)
+            {
+                MapInstance *map = iter->second;
+
+                auto task = std::make_unique<MapUpdateTask>(map);
+                m_server->GetThreadPool()->Submit(std::move(task));
+            }
+        }
+        RemoveMap();
+        std::this_thread::sleep_for(std::chrono::milliseconds(UPDATE_INTERVAL)); // 간격
+    }
+}
+
+MapInstance *MapManager::GetOrCreate(int mapId)
 {
     auto it = m_maps.find(mapId);
 
-    if(it != m_maps.end())  
+    if (it != m_maps.end())
     {
         K_slog_trace(K_SLOG_TRACE, "[%s][%d] alreay Map is Maked", __FUNCTION__, __LINE__);
         return it->second;
     }
 
-    K_slog_trace(K_SLOG_ERROR, "[%s][%d] MAPINIT START", __FUNCTION__, __LINE__);
+    K_slog_trace(K_SLOG_TRACE, "[%s][%d] MAPINIT START", __FUNCTION__, __LINE__);
 
     MapInitData mapData;
 
     auto itInit = m_maps_initData.find(mapId);
     if (itInit != m_maps_initData.end())
     {
-        mapData = itInit->second; 
+        K_slog_trace(K_SLOG_TRACE, "[%s][%d]gunoo22_TEST", __FUNCTION__, __LINE__);
+        mapData = itInit->second;
     }
     else
     {
-        
+        K_slog_trace(K_SLOG_TRACE, "[%s][%d]gunoo22_TEST", __FUNCTION__, __LINE__);
         if (!LoadJsonFile(mapId, mapData))
             return nullptr;
     }
 
-    MapInstance* newMap = new MapInstance();
+    MapInstance *newMap = new MapInstance();
 
-    if(newMap->Init(mapData) == 1)
+    if (newMap->Init(mapData) == 1)
     {
-        m_maps[mapId]= newMap;
-    }else {
+        m_maps[mapId] = newMap;
+    }
+    else
+    {
         delete newMap;
         return nullptr;
     }
 
     // 맵 생성 후 삭제 예약을 걸어둔다. 맵에 플레이어가 없는 경우에 일정 시간이 지나면 맵을 삭제할 수 있도록 설정
-    newMap->SetDestroyCallback([this](int id){
-        m_destroyQueue.push(id);
-    });
+    newMap->SetDestroyCallback([this](int id)
+                               { m_destroyQueue.push(id); });
 
     return newMap;
 }
 
 bool MapManager::PreLoadAll()
 {
-    for(const auto& entry : fs::directory_iterator(MAP_PATH))
+    for (const auto &entry : fs::directory_iterator(MAP_PATH))
     {
-        if(!entry.is_regular_file()) continue;
-        if(entry.path().extension() != ".json") continue;
+        if (!entry.is_regular_file())
+            continue;
+        if (entry.path().extension() != ".json")
+            continue;
 
         /*
             // entry.path() -> 파일 경로
             // entry.path().filename() -> 파일명
             // entry.path().stem() -> 확장자 제거한 파일명(예: "1001")
-        
+
         */
         int map_id = std::stoi(entry.path().stem().string());
 
         auto it = m_maps_initData.find(map_id);
-        if(it != m_maps_initData.end()) continue;
+        if (it != m_maps_initData.end())
+            continue;
 
         MapInitData mapData;
 
         bool is_Load = LoadJsonFile(map_id, mapData);
-        if(!is_Load) return false;
+        if (!is_Load)
+            return false;
 
         m_maps_initData.emplace(map_id, std::move(mapData));
     }
@@ -103,40 +134,52 @@ bool MapManager::PreLoadAll()
     return true;
 }
 
-bool MapManager::LoadJsonFile(int mapId, MapInitData& mapData)
+bool MapManager::LoadJsonFile(int mapId, MapInitData &mapData)
 {
 
-    std::string path = MAP_PATH + std::to_string(mapId) +".json";
+    std::string path = MAP_PATH + std::to_string(mapId) + ".json";
     std::ifstream file(path);
 
-    if(!file.is_open()) {
+    if (!file.is_open())
+    {
         K_slog_trace(K_SLOG_ERROR, "[%s][%d] FAILED OPEN [%s] FILE", __FUNCTION__, __LINE__, path.c_str());
         return false;
     }
+    K_slog_trace(K_SLOG_DEBUG, "[%s][%d] OPEN [%s] SUCCESS", __FUNCTION__, __LINE__, path.c_str());
+
 
     // JSON 파일 파싱
     nlohmann::json j;
-    try {
+    try
+    {
         file >> j;
-    } catch (const nlohmann::json::parse_error& e) {
+    }
+    catch (const nlohmann::json::parse_error &e)
+    {
         // JSON 문법 깨짐/파싱 실패
         return false;
     }
 
-    if (j.is_null()) return false;
+    if (j.is_null())
+        return false;
 
-	mapData.name = j["name"];
-	mapData.mapID = j["mapId"];
-	
+    mapData.name = j["name"];
+    mapData.mapID = j["mapId"];
+    
     // Json 파일에서 몬스터 데이터 읽어오기
     LoadMonster(j, mapData.MonstersData);
+
+    //gunoo22_TEST
+    K_slog_trace(K_SLOG_TRACE, "[%s][%d]gunoo22_TEST mapData.nams[%s]", __FUNCTION__, __LINE__, mapData.name.c_str());
+    K_slog_trace(K_SLOG_TRACE, "[%s][%d]gunoo22_TEST mapData.mapID[%d]", __FUNCTION__, __LINE__, mapData.mapID);
+
 
     K_slog_trace(K_SLOG_TRACE, "[%s][%d] Map ID [%d]", __FUNCTION__, __LINE__, mapId);
     return true;
 }
 
-void MapManager::LoadMonster(nlohmann::json& j, std::vector<MonsterSpawnData> MonstersData)
- {
+void MapManager::LoadMonster(nlohmann::json &j, std::vector<MonsterSpawnData>& MonstersData)
+{
     /*
     struct MonsterSpawnData {
     MonsterType type;
@@ -145,14 +188,15 @@ void MapManager::LoadMonster(nlohmann::json& j, std::vector<MonsterSpawnData> Mo
     float respawnDelay;
 };
     */
-	
+
     auto MonsterCount = j["Monster"].size();
 
     MonstersData.resize(MonsterCount);
     // Json 파일에서 Monster 배열의 정보들을 반복문을 통해 설정
-    for(const auto& Monster : j["monsters"]){
+    for (const auto &Monster : j["monsters"])
+    {
         MonsterSpawnData data;
-	
+
         data.monsterId = Monster["monsterId"];
         data.spawnPos.xPos = Monster["x"];
         data.spawnPos.yPos = Monster["y"];
@@ -160,19 +204,26 @@ void MapManager::LoadMonster(nlohmann::json& j, std::vector<MonsterSpawnData> Mo
         MonstersData.push_back(data);
     }
 
+    //gunoo22_TEST
+    K_slog_trace(K_SLOG_TRACE, "[%s][%d]gunoo22_TEST MonsterCount[%d]", __FUNCTION__, __LINE__, MonsterCount);
+    for (auto &md : MonstersData)
+    {
+        K_slog_trace(K_SLOG_TRACE, "[%s][%d]gunoo22_TEST monsterid[%d]", __FUNCTION__, __LINE__, md.monsterId);
+    }
+
+
     K_slog_trace(K_SLOG_TRACE, "[%s][%d] MonsterLoad Success", __FUNCTION__, __LINE__);
- }
+}
 
-
- void MapManager::RemoveMap()
- {
-    while(!m_destroyQueue.empty())
+void MapManager::RemoveMap()
+{
+    while (!m_destroyQueue.empty())
     {
         int mapId = m_destroyQueue.front();
         m_destroyQueue.pop();
 
         auto it = m_maps.find(mapId);
-        if(it != m_maps.end())
+        if (it != m_maps.end())
         {
             K_slog_trace(K_SLOG_TRACE, "[%s][%d] Map Delete [%d]", __FUNCTION__, __LINE__, mapId);
             delete it->second;
@@ -180,4 +231,4 @@ void MapManager::LoadMonster(nlohmann::json& j, std::vector<MonsterSpawnData> Mo
             m_maps.erase(it);
         }
     }
- }
+}

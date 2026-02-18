@@ -1,7 +1,9 @@
 #include "common.h"
 #include "PacketParser.h"
 #include "ChannelSession.h"
-
+#include "CombatService.h"
+#include "ChannelServer.h"
+#include "Player.h"
 
  // 플레이어가 공격 했을 때 피격 당하는 몬스터
 
@@ -9,7 +11,10 @@
 // 플레이어가 공격을 했다라는 정보만을 가지고 서버에서 피격 판정 여부와 공격 가능 여부를 판단해서 같은 맵의 플레이어들한테 정보 전달
 void AttackPacket(PacketContext * ctx)
 {   
+    CombatService *combat_service = nullptr;
     ChannelSession *session = nullptr;
+    Player *player = nullptr;
+
     size_t offset = 0;
     int rc = EXIT_SUCCESS;
 
@@ -31,6 +36,24 @@ void AttackPacket(PacketContext * ctx)
      K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] session is nullptr\n", __FILE__, __FUNCTION__, __LINE__);
         rc = EXIT_FAILURE;
         errMsg = "[" + std::to_string(rc) + "]session is nullptr";
+        goto err;
+    }
+
+    player = session->GetPlayer();
+    if(player == nullptr)
+    {
+     K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] player is nullptr\n", __FILE__, __FUNCTION__, __LINE__);
+        rc = EXIT_FAILURE;
+        errMsg = "[" + std::to_string(rc) + "]player is nullptr";
+        goto err;
+    }
+
+    combat_service = ctx->combat_service;
+    if(combat_service == nullptr)
+    {
+     K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] combat_service is nullptr\n", __FILE__, __FUNCTION__, __LINE__);
+        rc = EXIT_FAILURE;
+        errMsg = "[" + std::to_string(rc) + "]combat_service is nullptr";
         goto err;
     }
 
@@ -62,12 +85,7 @@ void AttackPacket(PacketContext * ctx)
         goto err;
     }
 
-    
-
-    
-
-
-
+    combat_service->HandleAttack(player, skill_id, attack_dir);
 err:
     if (rc != EXIT_SUCCESS) {
         session->SendNok(PKT_ENTER_MAP, errMsg);

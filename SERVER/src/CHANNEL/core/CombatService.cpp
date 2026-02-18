@@ -9,6 +9,11 @@ CombatService::CombatService()
     m_skillService = SkillService::GetInstance();
 }
 
+CombatService::~CombatService()
+{
+    
+}
+
 
 int CombatService::HandleAttack(Player* Attacker, std::string skill_id, std::string attack_dir)
 {

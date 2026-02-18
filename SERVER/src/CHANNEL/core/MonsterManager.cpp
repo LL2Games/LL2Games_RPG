@@ -2,7 +2,7 @@
 #include <fstream>
 
 
-#define MONSTER_PATH "./data/Monsters/"
+#define MONSTER_PATH "../src/CHANNEL/data/Monsters/"
 
 
 MonsterManager *MonsterManager::m_instance =nullptr;
@@ -84,6 +84,7 @@ bool MonsterManager::LoadFromFile(int monster_id, MonsterTemplate& monsterTempla
         K_slog_trace(K_SLOG_ERROR, "[%s][%d] FAILED OPEN [%s] FILE", __FUNCTION__, __LINE__, path.c_str());
         return false;
     }
+    K_slog_trace(K_SLOG_DEBUG, "[%s][%d] SUCCESS OPEN [%s] FILE", __FUNCTION__, __LINE__, path.c_str());
 
     // JSON 파일 파싱
     nlohmann::json j;

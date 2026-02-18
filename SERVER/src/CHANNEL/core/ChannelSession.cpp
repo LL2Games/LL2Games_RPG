@@ -47,6 +47,7 @@ bool ChannelSession::OnBytes(const uint8_t* data, size_t len)
             ctx.player_service = m_server->GetPlayerService();
             ctx.stat_service = m_server->GetStatService();
             ctx.item_service = m_server->GetItemService();
+            ctx.combat_service = m_server->GetCombatService();
         }
         
         handler->Execute(&ctx);

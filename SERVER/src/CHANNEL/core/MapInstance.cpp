@@ -21,19 +21,61 @@ int MapInstance::Init(const MapInitData& data)
     this->m_mapID = data.mapID;
 	// 여기서 Map Json 파일에서 읽어온 몬스터 정보 저장
     this->m_monsterSpawnList = data.MonstersData;
+
+#if 1 //guno22_TEST
+	{
+		//"100000000”
+		std::vector<MonsterSpawnData>& list = this->m_monsterSpawnList;
+		K_slog_trace(K_SLOG_DEBUG, "[%s][%d]gunoo22_TEST size[%d]", __FUNCTION__, __LINE__, list.size());
+		for (auto& m : list)
+		{
+			K_slog_trace(K_SLOG_DEBUG, "[%s][%d]gunoo22_TEST m.monsterId[%d]", __FUNCTION__, __LINE__, m.monsterId);
+		}
+	}
+#endif
+	InitSpawnMonster();
     return 1;
 }
 
 int MapInstance::Update()
 {
 	SpawnMonster();
-
+	UpdateMonster();
 	if(!m_has_player)
 	{
 		RemoveMap();
 	}
-	
+	BroadcastMapInfo();
+
     return 1;
+}
+
+//맵내에 있는 모든사용자에게 Update시 보내주는 정보
+void MapInstance::BroadcastMapInfo()
+{
+	std::vector<std::string> payload;	
+
+	K_slog_trace(K_SLOG_TRACE, "[%s][%d]gunoo22_TEST11", __FUNCTION__, __LINE__);
+	for (auto& monster : m_monsterList)
+	{
+		K_slog_trace(K_SLOG_TRACE, "[%s][%d]gunoo22_TEST22", __FUNCTION__, __LINE__);
+		if (monster.IsAlive())
+		{
+			K_slog_trace(K_SLOG_TRACE, "[%s][%d]gunoo22_TEST33", __FUNCTION__, __LINE__);
+			payload.push_back(std::to_string(monster.GetInstanceId()));
+			payload.push_back(std::to_string(monster.GetPos().xPos));
+			payload.push_back(std::to_string(monster.GetPos().yPos));
+			payload.push_back(std::to_string(monster.GetCurrentHP()));
+			payload.push_back(std::to_string(monster.GetMaxHP()));
+		}
+	}
+
+	
+	for(auto it = m_playerList.begin(); it != m_playerList.end(); ++it)
+	{	
+		auto session = it->second->GetSession();	
+		session->Send(PKT_MONSTER_MOVE, payload);
+	}
 }
 
 int MapInstance::InitSpawnMonster()
@@ -41,6 +83,8 @@ int MapInstance::InitSpawnMonster()
 	int instanceId = 1;
     m_monsterList.reserve(m_monsterSpawnList.size());
 	
+	
+	K_slog_trace(K_SLOG_TRACE, "[%s][%d]gunoo22_TEST", __FUNCTION__, __LINE__);
     for(m_monsterSpawnListIter = m_monsterSpawnList.begin(); m_monsterSpawnListIter < m_monsterSpawnList.end(); ++m_monsterListIter)
     {
         Monster monster;
@@ -72,20 +116,32 @@ int MapInstance::InitSpawnMonster()
     return 1;
 }   
 
+int MapInstance::UpdateMonster()
+{
+	//K_slog_trace(K_SLOG_ERROR, "[%s][%d] 몬스터 업데이트 시작", __FUNCTION__, __LINE__);
+	for(auto& monster : m_monsterList) 
+	{
+		if(monster.IsAlive())
+		{
+			monster.Update();
+		}
+	}
+
+	return 1;
+}
+
 int MapInstance::SpawnMonster()
 {
 	auto now = std::chrono::steady_clock::now();
 	
-	K_slog_trace(K_SLOG_ERROR, "[%s][%d] 몬스터 리스폰 시작", __FUNCTION__, __LINE__);
-	
-	
-	for(auto& Monsters : m_monsterList) 
+	//K_slog_trace(K_SLOG_TRACE, "[%s][%d] 몬스터 리스폰 시작", __FUNCTION__, __LINE__);
+	for(auto& monster : m_monsterList) 
 	{
-		if(Monsters.IsAlive()) continue;
+		if(monster.IsAlive()) continue;
 		
-		if(Monsters.CheckRespawnTime(now))
+		if(monster.CheckRespawnTime(now))
 		{
-			Monsters.Reset();
+			monster.Reset();
 		}
 	}
 	

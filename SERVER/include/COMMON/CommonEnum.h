@@ -46,7 +46,7 @@ struct MonsterTemplate {
 
 
 typedef struct MapInitData{
-    uint16_t mapID;
+    uint32_t mapID;
 	std::string name;
     std::vector<MonsterSpawnData> MonstersData;
 

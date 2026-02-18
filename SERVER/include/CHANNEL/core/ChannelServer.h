@@ -15,7 +15,7 @@
 
 #include "ThreadPool.h"
 #include "CommandReceiver.h"
-
+#include "CombatService.h"
 
 
 class ChannelServer
@@ -35,6 +35,8 @@ public:
     PlayerService* GetPlayerService() {return &m_player_service;}
     StatService* GetStatService() {return &m_stat_service;}
     ItemService* GetItemService() {return &m_item_service;}
+    CombatService* GetCombatService() {return &m_combat_service;}
+    ThreadPool* GetThreadPool() {return &m_pool;}
 private:
     bool InitListenSocket(int port);
     bool InitEpoll();
@@ -58,11 +60,11 @@ private:
     ItemManager* m_item_manager;
     //MySqlConnectionPool m_db;
     RedisClient m_redis;
-
+    
     MapService m_map_service;
     StatService m_stat_service;
-
     ItemService m_item_service;
+    CombatService m_combat_service;
 
     ThreadPool m_pool;
     CommandReceiver m_cmd_receiver;
