@@ -96,7 +96,7 @@ int Monster::UpdateChase(float dt)
 
 	//플레이어가 몬스터와 같은 맵에 없는경우 예외처리
 	if (player->GetCurrentMap() && (player->GetCurrentMap()->GetMapId() != m_mapId))
-		return 0;
+		return UpdatePatrol(dt);
 
 	//플레이어와 몬스터 거리 계산 (X축만 사용)
 	float dx = playerPos.xPos - m_Pos.xPos;
