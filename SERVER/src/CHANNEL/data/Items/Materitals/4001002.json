@@ -1,6 +1,6 @@
 {
-  "item_id": 4001001,
-  "name": "Green Snail Shell",
+  "item_id": 4001002,
+  "name": "Blue Snail Shell",
   "type": "material",
 
   "stackable": true,
@@ -13,6 +13,6 @@
 
   "reagent": {
     "allowed_by": ["skill"],
-    "tags": ["shell", "reagent", "green"]
+    "tags": ["shell", "reagent", "Blue"]
   }
 }

@@ -44,8 +44,6 @@ int CombatService::HandleAttack(Player* Attacker, std::string skill_id, std::str
         hitResults.push_back({monster, finalDamage});
     }
     
-
-    
     map->ResolveSkillHit(Attacker, *skillDef, hitResults);
   
     return 1;

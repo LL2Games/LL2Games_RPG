@@ -4,7 +4,7 @@
   "type": "MELEE_ARC",
 
   "cooldown_ms": 500,
-  "mp_cost": 0,
+  "mp_cost": 10,
 
   "requirements": {"root": 20000,"min_tier": 1,"min_skill_level": 1},
 

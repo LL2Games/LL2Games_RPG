@@ -1,0 +1,10 @@
+{
+  "item_id": 4001005,
+  "name": "Rare_Piece",
+  "type": "material",
+
+  "stackable": true,
+  "max_stack": 999,
+  "sell_price": 2
+
+}

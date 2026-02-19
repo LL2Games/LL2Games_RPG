@@ -53,6 +53,7 @@ public:
 
     void ResolveSkillHit(Player* Attacker, SkillDef& skillDef, std::vector<std::pair<Monster*, int>> hits);
 
+    void ProcessContactDamage(int64_t nowMs);
 public:
 
     // int 매개변수를 받는 콜백 함수 이름 지정

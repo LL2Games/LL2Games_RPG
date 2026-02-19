@@ -173,7 +173,7 @@ void MapInstance::BroadcastMoveExcept(Player* sender, Vec2 pos, float speed)
 {
 	std::vector<std::string> payload;
 	payload.reserve(4);
-	K_slog_trace(K_SLOG_TRACE, "[%s][%d] playerID [%f]", __FUNCTION__, __LINE__, sender->GetId());
+	K_slog_trace(K_SLOG_TRACE, "[%s][%d] playerID [%d]", __FUNCTION__, __LINE__, sender->GetId());
 	K_slog_trace(K_SLOG_TRACE, "[%s][%d] xPos [%f]", __FUNCTION__, __LINE__, pos.xPos);
 	K_slog_trace(K_SLOG_TRACE, "[%s][%d] yPos [%f]", __FUNCTION__, __LINE__, pos.yPos);
 	K_slog_trace(K_SLOG_TRACE, "[%s][%d] speed [%f]", __FUNCTION__, __LINE__, speed);
@@ -249,4 +249,10 @@ void MapInstance::BroadcastMonsterHit(Player* Attacker, std::string SkillID, std
 		session->Send(PKT_MONSTER_ONDAMAGED, payload);
 	}
 
+}
+
+
+void MapInstance::ProcessContactDamage(int64_t nowMs)
+{
+   
 }

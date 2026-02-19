@@ -1,0 +1,10 @@
+{
+  "item_id": 4001004,
+  "name": "Slime Gel",
+  "type": "material",
+
+  "stackable": true,
+  "max_stack": 999,
+  "sell_price": 2
+
+}

@@ -13,8 +13,8 @@ void MapHandler::Execute(PacketContext * ctx)
     int rc = EXIT_SUCCESS;
     std::string errMsg;
     size_t offset = 0;
-    int mapId =0;
-    int playerid =0;
+    int mapId = 0;
+    int playerid = 0;
 
     std::string player_id;
     std::string map_id;
