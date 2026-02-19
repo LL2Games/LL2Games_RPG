@@ -70,6 +70,15 @@ void MapInstance::BroadcastMapInfo()
 			payload.push_back(std::to_string(monster.GetCurrentHP()));
 			payload.push_back(std::to_string(monster.GetMaxHP()));
 		}
+
+		//원거리 공격 투사체
+		if (monster.IsRangedAttack())
+		{
+			payload.push_back("PROJECTILE"); //test
+			payload.push_back(std::to_string(monster.GetProjectilePos().xPos));
+			payload.push_back(std::to_string(monster.GetProjectilePos().yPos));
+			payload.push_back(std::to_string(monster.GetProjectileDir()));
+		}
 	}
 	
 	

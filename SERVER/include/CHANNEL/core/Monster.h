@@ -67,6 +67,14 @@ public:
 
 	int GetCurrentHP() {return m_hp;}
 	int GetMaxHP() {return m_maxhp;}
+
+	//원거리공격 관련 메서드
+	bool IsRangedAttack() const { return m_isRangedAttack; }
+	Vec2 GetProjectilePos() const { return m_projectilePos; }
+	float GetProjectileDir() const { return m_projectileDir; }
+	bool IsAttackOnCooldown();
+	int TryRangedAttack(const float& dir);
+
 private:
     MonsterType m_type;
     Vec2 m_Pos;
@@ -106,4 +114,13 @@ private:
 
 	//스폰된 맵 ID
 	uint16_t m_mapId; 
+
+	//원거리 공격 관련 변수
+	Vec2 m_projectilePos; //투사체 위치
+	float m_projectileDir; //투사체 방향
+
+	int m_isRangedAttack; //원거리 공격 여부
+	float m_ragedAttackRange; //공격 범위
+	int64_t m_attackCooldown; //공격 쿨타임
+	int64_t m_lastAttackTime; //마지막 공격 시간
 };

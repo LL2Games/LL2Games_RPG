@@ -3,6 +3,7 @@
 #include <math.h>
 #include "MapInstance.h"
 #include "K_slog.h"
+#include "timeUtility.h"
 
 int Monster::Init(const MonsterTemplate &monsterTemplate, const MonsterSpawnData &monsterspawnData)
 {
@@ -38,6 +39,12 @@ int Monster::Init(const MonsterTemplate &monsterTemplate, const MonsterSpawnData
 	//막타 플레이어
 	m_lastAttacker = nullptr;
 	m_lastAttackerId = 0;
+
+	//원거리공격
+	m_isRangedAttack = 0; //예시값, 필요에 따라 조정 monsterspawnData.isRangedAttack로
+	m_ragedAttackRange = 50.0f; //예시값, 필요에 따라 조정 monsterspawnData.attackRange로 
+	m_attackCooldown = 2000.0f; //예시값, 필요에 따라 조정 monsterspawnData.attackCooldown로 
+	m_lastAttackTime = 0.0f;
 
 	return 1;
 }
@@ -84,6 +91,36 @@ int Monster::UpdatePatrol(float dt)
 	return 0;
 }
 
+bool Monster::IsAttackOnCooldown()
+{
+	auto now = NowMs();
+	return m_lastAttackTime == 0 || (now - m_lastAttackTime) >= m_attackCooldown;
+}
+
+int Monster::TryRangedAttack(const float& ) //dir
+{
+	//쿨다운 체크
+	if (IsAttackOnCooldown())
+	{
+		return 0;
+	}
+
+	//스킬 사용 로직
+	/*
+	1. 투사체 생성 및 원거리공격 수행
+	2. 원거리공격 state값을 ing로 변경
+	3. state값이 ing일경우 service에서 CalculateRangedAttackPos 등을 통해 위치 계산
+	4. 계산된 위치로 다음 멤버변수 업데이트
+	   m_projectilePos.xPos = 계산된 x좌표;
+	   m_projectilePos.yPos = 계산된 y좌표;
+	   m_projectileDir = dir;
+	4-2 CalculateRagedAttackPos등에서 공격충돌 및 유효거리 도달시 공격 종료
+	*/
+	
+
+	return 1;
+}
+
 int Monster::UpdateChase(float dt)
 {
 	//m_lastAttackerId가 막타 맞은 플레이어이므로 해당 플레이어 chase모드
@@ -101,15 +138,26 @@ int Monster::UpdateChase(float dt)
 	//플레이어와 몬스터 거리 계산 (X축만 사용)
 	float dx = playerPos.xPos - m_Pos.xPos;
 
-	//너무 가까우면 이동하지 않음
-	if (fabs(dx) < 5.0f)
-		return 0;
-	
 	//방향 결정
 	if (dx > 0)
 		m_dir = 1.0f; //오른쪽
 	else
 		m_dir = -1.0f; //왼쪽
+
+	//공격 범위 내에 플레이어가 있다면 공격
+	if (m_isRangedAttack && fabs(dx) <= m_ragedAttackRange)
+	{
+		if (TryRangedAttack(m_dir))
+		{
+			//공격 성공시에만 마지막 공격시간 업데이트
+			m_lastAttackTime = NowMs();
+		}
+		return 0;
+	}
+
+	//너무 가까우면 이동하지 않음
+	if (fabs(dx) < 5.0f)
+		return 0;
 
 	//이동
 	m_Pos.xPos += m_dir * m_moveSpeed * dt;
