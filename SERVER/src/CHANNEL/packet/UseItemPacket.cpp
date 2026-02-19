@@ -90,15 +90,13 @@ void UseItemPacket(PacketContext * ctx)
     useItem_Info.push_back(std::to_string(result.hp));
     useItem_Info.push_back(std::to_string(result.mp));
     
-    session->Send(PKT_PLAYER_USE_ITEM, useItem_Info);
 
-    
 err:
     if (rc != EXIT_SUCCESS) {
         session->SendNok(PKT_PLAYER_USE_ITEM, errMsg);
     } else {
         K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] UseItemPacket END", __FILE__, __FUNCTION__, __LINE__);
-        session->SendOk(PKT_PLAYER_USE_ITEM);
+         session->SendOk(PKT_PLAYER_USE_ITEM, useItem_Info);
     }
 
 
