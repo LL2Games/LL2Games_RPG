@@ -7,6 +7,7 @@
 #include "PlayerData.h"
 #include "Skill_Info.h"
 #include "time.h"
+#include "Collider.h"
 
 class ChannelSession;
 class MapInstance;
@@ -28,8 +29,8 @@ public:
     void SetLevel(int m_level){this->m_level = m_level;}
     int GetLevel() const {return m_level;}
 
-    void SetPosition(float m_xPos, float m_yPos) {this->m_xPos = m_xPos; this->m_yPos = m_yPos;}\
-    void SetPosition(Vec2 Pos) {m_xPos = Pos.xPos, m_yPos = Pos.yPos;}
+    void SetPos(float m_xPos, float m_yPos) {this->m_xPos = m_xPos; this->m_yPos = m_yPos;}\
+    void SetPos(Vec2 Pos) {m_xPos = Pos.xPos, m_yPos = Pos.yPos;}
 
     void SetInitData(const PlayerInitData playerInitData);
     void SetInitData(const PlayerInitData playerInitData, const CharacterStat &stat);
@@ -49,9 +50,11 @@ public:
     int GetCurHP(){return m_stat.GetCurHp();}
     int GetCurMP(){return m_stat.GetCurMp();}
 
-    Vec2 GetPosition() {return Vec2{m_xPos, m_yPos};}
+    Vec2 GetPos() {return Vec2{m_xPos, m_yPos};}
 
     RootJob GetRootJob() const {return m_root_job;}
+
+    bool IsAlive(){return m_CurrentState != PlayerState::DEAD ? true : false;}
 
 public:
 
@@ -68,6 +71,12 @@ public:
     void AddMP(int MP);
 
     int GetItemCount(int itemId) const;
+
+    // 현재 공격을 받을 수 있는 상태인지 확인하는 함수 : 메이플에서 피격 당할 시 1초 정도의 무적이 존재하기 때문에 확인 함수 필요
+    bool CanTakeAnyContactDamage(int64_t nowMs);
+
+    // 플레이어가 피격 당했을 때 처리하는 함수
+    void OnContactDamaged(int64_t nowMs);
 private:
     int m_char_id;
     std::string m_account_id;
@@ -100,5 +109,6 @@ private:
     bool m_isChangedPositon;
     CharacterStat m_stat;
    
-
+    int64_t m_nextContactDamageAllowedMs;
+    int64_t m_contactDamageCooldownMs;
 };

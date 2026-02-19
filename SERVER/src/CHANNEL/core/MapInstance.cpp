@@ -232,7 +232,7 @@ void MapInstance::HandleMove(Player* sender, Vec2 pos, float speed)
 		return;
 	}
 
-	sender->SetPosition(pos);
+	sender->SetPos(pos);
 
 	BroadcastMoveExcept(sender, pos, speed);
 }
@@ -324,4 +324,26 @@ void MapInstance::BroadcastMonsterHit(Player* Attacker, std::string SkillID, std
 void MapInstance::ProcessContactDamage(int64_t nowMs)
 {
    (void)nowMs;
+
+   for(auto p : m_playerList)
+   {
+		Player* player = p.second;
+		if(!player || !player->IsAlive()) continue;
+
+		if(!player->CanTakeAnyContactDamage(nowMs)) continue;
+
+		const Vec2 player_pos = player->GetPos();
+
+		for(Monster& monster : m_monsterList)
+		{
+			if(!monster.IsAlive()) continue;
+
+			const Vec2 monster_pos = monster.GetPos();
+			//if()
+
+
+
+		}
+   }
+
 }

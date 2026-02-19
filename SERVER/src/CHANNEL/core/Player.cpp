@@ -248,3 +248,17 @@ void Player::AddMP(int MP)
     if (m_stat.GetCurMp() > m_stat.GetMaxMp()) m_stat.GetCurMp() = m_stat.GetMaxMp();
     // if (m_stat.GetCurMp() < 0) m_stat.GetCurMp() = 0; //Mp깎일때 조건사용 ex)스킬 사용시 MP 감소할때
 }
+
+
+bool Player::CanTakeAnyContactDamage(int64_t nowMs)
+{
+    return nowMs >= m_nextContactDamageAllowedMs;
+}
+
+
+void Player::OnContactDamaged(int64_t nowMs)
+{
+  
+    // 다음 피격 가능 시간 설정
+    m_nextContactDamageAllowedMs = nowMs + m_contactDamageCooldownMs;
+}

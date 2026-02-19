@@ -81,7 +81,7 @@ std::vector<Monster*> CombatService::ComputeHitMonsters(Player* attacker, const 
     // 공격 방향에 따라서 곱해주는 값 설정
     int dir = attack_dir == "Left" ? -1 : 1;
 
-    attackerPos = attacker->GetPosition();
+    attackerPos = attacker->GetPos();
 
     for (Monster m : monsters)
     {
