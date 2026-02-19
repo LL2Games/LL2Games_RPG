@@ -19,7 +19,6 @@ enum class MonsterType {
     PIG
 };
 
-
 struct Vec2{
     float xPos;
     float yPos;
@@ -42,11 +41,13 @@ struct MonsterTemplate {
     float exp;
     float moveSpeed;
     std::string name;
+
+    uint16_t mapId;
 };
 
 
 typedef struct MapInitData{
-    uint16_t mapID;
+    uint32_t mapID;
 	std::string name;
     std::vector<MonsterSpawnData> MonstersData;
 

@@ -66,8 +66,16 @@ public:
     //조회용 인터페이스
     const BaseStat& GetBase() const { return m_base; }
     const DerivedStat& GetDerived() const {return m_derived; }
+
+    int& GetCurHp() {return m_cur_hp;}
     int GetCurHp() const {return m_cur_hp;}
+
+    int& GetCurMp() {return m_cur_mp;}
     int GetCurMp() const {return m_cur_mp;}
+
+    int GetMaxHp() const {return m_derived.maxHp;}
+    int GetMaxMp() const {return m_derived.maxMp;}
+
     int GetRemainAp() const {return m_remain_ap;}
 
 public:

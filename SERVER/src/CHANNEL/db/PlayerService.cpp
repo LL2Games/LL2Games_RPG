@@ -98,7 +98,7 @@ std::unique_ptr<Player> PlayerService::LoadPlayer(int characterId)
         playerInit.name = row[2];
         playerInit.level = std::atoi(row[3]);
         playerInit.job = std::atoi(row[4]);
-        playerInit.root_job = std::atoi(row[5]);
+        playerInit.root_job = std::atoi(row[7]); //root_job 컬럼 숫자
 
         K_slog_trace(K_SLOG_TRACE, "LoadPlayer SUCCESS [%d]", player->GetId());    
     }

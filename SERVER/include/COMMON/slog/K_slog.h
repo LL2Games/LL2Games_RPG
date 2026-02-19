@@ -1,6 +1,8 @@
 #pragma once
 #include "slog.h"
 
+//#define SLOG_DEBUG(x, y) K_slog_trace(K_SLOG_DEBUG, x, __FUNCTION__, __LINE__, y)
+
 enum e_slog
 {
     K_SLOG_NONE = 0, // 로그 출력 없음

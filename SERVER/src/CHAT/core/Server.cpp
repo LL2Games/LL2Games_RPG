@@ -13,6 +13,14 @@
 #define DAEMON_NAME "CHAT_DAEMON"
 #define BUFFER_SIZE 1024
 
+#define MSG_KEY 1234
+#define MSG_COMMAND_SEND 1
+#define MSG_COMMAND_RECV 2
+
+Server::Server() : m_dispatcher(MSG_KEY, MSG_COMMAND_SEND, MSG_COMMAND_RECV)
+{
+}
+
 bool Server::Init(const int port)
 {
     m_listenFd = socket(AF_INET, SOCK_STREAM, 0);
@@ -139,6 +147,7 @@ void Server::ProcessClient(Client *cli)
 
     auto handler = m_factory.Create(pkt->type);
     PacketContext ctx;
+    ctx.dispatcher = &m_dispatcher;
     ctx.client = cli;
     ctx.clients = &m_clients;
     ctx.payload = (char *)pkt->payload.c_str();

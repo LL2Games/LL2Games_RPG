@@ -1,7 +1,13 @@
+
 #include "ChannelServer.h"
 #include "common.h"
+#include "thread"
 
-ChannelServer::ChannelServer() : m_channel_id(0), m_listen_fd(0), m_epfd(0), m_running(false), m_map_service(m_player_mamager, m_map_manager)
+
+#define THREAD_POOL_COUNT 4
+
+
+ChannelServer::ChannelServer() : m_channel_id(0), m_listen_fd(0), m_epfd(0), m_running(false), m_map_manager(this), m_map_service(m_player_mamager, m_map_manager), m_pool(THREAD_POOL_COUNT)
 {
     m_item_manager = ItemManager::GetInstance();
 }
@@ -20,9 +26,6 @@ int ChannelServer::SetNonblocking(int fd)
     if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1) return -1;
     return 0;
 }
-
-
-
 
 bool ChannelServer::Init(const int port)
 {
@@ -45,9 +48,16 @@ bool ChannelServer::Init(const int port)
         return false;
    }
 
+   //스레드풀 시작
+   m_pool.Start();
+   //chatD 메시지큐 리시버 스레드 시작
+   m_cmd_receiver.Start();
+
+   
+   //맵매니저 스레드 시작
+   m_map_manager.Start();
+
    return true;
-
-
 }
 
 bool ChannelServer::InitListenSocket(int port)

@@ -26,6 +26,7 @@ public:
     int SetMonster(MonsterType monsterType);
     //int LoadMonsters(int monster_id);
     int Update();
+    int UpdateMonster();
     int SpawnMonster();
 
     void RemoveMap();
@@ -42,16 +43,14 @@ public:
     void HandleMonsterDead(Monster& monster);
 
     void GiveExp(int platerID, float exp);
-
     void GiveItem(int ItemGroup);
-
     void HandleMove(Player* sender, Vec2 pos, float speed);
-
-    void BroadcastMoveExcept(Player* sender, Vec2 pos, float speed);
-
-    void BroadcastMonsterHit(Player* Attacker, std::string SkillID, std::vector<MonsterHitResult> result);
-
     void ResolveSkillHit(Player* Attacker, SkillDef& skillDef, std::vector<std::pair<Monster*, int>> hits);
+    
+private:
+    void BroadcastMoveExcept(Player* sender, Vec2 pos, float speed);
+    void BroadcastMonsterHit(Player* Attacker, std::string SkillID, std::vector<MonsterHitResult> result);
+    void BroadcastMapInfo();
 
     void ProcessContactDamage(int64_t nowMs);
 public:

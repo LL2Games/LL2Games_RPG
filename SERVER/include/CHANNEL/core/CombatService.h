@@ -1,3 +1,5 @@
+#pragma once
+
 #include "common.h"
 #include "SkillService.h"
 #include "MapInstance.h"

@@ -1,7 +1,8 @@
 #include "SkillService.h"
+#include <string>
 
 
-#define SKILL_PATH "../src/CHANNEL/data/Skill"
+#define SKILL_PATH "../src/CHANNEL/data/Skills/"
 
 SkillService *SkillService::m_instance =nullptr;
 
@@ -58,16 +59,45 @@ std::optional<SkillDef> SkillService::GetOrLoadSkill(std::string skill_id)
 
 void SkillService::LoadSkill(nlohmann::json& j, SkillDef& skillDef)
 {
+    #if 1 //gunoo22 temp
+    {
+        int nTmp = j["skill_id"];
+        skillDef.skill_id = std::to_string(nTmp);
+    }
+    #else
     skillDef.skill_id = j["skill_id"];
-	skillDef.key = j["mapId"];
+    #endif
+	skillDef.key = j["key"];
+    #if 1 //gunoo22 temp
+    {
+        std::string sTmp = j["type"];
+        if (sTmp == "MELEE_ARC")
+             skillDef.type = SkillType::MELEE_ARC;
+        else
+            K_slog_trace(K_SLOG_ERROR, "[%s][%d] Unknown Skill Type [%s]", __FUNCTION__, __LINE__, sTmp.c_str());
+    }
+    #else
 	skillDef.type =j["type"];
+    #endif
     skillDef.cooldown_ms =j["cooldown_ms"];
     skillDef.mp_cost = j["mp_cost"];
 
     // Skill Json 파일에서 Hit 배열의 정보들을 반복문을 통해 설정
     for(const auto& hitData : j["hit"])
     {
+        #if 1 //gunoo22 temp
+        {
+            std::string sTmp = hitData["shape"];
+            if (sTmp == "ARC")
+            {
+                skillDef.hit.shape = HitShape::ARC;
+            }
+            else
+                K_slog_trace(K_SLOG_ERROR, "[%s][%d] Unknown Hit Shape [%s]", __FUNCTION__, __LINE__, sTmp.c_str());
+        }
+        #else
         skillDef.hit.shape = hitData["shape"];
+        #endif
         skillDef.hit.range = hitData["range"];
         skillDef.hit.angle_deg = hitData["angle_deg"];
         skillDef.hit.max_targets = hitData["max_targets"];
@@ -86,18 +116,29 @@ void SkillService::LoadSkill(nlohmann::json& j, SkillDef& skillDef)
     {
         skillDef.Requirements.root_job = require["root"];
         skillDef.Requirements.min_tier= require["min_tier"];
-        skillDef.Requirements.min_skill_level= require["min_skill_levelrequires"];
+        skillDef.Requirements.min_skill_level= require["min_skill_level"];
     }
 
      // Skill Json 파일에서 effect 배열의 정보들을 반복문을 통해 설정
     for(const auto& effects : j["effects"])
     {
         EffectDef effect;
+        #if 1 //gunoo22 temp
+        {
+            std::string sTmp = effects["type"];
+            if (sTmp == "KNOCKBACK")
+                effect.type = EffectType::KNOCKBACK;
+            else
+                K_slog_trace(K_SLOG_ERROR, "[%s][%d] Unknown Effect Type [%s]", __FUNCTION__, __LINE__, sTmp.c_str());
+        }
+        #else
         effect.type = effects["type"];
+        #endif
         effect.value = effects["force"];
         skillDef.effects.emplace_back(effect);
     }
-    
+
+
     K_slog_trace(K_SLOG_TRACE, "[%s][%d] SkillLoad Success", __FUNCTION__, __LINE__);
 
 }

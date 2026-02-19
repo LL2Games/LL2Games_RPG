@@ -23,7 +23,7 @@ int MySqlConnectionPool::Init(const int pool_size)
              continue;
         }
                                     //host, user, passwd, db, port, unix_socket, clientflag
-#if 1 
+#if 0 
         result = mysql_real_connect(conn, nullptr, nullptr, nullptr, nullptr, 0, nullptr,0);
 #else
         //result = mysql_real_connect(conn, nullptr, nullptr, nullptr, nullptr, 0, nullptr,0);

@@ -3,10 +3,11 @@
 #include "Monster.h"
 #include <nlohmann/json.hpp>
 #include <fstream>
+#include "CommonEnum.h"
 
 #define MAPDELETELIMIT 5
 
-MapInstance::MapInstance() : m_limit(std::chrono::minutes{MAPDELETELIMIT})
+MapInstance::MapInstance() : m_playerCount(0), m_limit(std::chrono::minutes{MAPDELETELIMIT})
 {
 	m_monsterManager = MonsterManager::GetInstance();
 }
@@ -21,19 +22,63 @@ int MapInstance::Init(const MapInitData& data)
     this->m_mapID = data.mapID;
 	// 여기서 Map Json 파일에서 읽어온 몬스터 정보 저장
     this->m_monsterSpawnList = data.MonstersData;
+
+#if 1 //guno22_TEST
+	{
+		//"100000000”
+		std::vector<MonsterSpawnData>& list = this->m_monsterSpawnList;
+		K_slog_trace(K_SLOG_DEBUG, "[%s][%d]gunoo22_TEST size[%d]", __FUNCTION__, __LINE__, list.size());
+		for (auto& m : list)
+		{
+			K_slog_trace(K_SLOG_DEBUG, "[%s][%d]gunoo22_TEST m.monsterId[%d]", __FUNCTION__, __LINE__, m.monsterId);
+		}
+	}
+#endif
+	InitSpawnMonster();
     return 1;
 }
 
 int MapInstance::Update()
 {
-	SpawnMonster();
-
 	if(!m_has_player)
 	{
 		RemoveMap();
 	}
-	
+	else
+	{
+		SpawnMonster();
+		UpdateMonster();
+		BroadcastMapInfo();
+	}
+
     return 1;
+}
+
+//맵내에 있는 모든사용자에게 Update시 보내주는 정보
+void MapInstance::BroadcastMapInfo()
+{
+	std::vector<std::string> payload;	
+
+	K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d]m_monsterList[size:%d]", __FILE__, __FUNCTION__, __LINE__, m_monsterList.size());
+	for (auto& monster : m_monsterList)
+	{
+		if (monster.IsAlive())
+		{
+			payload.push_back(std::to_string(monster.GetInstanceId()));
+			payload.push_back(std::to_string(monster.GetPos().xPos));
+			payload.push_back(std::to_string(monster.GetPos().yPos));
+			payload.push_back(std::to_string(monster.GetCurrentHP()));
+			payload.push_back(std::to_string(monster.GetMaxHP()));
+		}
+	}
+	
+	
+	K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d]m_playerList[size:%d]", __FILE__, __FUNCTION__, __LINE__, m_playerList.size());
+	for(auto it = m_playerList.begin(); it != m_playerList.end(); ++it)
+	{	
+		auto session = it->second->GetSession();	
+		session->Send(PKT_MONSTER_MOVE, payload);
+	}
 }
 
 int MapInstance::InitSpawnMonster()
@@ -41,16 +86,19 @@ int MapInstance::InitSpawnMonster()
 	int instanceId = 1;
     m_monsterList.reserve(m_monsterSpawnList.size());
 	
-    for(m_monsterSpawnListIter = m_monsterSpawnList.begin(); m_monsterSpawnListIter < m_monsterSpawnList.end(); ++m_monsterListIter)
+	
+	//K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d]gunoo22_TEST", __FILE__, __FUNCTION__, __LINE__);
+    for(m_monsterSpawnListIter = m_monsterSpawnList.begin(); m_monsterSpawnListIter < m_monsterSpawnList.end(); ++m_monsterSpawnListIter)
     {
         Monster monster;
        
+		//K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d]gunoo22_TEST", __FILE__, __FUNCTION__, __LINE__);
 		if(!m_monsterManager->EnsureLoaded(m_monsterSpawnListIter->monsterId))
 		{
 			K_slog_trace(K_SLOG_ERROR, "[%s][%d] FAILED OPEN [%s] FILE", __FUNCTION__, __LINE__, m_monsterSpawnListIter->monsterId);
 			return -1;
 		}
-			
+		//K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d]gunoo22_TEST", __FILE__, __FUNCTION__, __LINE__);	
 		
 		auto monsterTemplate = m_monsterManager->GetMonsterData(m_monsterSpawnListIter->monsterId);
 		
@@ -58,34 +106,50 @@ int MapInstance::InitSpawnMonster()
 		m_monsterSpawnListIter->instanceId = instanceId;
 		instanceId++;
 
-		if(monsterTemplate)
+		//K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d]gunoo22_TEST", __FILE__, __FUNCTION__, __LINE__);
+		if(monsterTemplate.has_value())
 		{
+			(*monsterTemplate).mapId = m_mapID;
 			monster.Init(*monsterTemplate, *m_monsterSpawnListIter);
 		}else {
 			K_slog_trace(K_SLOG_ERROR, "[%s][%d] MonsterTemplate Get Failed Monster_Id[%d] FILE", __FUNCTION__, __LINE__, m_monsterSpawnListIter->monsterId);
 			return -1;
 		}
+		//K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d]gunoo22_TEST", __FILE__, __FUNCTION__, __LINE__);
 			
         m_monsterList.push_back(monster);
+		//K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d]gunoo22_TEST", __FILE__, __FUNCTION__, __LINE__);
     }
 
     return 1;
 }   
 
+int MapInstance::UpdateMonster()
+{
+	//K_slog_trace(K_SLOG_ERROR, "[%s][%d] 몬스터 업데이트 시작", __FUNCTION__, __LINE__);
+	for(auto& monster : m_monsterList) 
+	{
+		if(monster.IsAlive())
+		{
+			monster.Update();
+		}
+	}
+
+	return 1;
+}
+
 int MapInstance::SpawnMonster()
 {
 	auto now = std::chrono::steady_clock::now();
 	
-	K_slog_trace(K_SLOG_ERROR, "[%s][%d] 몬스터 리스폰 시작", __FUNCTION__, __LINE__);
-	
-	
-	for(auto& Monsters : m_monsterList) 
+	//K_slog_trace(K_SLOG_TRACE, "[%s][%d] 몬스터 리스폰 시작", __FUNCTION__, __LINE__);
+	for(auto& monster : m_monsterList) 
 	{
-		if(Monsters.IsAlive()) continue;
+		if(monster.IsAlive()) continue;
 		
-		if(Monsters.CheckRespawnTime(now))
+		if(monster.CheckRespawnTime(now))
 		{
-			Monsters.Reset();
+			monster.Reset();
 		}
 	}
 	
@@ -106,6 +170,8 @@ void MapInstance::OnEnter(int PlayerID, Player* player)
         m_emptyTime = {};
     }
 	m_playerCount++;
+	K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d] PlayerID(%d)", __FILE__, __FUNCTION__, __LINE__, PlayerID);
+	K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d] m_playerCount(%d)", __FILE__, __FUNCTION__, __LINE__, m_playerCount);
 }
 
 void MapInstance::OnLeave(int PlayerID)
@@ -123,6 +189,9 @@ void MapInstance::OnLeave(int PlayerID)
 		m_has_player = false;
 		m_destroyRequested = false;
 	}
+
+	K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d] PlayerID(%d)", __FILE__, __FUNCTION__, __LINE__, PlayerID);
+	K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d] m_playerCount(%d)", __FILE__, __FUNCTION__, __LINE__, m_playerCount);
 }
 
 void MapInstance::HandleMonsterDead(Monster& monster)

@@ -3,6 +3,7 @@
 #include "PacketParser.h"
 #include "IPacketFactory.h"
 #include "Packet.h"
+#include "MapInstance.h"
 
 ChannelSession::ChannelSession(int fd, ChannelServer* server) : m_fd(fd), m_server(server)
 {
@@ -11,6 +12,17 @@ ChannelSession::ChannelSession(int fd, ChannelServer* server) : m_fd(fd), m_serv
 
 ChannelSession::~ChannelSession()
 {
+    if (m_player != nullptr)
+    {
+        MapInstance *map = m_player->GetCurrentMap();
+        if (map != nullptr)
+        {
+            //플레이어 접속 종료시 해당맵에서 퇴장
+            map->OnLeave(m_player->GetId());
+            K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d] map->OnLeave(Id:%d)", __FILE__, __FUNCTION__, __LINE__, m_player->GetId());
+        }
+    }
+    K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d] ChannelSession Destroy(fd:%d)", __FILE__, __FUNCTION__, __LINE__, m_fd);
 }
 
 
@@ -47,6 +59,7 @@ bool ChannelSession::OnBytes(const uint8_t* data, size_t len)
             ctx.player_service = m_server->GetPlayerService();
             ctx.stat_service = m_server->GetStatService();
             ctx.item_service = m_server->GetItemService();
+            ctx.combat_service = m_server->GetCombatService();
         }
         
         handler->Execute(&ctx);

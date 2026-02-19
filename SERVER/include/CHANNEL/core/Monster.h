@@ -13,6 +13,11 @@ struct MonsterHitResult {
     bool dead;
 };
 
+enum MonsterState {
+	E_Patrol,
+	E_Chase,
+	E_Dead,
+};
 
 
 class Monster
@@ -25,7 +30,9 @@ public:
 	int Init(const MonsterTemplate& monsterTemplate, const MonsterSpawnData& monsterspawnData);
 	
 	// 몬스터 업데이트
-	int Update();
+	int Update(float dt = 1.0f);
+	int UpdatePatrol(float dt= 1.0f); 
+	int UpdateChase(float dt= 1.0f);
 
 	// 몬스터 사망
 	int Dead();
@@ -49,7 +56,8 @@ public:
 
 	bool IsAlive() {return m_isAlive;}
 
-	int GetLastAttackerID() {return m_lastAttacker;}
+	int GetLastAttackerID() {return m_lastAttackerId;}
+	Player* GetLastAttacker() {return m_lastAttacker;}
 
 	float GetExp(){return m_exp;}
 
@@ -64,6 +72,10 @@ private:
     Vec2 m_Pos;
 	Vec2 m_spawnPos;
 
+	float m_rightBound;
+	float m_leftBound;
+	float m_dir;
+
     bool m_isAlive;
 	bool m_deadRequest; 
 	
@@ -72,7 +84,7 @@ private:
     int m_maxhp;
 
     //몬스터 상태 값 나중에 추가해야함
-    //MonsterState state;
+    MonsterState m_state;
 	float m_exp;
     float m_attackDamage;
     int m_level;
@@ -89,6 +101,9 @@ private:
 	// 몬스터 아이템 드롭 그룹
 	int m_itemGroup;
 	
-	int m_lastAttacker;
+	int m_lastAttackerId;
+	Player *m_lastAttacker;
 
+	//스폰된 맵 ID
+	uint16_t m_mapId; 
 };

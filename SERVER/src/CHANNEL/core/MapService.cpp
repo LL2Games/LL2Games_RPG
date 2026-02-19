@@ -1,7 +1,7 @@
 #include "MapService.h"
 #include "Player.h"
 #include "MapInstance.h"
-
+#include "MapManager.h"
 
 MapService::MapService(PlayerManager& playermanager, MapManager& mapManager) : m_playerManager(playermanager), m_MapManger(mapManager)
 {

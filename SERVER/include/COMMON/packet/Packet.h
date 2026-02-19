@@ -22,6 +22,9 @@ class MapService;
 class StatService;
 class ItemManager;
 class ItemService;
+class CombatService;
+
+class CommandDispatcher;
 
 
 #define BUFFER_SIZE 1024
@@ -74,6 +77,7 @@ struct PacketContext
     // Chat에서 사용
     std::vector<Client*>* clients = nullptr;
     std::function<void(const std::string&, const std::string&, int)>broadcast;
+    CommandDispatcher* dispatcher = nullptr;
 
     //World
     WorldSession *world_session = nullptr;
@@ -88,6 +92,7 @@ struct PacketContext
     StatService* stat_service = nullptr;
     ItemManager* item_manager =nullptr;
     ItemService* item_service = nullptr;
+    CombatService* combat_service = nullptr;
 };
 
 typedef struct packet

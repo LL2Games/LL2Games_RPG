@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include <vector>
 #include "DaemonFactory.h"
 #include "ProcessMonitor.h"
 
@@ -22,7 +23,13 @@ private:
 
 private:
     static ProcessManager *s_Instance;
-    std::unique_ptr<BaseDaemon> m_login, m_chat, m_world, m_channel;
+    std::unique_ptr<BaseDaemon> m_login;
+    std::unique_ptr<BaseDaemon> m_world;
+
+
+    std::vector<std::unique_ptr<BaseDaemon>> m_channels;
+    std::vector<std::unique_ptr<BaseDaemon>> m_chats;
+
     ProcessMonitor m_monitor;
 
 public:
