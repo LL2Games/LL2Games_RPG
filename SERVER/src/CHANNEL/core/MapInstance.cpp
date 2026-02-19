@@ -254,5 +254,5 @@ void MapInstance::BroadcastMonsterHit(Player* Attacker, std::string SkillID, std
 
 void MapInstance::ProcessContactDamage(int64_t nowMs)
 {
-   
+   (void)nowMs;
 }

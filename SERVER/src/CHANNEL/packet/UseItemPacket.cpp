@@ -95,10 +95,10 @@ void UseItemPacket(PacketContext * ctx)
     
 err:
     if (rc != EXIT_SUCCESS) {
-        session->SendNok(PKT_ENTER_MAP, errMsg);
+        session->SendNok(PKT_PLAYER_USE_ITEM, errMsg);
     } else {
         K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] UseItemPacket END", __FILE__, __FUNCTION__, __LINE__);
-        session->SendOk(PKT_ENTER_MAP);
+        session->SendOk(PKT_PLAYER_USE_ITEM);
     }
 
 
