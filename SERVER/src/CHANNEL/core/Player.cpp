@@ -3,7 +3,7 @@
 #include "ItemManager.h"
 
 
-Player::Player() : m_char_id(0), m_name(""), m_cur_hp(30), m_max_hp(100)
+Player::Player() : m_char_id(0), m_name("")
 {
 }
 
@@ -59,8 +59,28 @@ void Player::SetInitData(const PlayerInitData playerInitData, const CharacterSta
     this->m_stat = stat;
 
 
-#if 1 /*ITEM 사용 테스트를 위한 Inven 채우기 */
+#if 1 //테스트용
+    /*ITEM 사용 테스트를 위한 Inven 채우기 */
     m_inven[2000000] = 100;
+
+    //HP물약회복 테스트를 위한 HP 임시세팅
+    m_stat.GetCurHp() = 10;
+
+    //스킬테스트를 위한 임시데이터 삽입
+    m_learnedSkills["20001"] = 1; //스킬ID 20001을 레벨 1로 배웠다고 가정
+#endif  
+
+#if 0 /*gunoo22 260219 테스트로그*/
+    K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d]gunoo22_TEST Player SetInitData", __FILE__, __FUNCTION__, __LINE__);
+    K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d]gunoo22_TEST char_id[%d]", __FILE__, __FUNCTION__, __LINE__, playerInitData.char_id);
+    K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d]gunoo22_TEST account_id[%s]", __FILE__, __FUNCTION__, __LINE__, playerInitData.account_id.c_str());
+    K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d]gunoo22_TEST name[%s]", __FILE__, __FUNCTION__, __LINE__, playerInitData.name.c_str());
+    K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d]gunoo22_TEST level[%d]", __FILE__, __FUNCTION__, __LINE__, playerInitData.level);
+    K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d]gunoo22_TEST job[%d]", __FILE__, __FUNCTION__, __LINE__, playerInitData.job);
+    K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d]gunoo22_TEST root_job[%d]", __FILE__, __FUNCTION__, __LINE__, playerInitData.root_job);
+    K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d]gunoo22_TEST map_id[%d]", __FILE__, __FUNCTION__, __LINE__, playerInitData.map_id);
+    K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d]gunoo22_TEST xPos[%f]", __FILE__, __FUNCTION__, __LINE__, playerInitData.xPos);
+    K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d]gunoo22_TEST yPos[%f]", __FILE__, __FUNCTION__, __LINE__, playerInitData.yPos);
 #endif
 }
 
@@ -93,7 +113,7 @@ bool Player::CanAttack(SkillDef* skillDef)
     }
 
     // 플레이어의 마나가 충분한지 확인한다.
-    if(m_cur_mp < skillDef->mp_cost)
+    if(m_stat.GetCurMp() < skillDef->mp_cost)
     {
         K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] 마나가 부족합니다.\n", __FILE__, __FUNCTION__, __LINE__);
         return false;
@@ -215,16 +235,16 @@ int Player::GetSkillLevel(std::string skill_id) const
 
 void Player::AddHP(int HP)
 {
-    K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] 현재 체력 [%d].\n", __FILE__, __FUNCTION__, __LINE__,m_cur_hp);
+    K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] 현재 체력 [%d].\n", __FILE__, __FUNCTION__, __LINE__,m_stat.GetCurHp());
     K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] 추가 체력 [%d].\n", __FILE__, __FUNCTION__, __LINE__,HP);
-    m_cur_hp += HP;
-    if (m_cur_hp > m_max_hp) m_cur_hp = m_max_hp;
-    if (m_cur_hp < 0) m_cur_hp = 0;
+    m_stat.GetCurHp() += HP;
+    if (m_stat.GetCurHp() > m_stat.GetMaxHp()) m_stat.GetCurHp() = m_stat.GetMaxHp();
+    // if (m_stat.GetCurHp() < 0) m_stat.GetCurHp() = 0; //체력깎일때 조건사용 ex)OnDamage에서 HP 감소할 때
 }
 
 void Player::AddMP(int MP)
 {
-    m_cur_mp += MP;
-    if (m_cur_mp > m_max_mp) m_cur_mp = m_max_mp;
-    if (m_cur_mp < 0) m_cur_mp = 0;
+    m_stat.GetCurMp() += MP;
+    if (m_stat.GetCurMp() > m_stat.GetMaxMp()) m_stat.GetCurMp() = m_stat.GetMaxMp();
+    // if (m_stat.GetCurMp() < 0) m_stat.GetCurMp() = 0; //Mp깎일때 조건사용 ex)스킬 사용시 MP 감소할때
 }

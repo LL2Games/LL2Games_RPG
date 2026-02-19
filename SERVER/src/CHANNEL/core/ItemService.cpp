@@ -28,8 +28,8 @@ int ItemService::HandleUseItem(Player* player, int itemId, int useCount, UseItem
     // 해당 플레이어한테 체력 변경 전달 및 아이템 사용 동기화
     // is_use가 현재 bool 형인데 나중에 err_code 보내는 것으로 변경 해야함 
     result.result = is_use;
-    result.hp = player->GetCurrHP();
-    result.mp = player->GetCurrMP();
+    result.hp = player->GetCurHP();
+    result.mp = player->GetCurMP();
     result.item_id = itemId;
     result.used_count = useCount;
     result.remain_count = player->GetItemCount(itemId);

@@ -37,8 +37,6 @@ public:
     void SetCurrentMap(MapInstance* map) {m_current_map = map;}
     void SetSession(ChannelSession* session) {m_session = session;}
 
-    int GetCurrHP(){return m_cur_hp;}
-    int GetCurrMP(){return m_cur_mp;}
 
     int GetId() {return m_char_id;}
     std::string GetName() {return m_name;}
@@ -48,6 +46,9 @@ public:
     //stat
     CharacterStat& GetStat() {return m_stat;}
     const CharacterStat& GetStat() const {return m_stat;}    
+    int GetCurHP(){return m_stat.GetCurHp();}
+    int GetCurMP(){return m_stat.GetCurMp();}
+
     Vec2 GetPosition() {return Vec2{m_xPos, m_yPos};}
 
     RootJob GetRootJob() const {return m_root_job;}
@@ -80,11 +81,6 @@ private:
     float m_xPos;
     float m_yPos;
 
-    int m_cur_hp;
-    int m_cur_mp;
-
-    int m_max_hp;
-    int m_max_mp;
 
     MapInstance* m_current_map;
     ChannelSession* m_session;

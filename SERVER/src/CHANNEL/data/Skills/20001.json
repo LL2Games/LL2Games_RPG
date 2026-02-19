@@ -4,12 +4,12 @@
   "type": "MELEE_ARC",
 
   "cooldown_ms": 500,
-  "mp_cost": 0,
+  "mp_cost": 10,
 
-  "requirements": {"root": 20000,"min_tier": 1,"min_skill_level": 1},
+  "requirements": [{"root": 20000,"min_tier": 1,"min_skill_level": 1}],
 
-  "hit": { "shape": "ARC", "range": 120.0, "angle_deg": 60.0, "max_targets": 6, "hit_count": 1 },
-  "damage": { "multiplier": 1.2, "flat_add": 0 },
+  "hit": [{ "shape": "ARC", "range": 120.0, "angle_deg": 60.0, "max_targets": 6, "hit_count": 1 }],
+  "damage": [{ "multiplier": 1.2, "flat_add": 0 }],
 
   "effects": [
     { "type": "KNOCKBACK", "force": 200.0 }

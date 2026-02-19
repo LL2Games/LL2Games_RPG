@@ -23,6 +23,8 @@ int CombatService::HandleAttack(Player* Attacker, std::string skill_id, std::str
 
     if(!skillDef) return 0;
 
+    K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d]++++++CUR_MP+++++[%d]", __FILE__, __FUNCTION__, __LINE__, Attacker->GetCurMP());
+
     //캐릭터가 공격 가능 상태인지 확인
     if(!Attacker->CanAttack(&*skillDef))
     {
