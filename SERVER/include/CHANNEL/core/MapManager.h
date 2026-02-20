@@ -19,7 +19,7 @@ public:
     MapManager(ChannelServer *server);
     ~MapManager();
 
-    void Init();
+    bool Init();
     MapInstance* GetOrCreate(int mapId);
     bool PreLoadAll();
     void LoadMonster(nlohmann::json& j, std::vector<MonsterSpawnData>& MonstersData);

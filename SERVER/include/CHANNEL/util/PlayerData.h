@@ -12,19 +12,22 @@ enum class RootJob : int
     Unknown = 0
 };
 
-
-inline RootJob ToRootJob(int code)
+namespace PlayerData
 {
-    switch(code)
+    inline RootJob ToRootJob(int code)
     {
-        case 20000: return RootJob::Knight;
-        case 21000: return RootJob::Mage;
-        case 22000: return RootJob::Archer;
-        case 23000: return RootJob::Thief;
-        case 29000: return RootJob::Common;
-        default:    return RootJob::Unknown;
-    }
-};
+        switch(code)
+        {
+            case 20000: return RootJob::Knight;
+            case 21000: return RootJob::Mage;
+            case 22000: return RootJob::Archer;
+            case 23000: return RootJob::Thief;
+            case 29000: return RootJob::Common;
+            default:    return RootJob::Unknown;
+        }
+    };
+
+}
 
 
 struct PlayerInitData{

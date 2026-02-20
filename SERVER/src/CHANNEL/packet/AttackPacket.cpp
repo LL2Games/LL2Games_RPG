@@ -4,6 +4,7 @@
 #include "CombatService.h"
 #include "ChannelServer.h"
 #include "Player.h"
+#include "utility.h"
 
  // 플레이어가 공격 했을 때 피격 당하는 몬스터
 
@@ -18,9 +19,11 @@ void AttackPacket(PacketContext * ctx)
     size_t offset = 0;
     int rc = EXIT_SUCCESS;
 
-    std::string skill_id;
+    std::string skill_id_str;
     std::string attack_dir;
     std::string errMsg;
+
+    int skill_id = 0;
      
     if(ctx == nullptr)
     {
@@ -62,7 +65,7 @@ void AttackPacket(PacketContext * ctx)
         ctx->payload,
         ctx->payload_len,
         offset,
-        skill_id,
+        skill_id_str,
         errMsg
     ))
     {
@@ -85,13 +88,21 @@ void AttackPacket(PacketContext * ctx)
         goto err;
     }
 
+    if(!utility::StringToInt(skill_id_str, skill_id)) 
+    {
+        rc = EXIT_FAILURE;
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] StringToInt fail", __FILE__, __FUNCTION__, __LINE__);
+        goto err;
+    }
+
     combat_service->HandleAttack(player, skill_id, attack_dir);
+
 err:
-    if (rc != EXIT_SUCCESS) {
-        session->SendNok(PKT_ENTER_MAP, errMsg);
+    if (rc != EXIT_SUCCESS) { 
+        session->SendNok(PKT_PLAYER_ATTACK, errMsg);
     } else {
-        K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] MAP HANDLER END", __FILE__, __FUNCTION__, __LINE__);
-        session->SendOk(PKT_ENTER_MAP);
+        K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] Player Attack End", __FILE__, __FUNCTION__, __LINE__);
+        session->SendOk(PKT_PLAYER_ATTACK);
     }
 
 }

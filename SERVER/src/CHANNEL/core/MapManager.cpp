@@ -16,10 +16,11 @@ MapManager::~MapManager()
 {
 }
 
-void MapManager::Init()
+bool MapManager::Init()
 {
     // 서버 구동 시 Map 데이터 전부 읽어서 미리 저장
-    PreLoadAll();
+    if(!PreLoadAll()) return false;
+    return true;
 }
 
 void MapManager::Start()
@@ -163,9 +164,9 @@ bool MapManager::LoadJsonFile(int mapId, MapInitData &mapData)
     if (j.is_null())
         return false;
 
-    mapData.name = j["name"];
-    mapData.mapID = j["mapId"];
-    
+    mapData.name = j.at("name").get<std::string>();
+    mapData.mapID = j.at("mapId").get<u_int32_t>();
+
     // Json 파일에서 몬스터 데이터 읽어오기
     LoadMonster(j, mapData.MonstersData);
 
@@ -189,23 +190,21 @@ void MapManager::LoadMonster(nlohmann::json &j, std::vector<MonsterSpawnData>& M
 };
     */
 
-    auto MonsterCount = j["Monster"].size();
+    const auto& arr = j.at("monsters");
+    MonstersData.clear();
+    MonstersData.reserve(arr.size());
 
-    MonstersData.resize(MonsterCount);
-    // Json 파일에서 Monster 배열의 정보들을 반복문을 통해 설정
-    for (const auto &Monster : j["monsters"])
+    for (const auto& m : arr)
     {
         MonsterSpawnData data;
+        data.monsterId = m.at("monsterId").get<int>();   // 키 맞춰라
+        data.spawnPos.xPos = m.at("xPos").get<float>();     
+        data.spawnPos.yPos = m.at("yPos").get<float>();
+        data.ItemId = m.at("group").get<int>(); 
 
-        data.monsterId = Monster["monsterId"];
-        data.spawnPos.xPos = Monster["x"];
-        data.spawnPos.yPos = Monster["y"];
-        data.ItemId = Monster["group"];
-        MonstersData.push_back(data);
+        MonstersData.push_back(std::move(data));
     }
 
-    //gunoo22_TEST
-    K_slog_trace(K_SLOG_TRACE, "[%s][%d]gunoo22_TEST MonsterCount[%d]", __FUNCTION__, __LINE__, MonsterCount);
     for (auto &md : MonstersData)
     {
         K_slog_trace(K_SLOG_TRACE, "[%s][%d]gunoo22_TEST monsterid[%d]", __FUNCTION__, __LINE__, md.monsterId);

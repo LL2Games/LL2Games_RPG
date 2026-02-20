@@ -1,6 +1,10 @@
 #pragma once
-#include "CommonEnum.h"
 #include <cmath>
+
+struct Vec2{
+    float xPos;
+    float yPos;
+};
 
 static inline float Dot(const Vec2& a, const Vec2& b) { return a.xPos*b.xPos + a.yPos*b.yPos; }
 static inline Vec2  Sub(const Vec2& a, const Vec2& b) { return {a.xPos-b.xPos, a.yPos-b.yPos}; }

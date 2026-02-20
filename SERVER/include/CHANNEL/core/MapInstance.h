@@ -49,7 +49,7 @@ public:
     
 private:
     void BroadcastMoveExcept(Player* sender, Vec2 pos, float speed);
-    void BroadcastMonsterHit(Player* Attacker, std::string SkillID, std::vector<MonsterHitResult> result);
+    void BroadcastMonsterHit(Player* Attacker, int SkillID, std::vector<MonsterHitResult> result);
     void BroadcastMapInfo();
 
     void ProcessContactDamage(int64_t nowMs);
@@ -70,7 +70,9 @@ private:
    	// 플레이어가 맵에 있는지 없는지 판단 변수
     bool m_has_player;
     bool m_destroyRequested;
-	
+
+    // 플레이어-몬스터 접촉 판정용 거리 임계값(반지름^2). 거리^2와 비교한다.
+    float m_contactCheckRadiusSq;
 	// 플레이어 수 
 	uint16_t m_playerCount;
     uint16_t m_mapID;
@@ -92,7 +94,11 @@ private:
     // Map 사라지는 제한 시간
     std::chrono::minutes m_limit;
 
+
+    // 맵이 사라질 때 반환하는 예약 콜백 함수 
     DestroyReqFn m_onDestroyReq;
+
+
 
 
 };

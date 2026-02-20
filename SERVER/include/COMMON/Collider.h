@@ -1,8 +1,9 @@
 #pragma once
+#include "Math.h"
 #include <cmath>
 #include <algorithm>
 #include <cstdint>
-#include "CommonEnum.h"
+
 
 enum class ColliderType : uint8_t
 {
@@ -110,4 +111,55 @@ namespace Collision
 
         return false;
     }
+
+    inline ColliderType SetCollisionType(std::string type)
+    {
+        if(type == "Rect2D") return ColliderType::Rect2D;
+        if(type == "Circle2D") return ColliderType::Circle2D;
+        return ColliderType::None;
+    }
+
+
+    // Rect(halfW, halfH)를 거리 컷용 원 반지름으로 근사: 빠름(조금 타이트할 수 있음)
+    // 플레이어와 몬스터 사이의 거리가 일정 이상인 경우 피격 판정 여부 계산을 넘기기 위해서 사용
+    inline float RectToRadiusFast(float halfW, float halfH)
+    {
+        return std::max(halfW, halfH);
+    }
+
+    // Rect를 완전히 포함하는 외접원 반지름: 안전함(조금 큼)
+    inline float RectToRadiusSafe(float halfW, float halfH)
+    {
+        return std::sqrt(halfW*halfW + halfH*halfH);
+    }
+
+    // (플레이어 Rect + 몬스터 Rect) 기반 broad-phase 거리 컷 반지름 계산
+    // extra는
+    inline float MakeContactRadius_Rect(float pHalfW, float pHalfH,
+                                 float mHalfW, float mHalfH,
+                                 float extra)
+    {
+        float Rp = RectToRadiusFast(pHalfW, pHalfH);   // 또는 Safe
+        float Rm = RectToRadiusFast(mHalfW, mHalfH);
+
+        return Rp + Rm + extra;
+    }
+
+
+    /*
+    정말 타이트: 0~4
+
+    broad-phase로 무난: 8~16
+
+    프레임 이동량/네트워크 보정까지 넉넉: 16~32
+    */
+    inline float MakeContactRadiusSq_Rect(float pHalfW, float pHalfH,
+                                          float mHalfW, float mHalfH,
+                                          float extra)
+    {
+        const float r = MakeContactRadius_Rect(pHalfW, pHalfH, mHalfW, mHalfH, extra);
+        return r * r;
+    }
 }
+
+

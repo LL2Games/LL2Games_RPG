@@ -3,8 +3,8 @@
   "name": "Henesys",
   "respawnDelay" : 30, 
   "monsters": [
-    { "monsterId": 100100, "x": -300, "y": 0, "group": 1 },
-    { "monsterId": 100101, "x":  250, "y": 0, "group": 2 }
+    { "monsterId": 100100, "xPos": -300.0, "yPos": 0.0, "group": 1 },
+    { "monsterId": 100101, "xPos":  250.0, "yPos": 0.0, "group": 2 }
   ]
 }
 

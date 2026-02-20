@@ -1,4 +1,3 @@
-
 #include "ChannelServer.h"
 #include "common.h"
 #include "thread"
@@ -10,6 +9,8 @@
 ChannelServer::ChannelServer() : m_channel_id(0), m_listen_fd(0), m_epfd(0), m_running(false), m_map_manager(this), m_map_service(m_player_mamager, m_map_manager), m_pool(THREAD_POOL_COUNT)
 {
     m_item_manager = ItemManager::GetInstance();
+    m_monster_manager = MonsterManager::GetInstance();
+    m_skill_manager = SkillManager::GetInstance();
 }
 
 ChannelServer::~ChannelServer()
@@ -32,8 +33,10 @@ bool ChannelServer::Init(const int port)
     K_slog_trace(K_SLOG_TRACE, "[%s] Channel Server Init %d\n", "ChannelServer", port); 
 
     // 서버 구동 시 JSON 파일을 읽어온다.
-    m_map_manager.Init();
-    m_item_manager->Init();
+    if(!m_map_manager.Init()) return false;
+    if(!m_item_manager->Init()) return false;
+    if(m_monster_manager->Init()) return false;
+    if(m_skill_manager->Init()) return false;
 
 
    if(!InitListenSocket(port))

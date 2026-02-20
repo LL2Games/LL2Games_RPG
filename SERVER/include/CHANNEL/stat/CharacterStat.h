@@ -78,6 +78,8 @@ public:
 
     int GetRemainAp() const {return m_remain_ap;}
 
+    void SetCurMp(int cur_mp) {m_cur_mp = cur_mp;}
+
 public:
     void Up(const std::string & statType);
 

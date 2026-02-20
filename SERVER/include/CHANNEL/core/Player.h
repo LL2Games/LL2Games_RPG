@@ -63,9 +63,11 @@ public:
 
     bool CanUseItem(int itemId, int useCount);
 
-    int GetSkillLevel(std::string skill_id) const;
+    int GetSkillLevel(int skill_id) const;
 
+    void UseSkill(SkillDef* skillDef);
     bool UseItem(int itemId, int useCount);
+
 
     void AddHP(int HP);
     void AddMP(int MP);
@@ -97,9 +99,9 @@ private:
     PlayerState m_CurrentState;
 
     // 플레이어가 배운 스킬들 저장 string은 skillID, int는 스킬 레벨
-    std::unordered_map<std::string , int> m_learnedSkills;
+    std::unordered_map<int , int> m_learnedSkills;
     // 사용한 스킬쿨들을 저장
-    std::unordered_map<std::string, int64_t> skillCooldownEndMs;
+    std::unordered_map<int, int64_t> skillCooldownEndMs;
 
     // 플레이어가 들고 있는 아이템 정보들
     std::unordered_map<int, int> m_inven;
