@@ -35,8 +35,8 @@ bool ChannelServer::Init(const int port)
     // 서버 구동 시 JSON 파일을 읽어온다.
     if(!m_map_manager.Init()) return false;
     if(!m_item_manager->Init()) return false;
-    if(m_monster_manager->Init()) return false;
-    if(m_skill_manager->Init()) return false;
+    if(!m_monster_manager->Init()) return false;
+    if(!m_skill_manager->Init()) return false;
 
 
    if(!InitListenSocket(port))
