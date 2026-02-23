@@ -323,28 +323,32 @@ void MapInstance::BroadcastMonsterHit(Player* Attacker, int SkillID, std::vector
 
 void MapInstance::ProcessContactDamage(int64_t nowMs)
 {
-   (void)nowMs;
 
    for(auto p : m_playerList)
    {
 		Player* player = p.second;
+
+		// 플레이어가 죽었다면 스킵
 		if(!player || !player->IsAlive()) continue;
 
+		// 플레이어가 이미 피격 당했고 무적 상태라면 스킵
 		if(!player->CanTakeAnyContactDamage(nowMs)) continue;
 
 		const Vec2 player_pos = player->GetPos();
 
-	
-
 		for(Monster& monster : m_monsterList)
 		{
+			// 몬스터가 죽은 상태라면 스킵
 			if(!monster.IsAlive()) continue;
 
 			const Vec2 monster_pos = monster.GetPos();
+			// 플레이어와 몬스터의 거리가 일정 이상이라면 스킵
 			if(Distancesquare(player_pos, monster_pos) > m_contactCheckRadiusSq) continue;
 			
+			 // 정밀 충돌(AABB/원형)
+            if (!Collision::Intersects(player_pos, player->GetCollider(), monster_pos, monster.GetCollider())) continue;
 
-
+			
 
 		}
    }

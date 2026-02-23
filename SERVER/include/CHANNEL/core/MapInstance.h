@@ -8,12 +8,13 @@
 #include "Item.h"
 #include "Player.h"
 #include "ChannelSession.h"
+#include "CombatService.h"
 #include "Skill_Info.h"
 
 #include <nlohmann/json.hpp>
 #include <functional>
 
-
+class CombatService;
 
 class MapInstance 
 {

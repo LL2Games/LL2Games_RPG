@@ -68,6 +68,8 @@ public:
 
 	int GetCurrentHP() {return m_hp;}
 	int GetMaxHP() {return m_maxhp;}
+
+	Collider2D GetCollider() {return m_collider;}
 private:
     MonsterType m_type;
 	Collider2D m_collider;
