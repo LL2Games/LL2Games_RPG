@@ -9,6 +9,7 @@
 #include "Player.h"
 #include "ChannelSession.h"
 #include "Skill_Info.h"
+#include "ProjectileManager.h"
 
 #include <nlohmann/json.hpp>
 #include <functional>
@@ -65,6 +66,7 @@ public:
 
 
     std::vector<Monster>& GetMonsterList(){ return m_monsterList;};
+    ProjectileManager& GetProjectileManager() { return m_projectileManager; }
 
 private:
    	// 플레이어가 맵에 있는지 없는지 판단 변수
@@ -93,6 +95,6 @@ private:
     std::chrono::minutes m_limit;
 
     DestroyReqFn m_onDestroyReq;
-
+    ProjectileManager m_projectileManager;
 
 };

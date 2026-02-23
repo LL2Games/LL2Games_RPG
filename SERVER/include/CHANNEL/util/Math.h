@@ -10,3 +10,5 @@ bool IsHitFrontBox2D(
     float range,               // 예: 120
     float verticalTolerance    // 예: 60 (스킬별 튜닝)
 );
+
+float Length(const Vec2& v);

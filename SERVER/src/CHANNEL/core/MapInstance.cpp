@@ -4,6 +4,7 @@
 #include <nlohmann/json.hpp>
 #include <fstream>
 #include "CommonEnum.h"
+#include "IProjectile.h"
 
 #define MAPDELETELIMIT 5
 
@@ -40,6 +41,7 @@ int MapInstance::Init(const MapInitData& data)
 
 int MapInstance::Update()
 {
+	K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d] MapInstance Pointer[%p]", __FILE__, __FUNCTION__, __LINE__, this);
 	if(!m_has_player)
 	{
 		RemoveMap();
@@ -48,6 +50,7 @@ int MapInstance::Update()
 	{
 		SpawnMonster();
 		UpdateMonster();
+		m_projectileManager.Update(); //투사체 업데이트
 		BroadcastMapInfo();
 	}
 
@@ -60,7 +63,7 @@ void MapInstance::BroadcastMapInfo()
 	std::vector<std::string> payload;	
 
 	K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d]m_monsterList[size:%d]", __FILE__, __FUNCTION__, __LINE__, m_monsterList.size());
-	for (auto& monster : m_monsterList)
+	for (const auto& monster : m_monsterList)
 	{
 		if (monster.IsAlive())
 		{
@@ -70,15 +73,21 @@ void MapInstance::BroadcastMapInfo()
 			payload.push_back(std::to_string(monster.GetCurrentHP()));
 			payload.push_back(std::to_string(monster.GetMaxHP()));
 		}
-
-		//원거리 공격 투사체
-		if (monster.IsRangedAttack())
-		{
-			payload.push_back("PROJECTILE"); //test
-			payload.push_back(std::to_string(monster.GetProjectilePos().xPos));
-			payload.push_back(std::to_string(monster.GetProjectilePos().yPos));
-			payload.push_back(std::to_string(monster.GetProjectileDir()));
-		}
+	}
+		
+	//원거리 공격 투사체
+	K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d]projectiles[size:%d]", __FILE__, __FUNCTION__, __LINE__, m_projectileManager.GetProjectiles().size());
+	for (const auto& p : m_projectileManager.GetProjectiles())
+	{
+		payload.push_back("PROJECTILE"); //test
+		//id
+		payload.push_back(std::to_string(p->GetId()));
+		//좌표
+		payload.push_back(std::to_string(p->GetPos().xPos));
+		payload.push_back(std::to_string(p->GetPos().yPos));
+		//방향
+		payload.push_back(std::to_string(p->GetDir().xPos));
+		payload.push_back(std::to_string(p->GetDir().yPos));
 	}
 	
 	
@@ -119,6 +128,7 @@ int MapInstance::InitSpawnMonster()
 		if(monsterTemplate.has_value())
 		{
 			(*monsterTemplate).mapId = m_mapID;
+			(*monsterTemplate).mapInstance = this;
 			monster.Init(*monsterTemplate, *m_monsterSpawnListIter);
 		}else {
 			K_slog_trace(K_SLOG_ERROR, "[%s][%d] MonsterTemplate Get Failed Monster_Id[%d] FILE", __FUNCTION__, __LINE__, m_monsterSpawnListIter->monsterId);
@@ -289,6 +299,8 @@ void MapInstance::ResolveSkillHit(Player* Attacker, SkillDef& skillDef, std::vec
 {
 	//skillDef는 상태이상 적용 시 필요한 정보 : 현재는 필요 없지만 후에 필요할지 몰라서 일단 매개변수로 추가해놓음
 	(void)skillDef;
+
+	K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d] MapInstance Pointer[%p]", __FILE__, __FUNCTION__, __LINE__, this);
 
 	std::vector<MonsterHitResult> results;
     results.reserve(hits.size());

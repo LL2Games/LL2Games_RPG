@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <optional>
 
+class MapInstance;
+
 #pragma once
 enum class MapRegion{
     HENESYS,
@@ -43,6 +45,7 @@ struct MonsterTemplate {
     std::string name;
 
     uint16_t mapId;
+    MapInstance* mapInstance;
 };
 
 
