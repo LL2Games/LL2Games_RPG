@@ -122,13 +122,19 @@ private:
 	uint16_t m_mapId; 
 	MapInstance* m_mapInstance;
 
-	//원거리 공격 관련 변수
+	/***원거리 공격 관련 변수***/
+	//고정값
+	bool m_isRangedAttack; //원거리 공격 여부
+	int m_projectileId; //투사체 아이디
+	float m_projectileDamage; //투사체 데미지
+	float m_projectileSpeed; //투사체 속도
+	float m_ragedAttackRange; //투사체 공격 범위
+
+	//변동값
 	Vec2 m_projectilePos; //투사체 위치
 	float m_projectileDir; //투사체 방향
-	float m_projectileSpeed; //투사체 속도
-	float m_ragedAttackRange; //공격 범위
-
-	int m_isRangedAttack; //원거리 공격 여부
 	int64_t m_attackCooldown; //공격 쿨타임
 	int64_t m_lastAttackTime; //마지막 공격 시간
+	/***원거리 공격 관련 변수***/
+
 };

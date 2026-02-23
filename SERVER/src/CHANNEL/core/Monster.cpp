@@ -44,13 +44,23 @@ int Monster::Init(const MonsterTemplate &monsterTemplate, const MonsterSpawnData
 	//막타 플레이어
 	m_lastAttacker = nullptr;
 	m_lastAttackerId = 0;
+	m_lastAttackTime = 0;
 
 	//원거리공격
-	m_isRangedAttack = 1; //예시값, 필요에 따라 조정 monsterspawnData.isRangedAttack로
-	m_ragedAttackRange = 50.0f; //예시값, 필요에 따라 조정 monsterspawnData.attackRange로 
-	m_attackCooldown = 2000.0f; //예시값, 필요에 따라 조정 monsterspawnData.attackCooldown로 
-	m_projectileSpeed = 30.0f; //예시값, 필요에 따라 조정 monsterspawnData.projectileSpeed로
-	m_lastAttackTime = 0;
+	m_isRangedAttack = monsterTemplate.isRanged;
+	if (m_isRangedAttack)
+	{
+		m_projectileId = monsterTemplate.projectileData.id;
+		m_projectileDamage = monsterTemplate.projectileData.damage;
+		m_projectileSpeed = monsterTemplate.projectileData.speed;
+		m_ragedAttackRange = monsterTemplate.projectileData.range;
+		m_attackCooldown = monsterTemplate.projectileData.coolDown;
+	}
+
+#if 1 /*gunoo22 260223 원거리 공격 TestLog*/
+	K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d] Monster [%s] initialized. Ranged Attack: %s", __FILE__, __FUNCTION__, __LINE__, m_name.c_str(), m_isRangedAttack ? "Yes" : "No");
+	K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d] Projectile Data - ID: %d, Damage: %f, Speed: %f, Range: %f, Cooldown: %ld", __FILE__, __FUNCTION__, __LINE__, m_projectileId, m_projectileDamage, m_projectileSpeed, m_ragedAttackRange, m_attackCooldown);
+#endif
 
 	if(monsterTemplate.collisionType == ColliderType::Rect2D)
 	{
@@ -244,6 +254,8 @@ int Monster::Reset()
 	m_deadRequest = false;
 	m_state = E_Patrol;
 	m_lastAttackTime = 0.0f;
+	m_lastAttacker = nullptr;
+	m_lastAttackerId = 0;
 	return 1;
 }
 
