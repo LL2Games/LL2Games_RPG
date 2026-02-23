@@ -52,6 +52,19 @@ int Monster::Init(const MonsterTemplate &monsterTemplate, const MonsterSpawnData
 	m_projectileSpeed = 30.0f; //예시값, 필요에 따라 조정 monsterspawnData.projectileSpeed로
 	m_lastAttackTime = 0;
 
+	if(monsterTemplate.collisionType == ColliderType::Rect2D)
+	{
+		m_collider.rect.offset = monsterTemplate.offset;
+		m_collider.rect.halfW = monsterTemplate.half.xPos;
+		m_collider.rect.halfH = monsterTemplate.half.yPos;
+	}
+	else if(monsterTemplate.collisionType == ColliderType::Circle2D)
+	{
+		m_collider.circle.offset = monsterTemplate.offset;
+		m_collider.circle.radius = monsterTemplate.radius;
+	}
+
+
 	return 1;
 }
 

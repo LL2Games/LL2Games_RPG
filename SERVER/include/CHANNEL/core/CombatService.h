@@ -7,8 +7,6 @@
 #include "Monster.h"
 
 
-
-
 class CombatService
 {
 public:

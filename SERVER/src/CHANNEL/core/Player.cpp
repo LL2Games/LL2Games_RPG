@@ -5,6 +5,12 @@
 
 Player::Player() : m_char_id(0), m_name("")
 {
+    m_collider.type = ColliderType::Rect2D;
+    // 일단 콜라이더 offset과 halfW, halfH 고정으로 설정 나중에 리소스 크기에 따라서 변경 해야함
+    m_collider.rect.offset = {0.f, 2.0f};
+    m_collider.rect.halfW = 12.f;
+    m_collider.rect.halfH = 14.f;
+
 }
 
 Player::~Player()

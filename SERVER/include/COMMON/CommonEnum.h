@@ -48,6 +48,7 @@ struct MonsterTemplate {
     ColliderType collisionType;
     Vec2 offset;
     Vec2 half;
+    float radius;
 
     // 몬스터와 플레이어간 접촉 여부 계산을 판단하는 거리 값 - 이 거리 안에 들어가면 접촉 했는지 안 했는지 계산
     float broadCutSq = 0.f;

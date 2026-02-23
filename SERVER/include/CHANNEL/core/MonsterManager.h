@@ -41,7 +41,7 @@ private:
 
 private:
     inline static constexpr float PLAYER_HALF_W = 14.f;
-    inline static constexpr float PLAYER_HALF_H = 18.f;
+    inline static constexpr float PLAYER_HALF_H = 12.f;
     inline static constexpr float EXTRA = 12.f;
 
 };

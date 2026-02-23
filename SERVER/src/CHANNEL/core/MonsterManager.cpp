@@ -157,11 +157,22 @@ bool MonsterManager::LoadJsonFile(int monster_id, MonsterTemplate& monsterTempla
 
     monsterTemplate.collisionType = Collision::SetCollisionType(col.at("type").get<std::string>());
 
-    monsterTemplate.offset.xPos = col.at("offset").at("x").get<float>();
-    monsterTemplate.offset.yPos = col.at("offset").at("y").get<float>();
+    if(monsterTemplate.collisionType == ColliderType::Rect2D)
+    {
+        monsterTemplate.offset.xPos = col.at("offset").at("x").get<float>();
+        monsterTemplate.offset.yPos = col.at("offset").at("y").get<float>();
 
-    monsterTemplate.half.xPos   = col.at("half").at("w").get<float>();
-    monsterTemplate.half.yPos   = col.at("half").at("h").get<float>();
+        monsterTemplate.half.xPos   = col.at("half").at("w").get<float>();
+        monsterTemplate.half.yPos   = col.at("half").at("h").get<float>();
+    }
+    else if(monsterTemplate.collisionType == ColliderType::Circle2D)
+    {
+        monsterTemplate.offset.xPos = col.at("offset").at("x").get<float>();
+        monsterTemplate.offset.yPos = col.at("offset").at("y").get<float>();
+
+        monsterTemplate.radius   = col.at("radius").get<float>();
+    }
+
 	
     float Rp = Collision::RectToRadiusFast(MonsterManager::PLAYER_HALF_W, MonsterManager::PLAYER_HALF_H);
     float Rm = Collision::RectToRadiusFast(monsterTemplate.half.xPos, monsterTemplate.half.yPos); // JSON에서 읽은 값

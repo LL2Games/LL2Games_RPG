@@ -56,6 +56,8 @@ public:
 
     bool IsAlive(){return m_CurrentState != PlayerState::DEAD ? true : false;}
 
+    Collider2D GetCollider() {return m_collider;}
+
 public:
 
     // 현재 플레이어가 공격 가능 상태인지 확인한다.
@@ -92,6 +94,7 @@ private:
     float m_xPos;
     float m_yPos;
 
+    Collider2D m_collider;
 
     MapInstance* m_current_map;
     ChannelSession* m_session;

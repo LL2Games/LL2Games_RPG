@@ -70,6 +70,8 @@ public:
 	int GetCurrentHP() const {return m_hp;}
 	int GetMaxHP() const {return m_maxhp;}
 
+	Collider2D GetCollider() {return m_collider;}
+
 	//원거리공격 관련 메서드
 	bool IsRangedAttack() const { return m_isRangedAttack; }
 	Vec2 GetProjectilePos() const { return m_projectilePos; }
