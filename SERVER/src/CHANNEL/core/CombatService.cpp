@@ -33,7 +33,7 @@ int CombatService::HandleAttack(Player* Attacker, std::string skill_id, std::str
     }
 
     // MapInstance에서 해당 맵에 스폰된 몬스터들의 정보를 추출
-    std::vector<Monster> monster_list = map->GetMonsterList();
+    std::vector<Monster>& monster_list = map->GetMonsterList();
      
     // ComputeHitMonsters(Player* attacker, const std::vector<Monster>& monsters, const SkillDef& skillDef, std::string attack_dir)
     // 몬스터들 중에서 피격된 몬스터들을 가져온다.
