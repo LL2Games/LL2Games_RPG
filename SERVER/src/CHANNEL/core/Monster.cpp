@@ -49,6 +49,7 @@ int Monster::Init(const MonsterTemplate &monsterTemplate, const MonsterSpawnData
 	m_isRangedAttack = 1; //예시값, 필요에 따라 조정 monsterspawnData.isRangedAttack로
 	m_ragedAttackRange = 50.0f; //예시값, 필요에 따라 조정 monsterspawnData.attackRange로 
 	m_attackCooldown = 2000.0f; //예시값, 필요에 따라 조정 monsterspawnData.attackCooldown로 
+	m_projectileSpeed = 30.0f; //예시값, 필요에 따라 조정 monsterspawnData.projectileSpeed로
 	m_lastAttackTime = 0;
 
 	return 1;
