@@ -2,10 +2,26 @@
 #include "common.h"
 #include "PlayerData.h"
 
-enum class SkillType {MELEE_ARC,};
-enum class HitShape  {ARC, };
+enum class SkillType 
+{
+    NONE,
+    BASIC,
+    MELEE_ARC,
+    ENUMEND
+};
+enum class HitShape  
+{
+    NONE,
+    ARC, 
+    ENUMEND
+};
 
-enum class EffectType {KNOCKBACK, };
+enum class EffectType 
+{
+    NONE,
+    KNOCKBACK, 
+    ENUMEND
+};
 
 struct EffectDef
 {
@@ -15,7 +31,7 @@ struct EffectDef
 
 struct SkillDef
 {
-    std::string skill_id;
+    int skill_id;
     std::string key;
 
     SkillType type;
@@ -48,3 +64,27 @@ struct SkillDef
 
     std::vector<EffectDef> effects;
 };
+
+
+namespace Skill
+{
+    inline SkillType SetSkillType(std::string skillType )
+    {
+        if(skillType == "BASIC") return SkillType::BASIC;
+        if(skillType == "MELEE_ARC") return SkillType::MELEE_ARC;
+        return SkillType::NONE;
+    };
+
+    inline HitShape SetHitShape(std::string hitType)
+    {
+        if(hitType == "ARC") return HitShape::ARC;
+        return HitShape::NONE;
+    };
+
+    inline EffectType SetEffectType(std::string effectType)
+    {
+        if(effectType == "KNOCKBACK") return EffectType::KNOCKBACK;
+        return EffectType::NONE;
+    };
+
+}

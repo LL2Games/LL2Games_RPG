@@ -1,12 +1,12 @@
 {
-  "skill_id": 20001,
-  "key": "knight.slash_01",
+  "skill_id": 21001,
+  "key": "Archer.Shot_01",
   "type": "MELEE_ARC",
 
   "cooldown_ms": 500,
   "mp_cost": 10,
 
-  "requirements": [{"root": 20000,"min_tier": 1,"min_skill_level": 1}],
+  "requirements": [{"root_job": 21000,"min_tier": 1,"min_skill_level": 1}],
 
   "hit": [{ "shape": "ARC", "range": 120.0, "angle_deg": 60.0, "max_targets": 6, "hit_count": 1 }],
   "damage": [{ "multiplier": 1.2, "flat_add": 0 }],
@@ -15,7 +15,7 @@
     { "type": "KNOCKBACK", "force": 200.0 }
   ],
 
-  "client": { "anim": "ANIM_SKL_KNIGHT_SLASH_01", "vfx": "VFX_SKL_KNIGHT_SLASH_01", "sfx": "SFX_SKL_KNIGHT_SLASH_01" },
+  "client": { "anim": "ANIM_SKL_ARCHER_SHOT_01", "vfx": "VFX_SKL_ARCHER_SHOT_01", "sfx": "SFX_SKL_ARCHER_SHOT_01" },
 
 
   "__comments": [

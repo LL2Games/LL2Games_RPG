@@ -8,5 +8,5 @@ enum class PlayerState
     JUMP,
     ATTACK,
     STUNNED,
-
+    DEAD
 };

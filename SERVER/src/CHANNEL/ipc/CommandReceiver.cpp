@@ -39,10 +39,10 @@ void CommandReceiver::Run() {
         //     0   // blocking
         // );
 
-        K_slog_trace(K_SLOG_DEBUG, "[%s][%d] recv wait...", __FILE__, __LINE__);
+        //K_slog_trace(K_SLOG_DEBUG, "[%s][%d] recv wait...", __FILE__, __LINE__);
         std::string msg;
         ssize_t ret = m_mq.Recv(msg);
-        K_slog_trace(K_SLOG_DEBUG, "[%s][%d] MQ recv[%s]", __FILE__, __LINE__, msg.c_str()); 
+        //K_slog_trace(K_SLOG_DEBUG, "[%s][%d] MQ recv[%s]", __FILE__, __LINE__, msg.c_str()); 
         
         if (ret <= 0)
             continue;

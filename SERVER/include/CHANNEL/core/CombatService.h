@@ -1,7 +1,7 @@
 #pragma once
 
 #include "common.h"
-#include "SkillService.h"
+#include "SkillManager.h"
 #include "MapInstance.h"
 #include "Player.h"
 #include "Monster.h"
@@ -15,7 +15,7 @@ public:
     CombatService();
     ~CombatService();
 
-    int HandleAttack(Player* Attacker, std::string skill_id, std::string attack_dir);
+    int HandleAttack(Player* Attacker, int skill_id, std::string attack_dir);
     int CalculateSkillBaseDamage(const Player* attacker, const SkillDef& skillDef); 
 
     int GetLevelDiffRate(int attackerLevel, int monsterLevel) const;
@@ -24,7 +24,7 @@ public:
 
     std::vector<Monster*> ComputeHitMonsters(Player* attacker, const std::vector<Monster>& monsters, const SkillDef& skillDef, std::string attack_dir);
 private:
-    SkillService* m_skillService;
+    SkillManager* m_skillManager;
 
 
 };

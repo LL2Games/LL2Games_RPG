@@ -12,7 +12,7 @@ public:
     ItemManager(){};
     ~ItemManager(){};
 
-    void Init();
+    bool Init();
     bool PreLoadAll();
     bool LoadJsonFile(const std::string& path, ItemInitData& itemData);
 

@@ -6,9 +6,9 @@
   "max_stack": 100,
   "sell_price": 10,
 
-  "use_effect": {
+  "use_effect": [{
     "hp_restore": 50,
     "mp_restore": 0,
     "cooldown_ms": 0
-  }
+  }]
 }

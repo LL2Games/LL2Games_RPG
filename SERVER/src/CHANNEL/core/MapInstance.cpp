@@ -251,7 +251,7 @@ void MapInstance::HandleMove(Player* sender, Vec2 pos, float speed)
 		return;
 	}
 
-	sender->SetPosition(pos);
+	sender->SetPos(pos);
 
 	BroadcastMoveExcept(sender, pos, speed);
 }
@@ -314,13 +314,13 @@ void MapInstance::ResolveSkillHit(Player* Attacker, SkillDef& skillDef, std::vec
 	BroadcastMonsterHit(Attacker, skillDef.skill_id, results);
 }
 
-void MapInstance::BroadcastMonsterHit(Player* Attacker, std::string SkillID, std::vector<MonsterHitResult> result)
+void MapInstance::BroadcastMonsterHit(Player* Attacker, int SkillID, std::vector<MonsterHitResult> result)
 {
 	std::vector<std::string> payload;
 	payload.reserve(4);
 
 	payload.push_back(std::to_string(Attacker->GetId()));
-	payload.push_back(SkillID);
+	payload.push_back(std::to_string(SkillID));
 
 	for (const auto& r : result)
 	{
@@ -345,4 +345,29 @@ void MapInstance::BroadcastMonsterHit(Player* Attacker, std::string SkillID, std
 void MapInstance::ProcessContactDamage(int64_t nowMs)
 {
    (void)nowMs;
+
+   for(auto p : m_playerList)
+   {
+		Player* player = p.second;
+		if(!player || !player->IsAlive()) continue;
+
+		if(!player->CanTakeAnyContactDamage(nowMs)) continue;
+
+		const Vec2 player_pos = player->GetPos();
+
+	
+
+		for(Monster& monster : m_monsterList)
+		{
+			if(!monster.IsAlive()) continue;
+
+			const Vec2 monster_pos = monster.GetPos();
+			if(Distancesquare(player_pos, monster_pos) > m_contactCheckRadiusSq) continue;
+			
+
+
+
+		}
+   }
+
 }

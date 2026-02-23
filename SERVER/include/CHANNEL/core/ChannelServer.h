@@ -5,17 +5,20 @@
 #include "PlayerService.h"
 #include "MapService.h"
 #include "MapManager.h"
+#include "MonsterManager.h"
 #include "MySqlConnectionPool.h"
 #include "RedisClient.h"
 #include "common.h"
 
 #include "StatService.h"
 #include "ItemManager.h"
+#include "SkillManager.h"
 #include "ItemService.h"
 
 #include "ThreadPool.h"
 #include "CommandReceiver.h"
 #include "CombatService.h"
+
 
 
 class ChannelServer
@@ -58,6 +61,8 @@ private:
     PlayerService m_player_service;
     MapManager m_map_manager;
     ItemManager* m_item_manager;
+    MonsterManager* m_monster_manager;
+    SkillManager* m_skill_manager;
     //MySqlConnectionPool m_db;
     RedisClient m_redis;
     

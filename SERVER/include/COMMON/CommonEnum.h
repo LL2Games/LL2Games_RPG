@@ -1,7 +1,9 @@
+#pragma once
 #include <vector>
 #include <string>
 #include <cstdint>
 #include <optional>
+#include "Collider.h"
 
 class MapInstance;
 
@@ -21,11 +23,7 @@ enum class MonsterType {
     PIG
 };
 
-struct Vec2{
-    float xPos;
-    float yPos;
-};
-
+// Map Json 파일에서 읽어온 몬스터 정보를 저장하는 구조체
 struct MonsterSpawnData {
     MonsterType type;
     Vec2 spawnPos;
@@ -35,6 +33,7 @@ struct MonsterSpawnData {
     int ItemId;
 };
 
+// 몬스터 Json 파일에서 읽어온 값을 저장하는 구조체
 struct MonsterTemplate {
     int monsterId;
     int level;
@@ -43,6 +42,15 @@ struct MonsterTemplate {
     float exp;
     float moveSpeed;
     std::string name;
+    std::string common_drop_group_id;
+    std::string unique_drop_group_id;
+
+    ColliderType collisionType;
+    Vec2 offset;
+    Vec2 half;
+
+    // 몬스터와 플레이어간 접촉 여부 계산을 판단하는 거리 값 - 이 거리 안에 들어가면 접촉 했는지 안 했는지 계산
+    float broadCutSq = 0.f;
 
     uint16_t mapId;
     MapInstance* mapInstance;

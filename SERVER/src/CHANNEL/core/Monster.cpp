@@ -148,7 +148,7 @@ int Monster::UpdateChase(float dt)
 		return 0;
 	}
 
-	Vec2 playerPos = player->GetPosition();
+	Vec2 playerPos = player->GetPos();
 
 	//플레이어가 몬스터와 같은 맵에 없는경우 예외처리
 	if (player->GetCurrentMap() && (player->GetCurrentMap()->GetMapId() != m_mapId))

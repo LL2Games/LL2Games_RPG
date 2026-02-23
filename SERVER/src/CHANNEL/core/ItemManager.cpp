@@ -6,10 +6,11 @@ namespace fs = std::filesystem;
 
 ItemManager *ItemManager::m_instance =nullptr;
 
-void ItemManager::Init()
+bool ItemManager::Init()
 {
     K_slog_trace(K_SLOG_TRACE, "[%s][%d] ItemManagerInit Start",__FUNCTION__, __LINE__);
-    PreLoadAll();
+    if(!PreLoadAll()) return false;
+    return true;
 }
 
 
@@ -61,20 +62,20 @@ bool ItemManager::LoadJsonFile(const std::string& path, ItemInitData& itemData)
     }
     if (j.is_null()) return false;
 
-    itemData.item_id    = j.value("item_id", 0);
-    itemData.name       = j.value("name", "");
-    itemData.type       = j.value("type", "");
-    itemData.stackable  = j.value("stackable", false);
-    itemData.max_stack  = j.value("max_stack", itemData.stackable ? 100 : 1);
-    itemData.sell_price = j.value("sell_price", 0);
-
+        itemData.item_id    = j.at("item_id").get<int>();
+        itemData.name       = j.at("name").get<std::string>();
+        itemData.type       = j.at("type").get<std::string>();
+        itemData.stackable  = j.at("stackable").get<bool>();
+        itemData.max_stack  = j.at("max_stack").get<int>();
+        itemData.sell_price = j.at("sell_price").get<int>();
+    
     if (itemData.type == "consumable" && j.contains("use_effect"))
     {
-        const auto& ue = j["use_effect"];
+        const auto& ue = j.at("use_effect").at(0);
         UseEffect effect;
-        effect.hp_restore  = ue.value("hp_restore", 0);
-        effect.mp_restore  = ue.value("mp_restore", 0);
-        effect.cooldown_ms = ue.value("cooldown_ms", 0);
+        effect.hp_restore  = ue.at("hp_restore").get<int>();
+        effect.mp_restore  = ue.at("mp_restore").get<int>();
+        effect.cooldown_ms = ue.at("cooldown_ms").get<int>();
         itemData.use_effect = effect;
     }
 

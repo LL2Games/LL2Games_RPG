@@ -1,6 +1,7 @@
 #pragma once
 #include "common.h"
 #include "CommonEnum.h"
+#include "Collider.h"
 //#include "Player.h"
 
 class Player;
@@ -78,6 +79,8 @@ public:
 
 private:
     MonsterType m_type;
+	Collider2D m_collider;
+
     Vec2 m_Pos;
 	Vec2 m_spawnPos;
 

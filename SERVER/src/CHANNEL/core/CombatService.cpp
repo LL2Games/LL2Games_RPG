@@ -6,7 +6,7 @@
 
 CombatService::CombatService()
 {
-    m_skillService = SkillService::GetInstance();
+    m_skillManager = SkillManager::GetInstance();
 }
 
 CombatService::~CombatService()
@@ -15,15 +15,13 @@ CombatService::~CombatService()
 }
 
 
-int CombatService::HandleAttack(Player* Attacker, std::string skill_id, std::string attack_dir)
+int CombatService::HandleAttack(Player* Attacker, int skill_id, std::string attack_dir)
 {
     MapInstance* map = Attacker->GetCurrentMap();
 
-    std::optional<SkillDef> skillDef = m_skillService->GetOrLoadSkill(skill_id);
+    std::optional<SkillDef> skillDef = m_skillManager->GetSkill(skill_id);
 
     if(!skillDef) return 0;
-
-    K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d]++++++CUR_MP+++++[%d]", __FILE__, __FUNCTION__, __LINE__, Attacker->GetCurMP());
 
     //캐릭터가 공격 가능 상태인지 확인
     if(!Attacker->CanAttack(&*skillDef))
@@ -31,6 +29,8 @@ int CombatService::HandleAttack(Player* Attacker, std::string skill_id, std::str
         K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] 플레이어가 공격 가능한 상태가 아닙니다.\n", __FILE__, __FUNCTION__, __LINE__);
         return 0;
     }
+
+    Attacker->UseSkill(&*skillDef);
 
     // MapInstance에서 해당 맵에 스폰된 몬스터들의 정보를 추출
     std::vector<Monster>& monster_list = map->GetMonsterList();
@@ -81,7 +81,7 @@ std::vector<Monster*> CombatService::ComputeHitMonsters(Player* attacker, const 
     // 공격 방향에 따라서 곱해주는 값 설정
     int dir = attack_dir == "Left" ? -1 : 1;
 
-    attackerPos = attacker->GetPosition();
+    attackerPos = attacker->GetPos();
 
     for (Monster m : monsters)
     {

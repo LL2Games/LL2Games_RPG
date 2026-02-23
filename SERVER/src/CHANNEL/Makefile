@@ -69,7 +69,7 @@ SRCS := \
 	core/Item.cpp \
 	core/StatService.cpp \
 	core/CombatService.cpp \
-	core/SkillService.cpp \
+	core/SkillManager.cpp \
 	core/ItemManager.cpp \
 	core/ItemService.cpp \
 	core/Projectile.cpp \
@@ -92,11 +92,11 @@ SRCS := \
 	db/RedisUtility.cpp \
 	\
 	ipc/CommandReceiver.cpp \
+	ipc/CommandMsgQueue.cpp \
     \
 	stat/PlayerStatRepository.cpp \
 	stat/CharacterStat.cpp \
 	\
-    \
 	util/Math.cpp \
 	\
     main.cpp

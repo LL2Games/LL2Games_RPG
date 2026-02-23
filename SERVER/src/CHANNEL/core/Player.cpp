@@ -28,7 +28,7 @@ void Player::SetInitData(const PlayerInitData playerInitData)
     this->m_name = playerInitData.name;
     this->m_level = playerInitData.level;
     this->m_job = playerInitData.job;
-    this->m_root_job = ToRootJob(playerInitData.root_job);
+    this->m_root_job = PlayerData::ToRootJob(playerInitData.root_job);
     this->m_map_id = playerInitData.map_id;
     this->m_xPos = playerInitData.xPos;
     this->m_yPos = playerInitData.yPos;
@@ -52,7 +52,7 @@ void Player::SetInitData(const PlayerInitData playerInitData, const CharacterSta
     this->m_name = playerInitData.name;
     this->m_level = playerInitData.level;
     this->m_job = playerInitData.job;
-    this->m_root_job = ToRootJob(playerInitData.root_job);
+    this->m_root_job = PlayerData::ToRootJob(playerInitData.root_job);
     this->m_map_id = playerInitData.map_id;
     this->m_xPos = playerInitData.xPos;
     this->m_yPos = playerInitData.yPos;
@@ -67,7 +67,7 @@ void Player::SetInitData(const PlayerInitData playerInitData, const CharacterSta
     m_stat.GetCurHp() = 10;
 
     //스킬테스트를 위한 임시데이터 삽입
-    m_learnedSkills["20001"] = 1; //스킬ID 20001을 레벨 1로 배웠다고 가정
+    m_learnedSkills[20001] = 1; //스킬ID 20001을 레벨 1로 배웠다고 가정
 #endif  
 
 #if 0 /*gunoo22 260219 테스트로그*/
@@ -134,11 +134,25 @@ bool Player::CanAttack(SkillDef* skillDef)
         return false;
     }
 
-    skillCooldownEndMs[skillDef->skill_id] = now + skillDef->cooldown_ms;
+    
 
     return true;
 
 
+}
+
+void Player::UseSkill(SkillDef* skillDef)
+{
+    int cur_mp = 0;
+    int64_t now = NowMs();
+    skillCooldownEndMs[skillDef->skill_id] = now + skillDef->cooldown_ms;
+
+    cur_mp = m_stat.GetCurMp();
+    cur_mp -= skillDef->mp_cost;
+
+    m_stat.SetCurMp(cur_mp);
+
+    K_slog_trace(K_SLOG_TRACE, "[%s:%d] CurMp =%d\n", __FUNCTION__, __LINE__, cur_mp);
 }
 
 
@@ -219,7 +233,7 @@ int Player::GetItemCount(int itemId) const
     return (it == m_inven.end()) ? 0 : it->second;
 }
 
-int Player::GetSkillLevel(std::string skill_id) const
+int Player::GetSkillLevel(int skill_id) const
 {
     auto it = m_learnedSkills.find(skill_id);
 
@@ -247,4 +261,18 @@ void Player::AddMP(int MP)
     m_stat.GetCurMp() += MP;
     if (m_stat.GetCurMp() > m_stat.GetMaxMp()) m_stat.GetCurMp() = m_stat.GetMaxMp();
     // if (m_stat.GetCurMp() < 0) m_stat.GetCurMp() = 0; //Mp깎일때 조건사용 ex)스킬 사용시 MP 감소할때
+}
+
+
+bool Player::CanTakeAnyContactDamage(int64_t nowMs)
+{
+    return nowMs >= m_nextContactDamageAllowedMs;
+}
+
+
+void Player::OnContactDamaged(int64_t nowMs)
+{
+  
+    // 다음 피격 가능 시간 설정
+    m_nextContactDamageAllowedMs = nowMs + m_contactDamageCooldownMs;
 }
