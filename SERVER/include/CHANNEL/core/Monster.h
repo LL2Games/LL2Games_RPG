@@ -18,6 +18,7 @@ struct MonsterHitResult {
 enum MonsterState {
 	E_Patrol,
 	E_Chase,
+	E_RangeAttack,
 	E_Dead,
 };
 
@@ -78,6 +79,7 @@ public:
 	float GetProjectileDir() const { return m_projectileDir; }
 	bool IsAttackOnCooldown();
 	bool TryRangedAttack(const Vec2& dir);
+	MonsterState GetState() const { return m_state; }
 
 private:
     MonsterType m_type;

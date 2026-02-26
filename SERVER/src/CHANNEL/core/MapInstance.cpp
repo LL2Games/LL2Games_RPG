@@ -5,6 +5,7 @@
 #include <fstream>
 #include "CommonEnum.h"
 #include "IProjectile.h"
+#include "timeUtility.h"
 
 #define MAPDELETELIMIT 5
 
@@ -51,6 +52,8 @@ int MapInstance::Update()
 		SpawnMonster();
 		UpdateMonster();
 		m_projectileManager.Update(); //투사체 업데이트
+		ProcessRangedDamage(NowMs()); //원거리 공격 판정 및 데미지 처리
+		//ProcessContactDamage(NowMs()); //플레이어-몬스터 접촉 판정 및 데미지 처리
 		BroadcastMapInfo();
 	}
 
@@ -341,6 +344,39 @@ void MapInstance::BroadcastMonsterHit(Player* Attacker, int SkillID, std::vector
 
 }
 
+/*gunoo22 260223 원거리 공격 처리*/
+void MapInstance::ProcessRangedDamage(int64_t nowMs)
+{
+   for(auto p : m_playerList)
+   {
+		Player* player = p.second;
+
+		// 플레이어가 죽었다면 스킵
+		if(!player || !player->IsAlive()) continue;
+
+		// 플레이어가 이미 피격 당했고 무적 상태라면 스킵
+		if(!player->CanTakeAnyContactDamage(nowMs)) continue;
+
+		const Vec2 player_pos = player->GetPos();
+
+		K_slog_trace(K_SLOG_TRACE, "\n\n[%s:%s][%d] PLAYER POS [%f, %f]", __FILE__, __FUNCTION__, __LINE__, player_pos.xPos, player_pos.yPos);
+		for (const auto& p : m_projectileManager.GetProjectiles())
+		{
+			const Vec2& projectile_pos = p->GetPos();
+
+			K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d] PROJECTILE POS [%f, %f]", __FILE__, __FUNCTION__, __LINE__, projectile_pos.xPos, projectile_pos.yPos);
+
+			//플레이어와 투사체 거리가 일정거리 이상이라면 스킵
+			if (Distancesquare(player_pos, projectile_pos) > m_contactCheckRadiusSq) continue;
+
+			 // 정밀 충돌(AABB/원형)
+			if (!Collision::Intersects(player_pos, player->GetCollider(), projectile_pos, p->GetCollider())) continue;
+
+			//플레이어 온데미지
+			player->OnDamaged(p->GetDamage(), nowMs);
+		}
+   }
+}
 
 void MapInstance::ProcessContactDamage(int64_t nowMs)
 {
@@ -368,10 +404,6 @@ void MapInstance::ProcessContactDamage(int64_t nowMs)
 			
 			 // 정밀 충돌(AABB/원형)
             if (!Collision::Intersects(player_pos, player->GetCollider(), monster_pos, monster.GetCollider())) continue;
-
-			
-
 		}
    }
-
 }

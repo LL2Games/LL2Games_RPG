@@ -55,6 +55,7 @@ private:
     void BroadcastMapInfo();
 
     void ProcessContactDamage(int64_t nowMs);
+    void ProcessRangedDamage(int64_t nowMs);
 public:
 
     // int 매개변수를 받는 콜백 함수 이름 지정

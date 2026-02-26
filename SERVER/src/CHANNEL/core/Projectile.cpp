@@ -12,6 +12,10 @@ Projectile::Projectile(const Vec2& startPos,
               m_range(range),
               m_ownerMonsterId(ownerId)
 {
+    m_collider.type = ColliderType::Circle2D;
+    m_collider.circle.offset = {0.f, 0.f}; // 투사체
+    m_collider.circle.radius = 5.f; // 예시 반지름, 필요에 따라 조정
+    
 }
 
 void Projectile::Update(float dt)

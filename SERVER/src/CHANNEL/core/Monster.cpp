@@ -95,6 +95,11 @@ int Monster::Update(float dt)
 		K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d] state=[Chase]", __FILE__, __FUNCTION__, __LINE__);
 		UpdateChase(dt);
 		break;
+
+	case E_RangeAttack:
+		K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d] state=[RangeAttack]", __FILE__, __FUNCTION__, __LINE__);
+		UpdateChase(dt);
+		break;
 		
 	case E_Dead:
 		K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d] state=[Dead]", __FILE__, __FUNCTION__, __LINE__);
@@ -156,6 +161,8 @@ bool Monster::TryRangedAttack(const Vec2& dir)
 	//마지막 공격 시간 업데이트
 	m_lastAttackTime = NowMs();
 	K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d] 원거리 공격 시도. 방향: %f", __FILE__, __FUNCTION__, __LINE__, dir);
+
+	m_state = E_RangeAttack; //공격 상태로 전환
 
 	return true;
 }
@@ -280,8 +287,7 @@ bool Monster::OnDamaged(Player *Attacker, int damage)
 	m_lastAttacker = Attacker;
 	//한대 맞으면 해당 chase 모드로 전환
 	m_state = E_Chase;
-	K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] 몬스터가 플레이어 %d에게 공격당했습니다. 남은 HP: %d", __FILE__, __FUNCTION__, __LINE__, Attacker->GetId(), m_hp - damage);
-
+	K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] 몬스터가 플레이어 %s에게 공격당했습니다. 남은 HP: %d", __FILE__, __FUNCTION__, __LINE__, Attacker->GetName().c_str(), m_hp - damage);
 	K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] 몬스터 상태[%d]", __FILE__, __FUNCTION__, __LINE__, m_state);
 
 	m_hp -= damage;
