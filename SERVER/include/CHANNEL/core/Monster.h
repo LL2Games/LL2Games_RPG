@@ -63,12 +63,11 @@ public:
 	float GetExp(){return m_exp;}
 
 	int GetItemGroup(){return m_itemGroup;}
-
 	int GetInstanceId() const {return m_instanceId;}
-
 	int GetCurrentHP() {return m_hp;}
 	int GetMaxHP() {return m_maxhp;}
 
+	int GetDamage(){return m_attackDamage;}
 	Collider2D GetCollider() {return m_collider;}
 private:
     MonsterType m_type;
@@ -91,7 +90,7 @@ private:
     //몬스터 상태 값 나중에 추가해야함
     MonsterState m_state;
 	float m_exp;
-    float m_attackDamage;
+    int m_attackDamage;
     int m_level;
 	int m_moveSpeed;
 

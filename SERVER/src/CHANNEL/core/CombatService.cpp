@@ -30,6 +30,7 @@ int CombatService::HandleAttack(Player* Attacker, int skill_id, std::string atta
         return 0;
     }
 
+    // 플레이어 스킬 사용
     Attacker->UseSkill(&*skillDef);
 
     // MapInstance에서 해당 맵에 스폰된 몬스터들의 정보를 추출
@@ -140,13 +141,21 @@ int CombatService::CalculateSkillBaseDamage(const Player* attacker, const SkillD
 }
 
 
-int CombatService::CalculateFinalDamage(int baseSkillDmg, const Player* Attacker, const SkillDef& skillDef, const Monster& m) const
+int CombatService::ApplyContactDamage(Player* player, Monster& monster)
 {
-    (void)skillDef;
-    int dmg = baseSkillDmg;
+    // monster와 player의 레벨 차이와 플레이어의 방어력 등을 기반으로 데미지 계산
+    int finalDamage = CalculateFinalDamage(player, monster);
+    
+    return finalDamage;
+}
 
-    int lvRate = GetLevelDiffRate(Attacker->GetLevel(), m.GetLevel());
-    dmg = dmg * lvRate / 100;
+// 콜리전이 부닺혔을 때 데미지 계산
+int CombatService::CalculateFinalDamage(Player* player, Monster& m) const
+{
+    int dmg = m.GetDamage();
+
+    int lvRate = GetLevelDiffRate(m.GetLevel(), player->GetLevel());
+    dmg = dmg * lvRate / kLevelRateBasePct;
 
     // 방어/저항 등 추가 보정
     // dmg = ApplyDefense(dmg, m);
@@ -157,12 +166,35 @@ int CombatService::CalculateFinalDamage(int baseSkillDmg, const Player* Attacker
 }
 
 
-int CombatService::GetLevelDiffRate(int AttackerLevel, int MonsterLevel) const
+// 스킬로 공격 했을 때 데미지 계산
+int CombatService::CalculateFinalDamage(int baseDmg, const Player* Attacker, const SkillDef& skillDef, const Monster& m) const
 {
-    int diff = AttackerLevel - MonsterLevel;
-    int rate = 100 + diff;
-        if(rate < 30) rate = 30;
-        else if(rate > 120) rate = 120;
+    (void)skillDef;
+    int dmg = baseDmg;
 
+    int lvRate = GetLevelDiffRate(Attacker->GetLevel(), m.GetLevel());
+    dmg = dmg * lvRate / kLevelRateBasePct;
+
+    // 방어/저항 등 추가 보정
+    // dmg = ApplyDefense(dmg, m);
+    // dmg = ApplyElement(dmg, skillDef, m);
+
+    if (dmg < 1) dmg = 1;
+    return dmg;
+}
+
+
+int CombatService::GetLevelDiffRate(int AttackerLevel, int DefenderLevel) const
+{
+    int rate = 0;
+    int diff = AttackerLevel - DefenderLevel;
+    
+    // 공격 받는 자와 공격자의 레벨 차가 크면 데미지 비율 고정
+    if(DefenderLevel - AttackerLevel >=  kContactPenaltyLevelDiff) {
+        return kContactPenaltyRatePct;
+    }
+    rate = kLevelRateBasePct + diff * kLevelRateStepNum / kLevelRateStepDen;
+    if(rate < kLevelRateMinPct) rate = kLevelRateMinPct;
+    else if(rate > kLevelRateMaxPct) rate = kLevelRateMaxPct;
     return rate;
 }

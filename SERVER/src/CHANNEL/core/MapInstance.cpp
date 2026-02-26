@@ -4,6 +4,7 @@
 #include <nlohmann/json.hpp>
 #include <fstream>
 #include "CommonEnum.h"
+#include "timeUtility.h"
 
 #define MAPDELETELIMIT 5
 
@@ -49,6 +50,7 @@ int MapInstance::Update()
 		SpawnMonster();
 		UpdateMonster();
 		BroadcastMapInfo();
+		ProcessContactDamage(NowMs());
 	}
 
     return 1;
@@ -296,7 +298,7 @@ void MapInstance::ResolveSkillHit(Player* Attacker, SkillDef& skillDef, std::vec
 void MapInstance::BroadcastMonsterHit(Player* Attacker, int SkillID, std::vector<MonsterHitResult> result)
 {
 	std::vector<std::string> payload;
-	payload.reserve(4);
+	payload.reserve(result.size());
 
 	payload.push_back(std::to_string(Attacker->GetId()));
 	payload.push_back(std::to_string(SkillID));
@@ -320,6 +322,40 @@ void MapInstance::BroadcastMonsterHit(Player* Attacker, int SkillID, std::vector
 
 }
 
+void MapInstance::BroadcastPlayerHit(Player* Defender, PlayerHitResult result)
+{
+	  for (auto& [id, p] : m_playerList)
+    		{
+        	if (!p) continue;
+
+        	auto session = p->GetSession();
+        	if (!session) continue;
+
+        	std::vector<std::string> payload;
+        	payload.reserve(6);
+
+        	if (p == Defender)
+        	{
+        	    // 본인: 상세
+        	    payload.push_back(std::to_string(result.player_id));
+        	    payload.push_back(std::to_string(result.attacker_instance_id));
+        	    payload.push_back(std::to_string(result.damage));
+        	    payload.push_back(std::to_string(result.cur_hp));
+        	    payload.push_back(std::to_string(result.max_hp));
+        	    payload.push_back(std::to_string(static_cast<int>(result.state)));
+        	}
+        	else
+        	{
+        	    // 타인: 최소(HP 미공개)
+        	    payload.push_back(std::to_string(result.player_id));
+        	    payload.push_back(std::to_string(result.attacker_instance_id));
+        	    payload.push_back(std::to_string(result.damage));
+        	    payload.push_back(std::to_string(static_cast<int>(result.state)));
+        	}
+
+        	session->Send(PKT_PLAYER_ONDAMAGED, payload);
+    }	
+}
 
 void MapInstance::ProcessContactDamage(int64_t nowMs)
 {
@@ -348,9 +384,26 @@ void MapInstance::ProcessContactDamage(int64_t nowMs)
 			 // 정밀 충돌(AABB/원형)
             if (!Collision::Intersects(player_pos, player->GetCollider(), monster_pos, monster.GetCollider())) continue;
 
+			int dmg = m_combatService->ApplyContactDamage(player, monster);
 			
+			player->OnDamaged(dmg,nowMs);
 
+			PlayerHitResult result;
+
+			result.damage = dmg;
+			SetPlayerHitResult(player, monster.GetInstanceId(), result);
+
+			BroadcastPlayerHit(player, result);
 		}
    }
 
+}
+
+void MapInstance::SetPlayerHitResult(Player* player, int monster_instanceId, PlayerHitResult& result)
+{
+	result.attacker_instance_id = monster_instanceId;
+	result.player_id = player->GetId();
+	result.cur_hp = player->GetCurHP();
+	result.max_hp = player->GetMaxHP();
+	result.state = player->GetState();
 }

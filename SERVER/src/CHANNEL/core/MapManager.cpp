@@ -85,6 +85,8 @@ MapInstance *MapManager::GetOrCreate(int mapId)
 
     MapInstance *newMap = new MapInstance();
 
+    newMap->SetCombatService(m_server->GetCombatService());
+
     if (newMap->Init(mapData) == 1)
     {
         m_maps[mapId] = newMap;

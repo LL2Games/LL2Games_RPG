@@ -12,6 +12,15 @@
 class ChannelSession;
 class MapInstance;
 
+struct PlayerHitResult {
+    int player_id;
+    int attacker_instance_id;   // 몬스터/플레이어 구분 가능한 id 체계면 좋다
+    int damage;
+    int cur_hp;
+    int max_hp;
+    PlayerState state;
+};
+
 class Player
 {
 public:
@@ -39,9 +48,18 @@ public:
 
 public:
     int GetCurHP(){return m_stat.GetCurHp();}
+<<<<<<< HEAD
     int GetCurMP(){return m_stat.GetCurMp();}
     int GetId() {return m_char_id;}
     int GetLevel() const {return m_level;}
+=======
+    int GetMaxHP(){return m_stat.GetMaxHp();}
+    int GetCurMP(){return m_stat.GetCurMp();}
+    int GetMaxMP(){return m_stat.GetMaxMp();}
+    int GetId() {return m_char_id;}
+    int GetLevel() const {return m_level;}
+    PlayerState GetState(){return m_CurrentState;}
+>>>>>>> 8d8890e (feat: Player OnDamaged 추가)
 
     bool IsAlive(){return m_CurrentState != PlayerState::DEAD ? true : false;}
 
@@ -83,7 +101,11 @@ public:
 
     void Dead();
 
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 8d8890e (feat: Player OnDamaged 추가)
 private:
     int m_char_id;
     std::string m_account_id;
