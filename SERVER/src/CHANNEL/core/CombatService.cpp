@@ -36,7 +36,7 @@ int CombatService::HandleAttack(Player* Attacker, int skill_id, std::string atta
     std::vector<Monster>& monster_list = map->GetMonsterList();
      
 
-#if 0 /*gunoo22 260223 맵내 모든 몬스터 피격 테스트*/
+#if 1 /*gunoo22 260223 맵내 모든 몬스터 피격 테스트*/
     std::vector<Monster*> HitMonsters;
     for (auto& m : monster_list)
     {
@@ -95,7 +95,8 @@ std::vector<Monster*> CombatService::ComputeHitMonsters(Player* attacker, const 
 
     attackerPos = attacker->GetPos();
 
-    for (Monster m : monsters)
+    //gunoo22 260226 몬스터 체력 안다는 이슈 -> 레퍼런스로 안받음
+    for (const Monster& m : monsters) 
     {
         Vec2 mp = m.GetPos();
 
