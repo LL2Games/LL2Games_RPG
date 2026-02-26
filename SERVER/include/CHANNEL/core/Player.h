@@ -27,7 +27,6 @@ public:
     void SetMapId(int m_map_id){this->m_map_id = m_map_id;}
 
     void SetLevel(int m_level){this->m_level = m_level;}
-    int GetLevel() const {return m_level;}
 
     void SetPos(float m_xPos, float m_yPos) {this->m_xPos = m_xPos; this->m_yPos = m_yPos;}\
     void SetPos(Vec2 Pos) {m_xPos = Pos.xPos, m_yPos = Pos.yPos;}
@@ -38,24 +37,25 @@ public:
     void SetCurrentMap(MapInstance* map) {m_current_map = map;}
     void SetSession(ChannelSession* session) {m_session = session;}
 
-
+public:
+    int GetCurHP(){return m_stat.GetCurHp();}
+    int GetCurMP(){return m_stat.GetCurMp();}
     int GetId() {return m_char_id;}
+    int GetLevel() const {return m_level;}
+
+    bool IsAlive(){return m_CurrentState != PlayerState::DEAD ? true : false;}
+
     std::string GetName() {return m_name;}
+
     MapInstance* GetCurrentMap() {return m_current_map;}
     ChannelSession* GetSession() {return m_session;}
 
     //stat
     CharacterStat& GetStat() {return m_stat;}
     const CharacterStat& GetStat() const {return m_stat;}    
-    int GetCurHP(){return m_stat.GetCurHp();}
-    int GetCurMP(){return m_stat.GetCurMp();}
-
+  
     Vec2 GetPos() {return Vec2{m_xPos, m_yPos};}
-
     RootJob GetRootJob() const {return m_root_job;}
-
-    bool IsAlive(){return m_CurrentState != PlayerState::DEAD ? true : false;}
-
     Collider2D GetCollider() {return m_collider;}
 
 public:
@@ -70,7 +70,6 @@ public:
     void UseSkill(SkillDef* skillDef);
     bool UseItem(int itemId, int useCount);
 
-
     void AddHP(int HP);
     void AddMP(int MP);
 
@@ -80,7 +79,11 @@ public:
     bool CanTakeAnyContactDamage(int64_t nowMs);
 
     // 플레이어가 피격 당했을 때 처리하는 함수
-    void OnContactDamaged(int64_t nowMs);
+    void OnDamaged(int dmg,int64_t nowMs);
+
+    void Dead();
+
+    
 private:
     int m_char_id;
     std::string m_account_id;

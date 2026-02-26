@@ -276,9 +276,27 @@ bool Player::CanTakeAnyContactDamage(int64_t nowMs)
 }
 
 
-void Player::OnContactDamaged(int64_t nowMs)
+void Player::OnDamaged(int dmg,int64_t nowMs)
 {
-  
+    int cur_hp = 0;   
+    cur_hp = m_stat.GetCurHp();
+    cur_hp -= dmg;
+
+    if(cur_hp <= 0){
+        cur_hp = 0;
+        Dead();
+    }
+
+    m_stat.SetCurHp(cur_hp);
+
     // 다음 피격 가능 시간 설정
     m_nextContactDamageAllowedMs = nowMs + m_contactDamageCooldownMs;
+
+
+}
+
+void Player::Dead()
+{
+    m_CurrentState = PlayerState::DEAD;
+
 }
