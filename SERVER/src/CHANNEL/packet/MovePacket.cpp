@@ -42,14 +42,18 @@ void MovePacket(PacketContext * ctx)
     if(player == nullptr) 
     {
         K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] Player is nullptr\n", __FILE__, __FUNCTION__, __LINE__);
-        return;
+        rc = EXIT_FAILURE;
+        errMsg = "[" + std::to_string(rc) + "]Player is nullptr";
+        goto err;
     }
 
     map = player->GetCurrentMap();
      if(map == nullptr) 
     {
         K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] current_map is nullptr\n", __FILE__, __FUNCTION__, __LINE__);
-        return;
+        rc = EXIT_FAILURE;
+        errMsg = "[" + std::to_string(rc) + "]current_map is nullptr";
+        goto err;
     }
     // 받은 정보에서 Xpos 추출
      if(!PacketParser::ParseLengthPrefixedString(

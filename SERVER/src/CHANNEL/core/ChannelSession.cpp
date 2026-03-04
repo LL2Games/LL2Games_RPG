@@ -5,7 +5,7 @@
 #include "Packet.h"
 #include "MapInstance.h"
 
-ChannelSession::ChannelSession(int fd, ChannelServer* server) : m_fd(fd), m_server(server)
+ChannelSession::ChannelSession(int fd, ChannelServer* server) : m_fd(fd), m_server(server), m_player(nullptr)
 {
     m_recvBuf.reserve(8192);
 }
