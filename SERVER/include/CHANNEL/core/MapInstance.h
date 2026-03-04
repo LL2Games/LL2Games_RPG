@@ -14,6 +14,7 @@
 
 #include <nlohmann/json.hpp>
 #include <functional>
+#include <mutex>
 
 class CombatService;
 
@@ -103,6 +104,8 @@ private:
     DestroyReqFn m_onDestroyReq;
     ProjectileManager m_projectileManager;
 
+    // 동기화
+    std::mutex m_playerMutex;
 
 
 };

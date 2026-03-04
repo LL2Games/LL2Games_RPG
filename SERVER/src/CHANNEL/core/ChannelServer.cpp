@@ -255,8 +255,8 @@ void ChannelServer::OnReceive(int fd)
             OnDisconnect(fd);
             K_slog_trace(K_SLOG_TRACE, "Client %d disconnected\n", fd);
             close(fd);
-            delete m_sessions[fd];
-            m_sessions.erase(fd);
+            // delete m_sessions[fd];
+            // m_sessions.erase(fd);
             return ;
         }
         buf.append(temp, tempLen);
