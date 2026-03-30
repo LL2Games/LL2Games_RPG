@@ -141,6 +141,7 @@ bool MonsterManager::LoadJsonFile(int monster_id, MonsterTemplate& monsterTempla
 	
 	*/
     // 이렇게 json 파일을 읽을 때 가져오는 데이터 타입을 정해주면 안전하다.
+                                  //= j["monster_id"];
 	monsterTemplate.monsterId     = j.at("monster_id").get<int>();
     monsterTemplate.name          = j.at("name").get<std::string>();
     monsterTemplate.level         = j.at("level").get<int>();
