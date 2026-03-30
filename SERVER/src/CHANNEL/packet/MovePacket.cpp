@@ -3,6 +3,7 @@
 #include "ChannelSession.h"
 #include "PlayerManager.h"
 #include "MapInstance.h"
+#include "utility.h"
 
 
 void MovePacket(PacketContext * ctx)
@@ -93,13 +94,28 @@ void MovePacket(PacketContext * ctx)
         goto err;
     }
 
-    // stoi 등 형식 변환은 위험 가능성이 높다
-   
-    PlayerPos.xPos = stof(playerXPos);
-    PlayerPos.yPos = stof(playerYPos);
-    speed = stof(str_speed);
+    // stoi 등 형식 변환은 위험 가능성이 높다 따라서 utiliy 파일에서 int와 float 형식으로 변환하는 함수를 통해서 안전하게 변환
+    if(!utility::StringToFloat(playerXPos, PlayerPos.xPos))
+    {
+        rc = EXIT_FAILURE;
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] playerXPos String to Float fail", __FILE__, __FUNCTION__, __LINE__);
+        goto err;
+    }
 
- 
+    if(!utility::StringToFloat(playerYPos,  PlayerPos.yPos))
+    {
+        rc = EXIT_FAILURE;
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] playerYPos String to Float fail", __FILE__, __FUNCTION__, __LINE__);
+        goto err;
+    }
+
+    if(!utility::StringToFloat(str_speed,  speed))
+    {
+        rc = EXIT_FAILURE;
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] speed String to Float fail", __FILE__, __FUNCTION__, __LINE__);
+        goto err;
+    }
+   
     // 플레이어가 속한 맵의 모든 플레이어한테 변경 정보 전달
     map->HandleMove(player, PlayerPos, speed);
    

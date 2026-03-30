@@ -5,6 +5,7 @@
 #include "MapInstance.h"
 #include "ItemService.h"
 #include "PacketDTO.h"
+#include "utility.h"
 
 
 void UseItemPacket(PacketContext * ctx)
@@ -16,8 +17,10 @@ void UseItemPacket(PacketContext * ctx)
     int rc = EXIT_SUCCESS;
 
     std::string item_id;
-    std::string use_count;
+    std::string str_use_count;
     std::string errMsg;
+
+    int use_count = 0;
 
     std::vector<std::string> useItem_Info;
      
@@ -66,7 +69,7 @@ void UseItemPacket(PacketContext * ctx)
         ctx->payload,
         ctx->payload_len,
         offset,
-        use_count,
+        str_use_count,
         errMsg
     ))
     {
@@ -75,9 +78,16 @@ void UseItemPacket(PacketContext * ctx)
         goto err;
     }
 
+    if(!utility::StringToInt(str_use_count, use_count))
+    {
+        rc = EXIT_FAILURE;
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] str_use_count String to Int fail", __FILE__, __FUNCTION__, __LINE__);
+        goto err;
+    }
+
     // ITEM 사용 가능 여부 확인 후 사용
     //Player* player, int itemId, int useCount
-    rc = item_service->HandleUseItem(session->GetPlayer(), stoi(item_id), stoi(use_count), result);
+    rc = item_service->HandleUseItem(session->GetPlayer(), stoi(item_id), use_count, result);
     if(rc == EXIT_FAILURE)
     {
         K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] HandleUseItem Failed", __FILE__, __FUNCTION__, __LINE__);

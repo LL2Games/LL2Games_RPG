@@ -6,6 +6,7 @@
 #include "PlayerManager.h"
 #include "PacketParser.h"
 #include "K_slog.h"
+#include "utility.h"
 #include <sstream>
 
 
@@ -74,7 +75,12 @@ void ChannelInitHandler::HandleChannelAuth(PacketContext *ctx)
     }
 
 
-    characterId = stoi(ch_id);
+    if(!utility::StringToInt(ch_id, characterId))
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%d][%s] Error_MSG : [%s]", __LINE__, __FUNCTION__, "String to Int 실패");
+        rc = EXIT_FAILURE;
+        goto err;
+    }
 
     player = PlayerService::LoadPlayer(characterId);
 
@@ -98,13 +104,17 @@ void ChannelInitHandler::HandleChannelAuth(PacketContext *ctx)
         if (success) {
             K_slog_trace(K_SLOG_TRACE, "HandleChannelAuth: PlayerManager 등록 성공");
         } else {
-            K_slog_trace(K_SLOG_ERROR, "HandleChannelAuth: PlayerManager 등록 실패 (중복?)");
+            K_slog_trace(K_SLOG_ERROR, "HandleChannelAuth: PlayerManager 등록 실패, 이미 접속한 플레이어 입니다.");
+            rc = EXIT_FAILURE;
+            goto err;
         }
     } else {
         K_slog_trace(K_SLOG_ERROR, "HandleChannelAuth: PlayerManager가 null입니다");
+        rc = EXIT_FAILURE;
+        goto err;
     }
     // 성공 응답
-    K_slog_trace(K_SLOG_TRACE, "HandleChannelAuth: 인증 완료");
+    K_slog_trace(K_SLOG_TRACE, "HandleChannelAuth: 접속 성공");
 
 err:
     if (rc != EXIT_SUCCESS) {

@@ -62,7 +62,7 @@ MapInstance *MapManager::GetOrCreate(int mapId)
 
     if (it != m_maps.end())
     {
-        K_slog_trace(K_SLOG_TRACE, "[%s][%d] alreay Map is Maked", __FUNCTION__, __LINE__);
+        K_slog_trace(K_SLOG_TRACE, "[%s][%d] 이미 생성되어 있는 맵입니다. 맵의 정보를 반환합니다.", __FUNCTION__, __LINE__);
         return it->second;
     }
 
