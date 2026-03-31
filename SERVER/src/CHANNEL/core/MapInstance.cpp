@@ -8,7 +8,7 @@
 
 #define MAPDELETELIMIT 5
 
-MapInstance::MapInstance() : m_playerCount(0), m_limit(std::chrono::minutes{MAPDELETELIMIT})
+MapInstance::MapInstance() : m_playerCount(0), m_limit(std::chrono::minutes{MAPDELETELIMIT}), m_combatService(nullptr)
 {
 	m_monsterManager = MonsterManager::GetInstance();
 }

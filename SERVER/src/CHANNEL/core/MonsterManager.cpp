@@ -61,7 +61,7 @@ bool MonsterManager::PreLoadAll()
 
         m_mops.emplace(monster_id, std::move(monsterTemplate));
     }
-
+    K_slog_trace(K_SLOG_TRACE, "[%s][%d] MonsterData PreLoadAll Success", __FUNCTION__, __LINE__);
     return true;
 }
 

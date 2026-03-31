@@ -35,8 +35,8 @@ bool ChannelServer::Init(const int port)
     // 서버 구동 시 JSON 파일을 읽어온다.
     if(!m_map_manager.Init()) return false;
     if(!m_item_manager->Init()) return false;
-    if(m_monster_manager->Init()) return false;
-    if(m_skill_manager->Init()) return false;
+    if(!m_monster_manager->Init()) return false;
+    if(!m_skill_manager->Init()) return false;
 
 
    if(!InitListenSocket(port))
@@ -51,8 +51,10 @@ bool ChannelServer::Init(const int port)
         return false;
    }
 
+   K_slog_trace(K_SLOG_TRACE, "Thread Pool Start\n");
    //스레드풀 시작
    m_pool.Start();
+   K_slog_trace(K_SLOG_TRACE, "ChatD MessageQueue Start\n");
    //chatD 메시지큐 리시버 스레드 시작
    m_cmd_receiver.Start();
 

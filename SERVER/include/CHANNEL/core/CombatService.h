@@ -40,7 +40,7 @@ private:
     static constexpr int kContactPenaltyRatePct = 5;
 private:
 
-    SkillManager* m_skillManager;
+    SkillManager* m_skillManager = nullptr;
 
 
 };

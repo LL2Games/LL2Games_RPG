@@ -4,6 +4,12 @@
 #include "MapInstance.h"
 #include "K_slog.h"
 
+
+Monster::Monster() : m_lastAttacker(nullptr)
+{
+
+}
+
 int Monster::Init(const MonsterTemplate &monsterTemplate, const MonsterSpawnData &monsterspawnData)
 {
 

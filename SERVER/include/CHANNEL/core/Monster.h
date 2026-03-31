@@ -24,7 +24,7 @@ enum MonsterState {
 class Monster
 {
 public:
-    Monster(){};
+    Monster();
     ~Monster(){};
 	
 	// 몬스터 정보와 스폰 정보 설정 
