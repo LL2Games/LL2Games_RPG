@@ -3,6 +3,7 @@
 #include "CommonEnum.h"
 #include "util/PlayerData.h"
 #include "CharacterStat.h"
+#include "Inventory.h"
 #include "PlayerState.h"
 #include "PlayerData.h"
 #include "Skill_Info.h"
@@ -54,6 +55,8 @@ public:
     int GetLevel() const {return m_level;}
     PlayerState GetState(){return m_CurrentState;}
 
+    Inventory& GetInventory(){return m_inventory;}
+
     bool IsAlive(){return m_CurrentState != PlayerState::DEAD ? true : false;}
 
     std::string GetName() {return m_name;}
@@ -74,17 +77,17 @@ public:
     // 현재 플레이어가 공격 가능 상태인지 확인한다.
     bool CanAttack(SkillDef* skillDef);
 
-    bool CanUseItem(int itemId, int useCount);
+    bool CanUseItem(int inventoryType, int slotPos, int item_id, int useCount);
+    bool UseItem(int inventoryType, int slotPos, int itemId, int useCount);
 
     int GetSkillLevel(int skill_id) const;
-
     void UseSkill(SkillDef* skillDef);
-    bool UseItem(int itemId, int useCount);
+    
 
     void AddHP(int HP);
     void AddMP(int MP);
 
-    int GetItemCount(int itemId) const;
+    int GetItemCount(int inventoryType, int slotPos, int itemId) const;
 
     // 현재 공격을 받을 수 있는 상태인지 확인하는 함수 : 메이플에서 피격 당할 시 1초 정도의 무적이 존재하기 때문에 확인 함수 필요
     bool CanTakeAnyContactDamage(int64_t nowMs);
@@ -125,7 +128,9 @@ private:
     bool m_isChangedInventory;
     bool m_isChangedStatas;
     bool m_isChangedPositon;
+
     CharacterStat m_stat;
+    Inventory m_inventory;
    
     int64_t m_nextContactDamageAllowedMs;
     int64_t m_contactDamageCooldownMs;

@@ -9,7 +9,10 @@
 #include "Player.h"
 #include "ChannelSession.h"
 #include "CombatService.h"
+#include "DropManager.h"
 #include "Skill_Info.h"
+#include "Inventory.h"
+#include "DropInfos.h"
 
 #include <nlohmann/json.hpp>
 #include <functional>
@@ -51,10 +54,13 @@ public:
     void ResolveSkillHit(Player* Attacker, SkillDef& skillDef, std::vector<std::pair<Monster*, int>> hits);
     void SetPlayerHitResult(Player* player, int monster_instacneId, PlayerHitResult& result);
     
+    bool SpawnDropItem(Monster* monster, std::vector<DropResult> dropItems);
+    
 private:
     void BroadcastMoveExcept(Player* sender, Vec2 pos, float speed);
     void BroadcastMonsterHit(Player* Attacker, int SkillID, std::vector<MonsterHitResult> result);
     void BroadcastPlayerHit(Player* Defender, PlayerHitResult result);
+    void BroadcaseDropSpawn(std::vector<DropSpawnInfo> spawnedInfos);
     void BroadcastMapInfo();
 
     // 몬스터와 플레이어의 접촉 시 
@@ -83,6 +89,7 @@ private:
     uint16_t m_mapID;
 
     std::unordered_map<int, Player*> m_playerList;
+    std::unordered_map<int, DropItems> m_dropItems;
    
     std::vector<MonsterSpawnData> m_monsterSpawnList;
     std::vector<MonsterSpawnData>::iterator m_monsterSpawnListIter;
@@ -91,6 +98,7 @@ private:
     std::vector<Monster>::iterator m_monsterListIter;
 
     std::vector<Item> m_itemList;
+    std::vector<DropSpawnInfo> m_spawnInfos;
 	// Map에 플레이어가 없을 때 딱 시간 찍는 변수
 	std::chrono::steady_clock::time_point m_emptyTime;
     // Map 사라지는 제한 시간
@@ -102,5 +110,5 @@ private:
 private:
     MonsterManager* m_monsterManager;
     CombatService* m_combatService;
-
+    DropManager* m_dropManager;
 };

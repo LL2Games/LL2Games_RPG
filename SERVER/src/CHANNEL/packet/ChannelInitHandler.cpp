@@ -93,6 +93,10 @@ void ChannelInitHandler::HandleChannelAuth(PacketContext *ctx)
 
     K_slog_trace(K_SLOG_TRACE, "HandleChannelAuth: 플레이어 로드 성공 [%d]", characterId);
 
+    PlayerService::LoadInventory(player->GetId(), player->GetInventory());
+
+    K_slog_trace(K_SLOG_TRACE, "HandleChannelAuth: 플레이어 인벤토리 로드 성공 [%d]", characterId);
+
     // 세션에 플레이어 연결
     ctx->channel_session->SetPlayer(player.get());
     player->SetSession(ctx->channel_session);

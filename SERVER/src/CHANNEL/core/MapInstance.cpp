@@ -1,16 +1,18 @@
 #include "common.h"
 #include "MapInstance.h"
 #include "Monster.h"
-#include <nlohmann/json.hpp>
-#include <fstream>
 #include "CommonEnum.h"
 #include "timeUtility.h"
+#include <nlohmann/json.hpp>
+#include <fstream>
+
 
 #define MAPDELETELIMIT 5
 
 MapInstance::MapInstance() : m_playerCount(0), m_limit(std::chrono::minutes{MAPDELETELIMIT}), m_combatService(nullptr)
 {
 	m_monsterManager = MonsterManager::GetInstance();
+	m_dropManager = DropManager::GetInstance();
 }
 
 MapInstance::~MapInstance()
@@ -218,8 +220,6 @@ void MapInstance::GiveItem(int ItemGroup)
 
 }
 
-
-
 void MapInstance::HandleMove(Player* sender, Vec2 pos, float speed)
 {
 	if(!sender) return;
@@ -288,7 +288,15 @@ void MapInstance::ResolveSkillHit(Player* Attacker, SkillDef& skillDef, std::vec
 
 	for (auto& [m, dmg] : hits)
 	{
-		bool isDead = m->OnDamaged(Attacker, dmg);	
+		bool isDead = m->OnDamaged(Attacker, dmg);
+		// 몬스터가 죽었을 때 아이템 드롭
+		if(isDead)
+		{
+			// dropItem 세팅
+			std::vector<DropResult> dropItems = m_dropManager->SetDropItem(m->GetCommonItemGroupID(), m->GetUniqueItemGroupID());
+			// 아이템 스폰
+			SpawnDropItem(m, dropItems);
+		}	
 		results.push_back({m->GetInstanceId(), dmg, m->GetCurrentHP(), m->GetMaxHP(), isDead});
 	}
         
@@ -406,4 +414,62 @@ void MapInstance::SetPlayerHitResult(Player* player, int monster_instanceId, Pla
 	result.cur_hp = player->GetCurHP();
 	result.max_hp = player->GetMaxHP();
 	result.state = player->GetState();
+}
+
+
+bool MapInstance::SpawnDropItem(Monster* monster, std::vector<DropResult> dropItems)
+{
+	
+	for(size_t i =0; i < dropItems.size(); i++)
+	{
+		DropItems Item;
+		Item.count = dropItems[i].count;
+		Item.itemId = dropItems[i].itemId;
+		Item.type = dropItems[i].type;
+		Item.dropId = m_dropItems.size() + 1;
+		Item.pos = monster->GetPos();
+		Item.owner = monster->GetLastAttacker();
+		Item.ownerExpireTimeMs = NowMs() + 3000;
+		Item.expireTimeMs = NowMs() + 30000;
+
+		m_dropItems[Item.itemId] = Item;
+
+		DropSpawnInfo info;
+		info.dropId = Item.dropId;
+		info.count = Item.count;
+		info.itemId = Item.itemId;
+		info.type = Item.type;
+		info.xPos = Item.pos.xPos;
+		info.yPos = Item.pos.yPos;
+
+		m_spawnInfos.push_back(info);
+	}
+
+	BroadcaseDropSpawn(m_spawnInfos);
+
+	return true;
+}
+
+void MapInstance::BroadcaseDropSpawn(std::vector<DropSpawnInfo> spawnedInfos)
+{
+	for (auto& [id, p] : m_playerList)
+    		{
+        	if (!p) continue;
+
+        	auto session = p->GetSession();
+        	if (!session) continue;
+
+        	std::vector<std::string> payload;
+			
+			for(size_t i =0; i < spawnedInfos.size(); i++)
+			{
+        		payload.push_back(std::to_string(spawnedInfos[i].dropId));
+        		payload.push_back(std::to_string(spawnedInfos[i].itemId));
+        		payload.push_back(std::to_string(static_cast<int>(spawnedInfos[i].type)));
+        		payload.push_back(std::to_string(spawnedInfos[i].count));
+        		payload.push_back(std::to_string(spawnedInfos[i].xPos));
+        		payload.push_back(std::to_string(spawnedInfos[i].yPos));
+        		session->Send(PKT_DROPITEMS, payload);
+			}
+    }	
 }

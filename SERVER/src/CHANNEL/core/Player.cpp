@@ -67,7 +67,7 @@ void Player::SetInitData(const PlayerInitData playerInitData, const CharacterSta
 
 #if 1 //테스트용
     /*ITEM 사용 테스트를 위한 Inven 채우기 */
-    m_inven[2000000] = 100;
+    //m_inven[2000000] = 100;
 
     //HP물약회복 테스트를 위한 HP 임시세팅
     m_stat.GetCurHp() = 10;
@@ -162,8 +162,14 @@ void Player::UseSkill(SkillDef* skillDef)
 }
 
 
-bool Player::CanUseItem(int item_id, int useCount)
+bool Player::CanUseItem(int inventoryType, int slotPos, int item_id, int useCount)
 {
+    //인벤토리에서 해당 아이템이 있는지 확인
+
+    //개수 체크
+
+    // 아이템 타입 확인
+
     if (useCount <= 0) {
         K_slog_trace(K_SLOG_ERROR, "[%s:%d] invalid useCount=%d\n", __FUNCTION__, __LINE__, useCount);
         return false;
@@ -177,27 +183,20 @@ bool Player::CanUseItem(int item_id, int useCount)
         return false;
     }
     if (def->type != "consumable") {
-        K_slog_trace(K_SLOG_ERROR, "[%s:%d] not consumable item_id=%d type=%s\n",
-            __FUNCTION__, __LINE__, item_id, def->type.c_str());
+        K_slog_trace(K_SLOG_ERROR, "[%s:%d] not consumable item_id=%d type=%s\n", __FUNCTION__, __LINE__, item_id, def->type.c_str());
         return false;
     }
 
-    auto it = m_inven.find(item_id);
-    if (it == m_inven.end()) {
-        K_slog_trace(K_SLOG_ERROR, "[%s:%d] item not owned item_id=%d\n", __FUNCTION__, __LINE__, item_id);
-        return false;
-    }
-
-    if (it->second < useCount) {
-        K_slog_trace(K_SLOG_ERROR, "[%s:%d] not enough item_id=%d have=%d need=%d\n",
-            __FUNCTION__, __LINE__, item_id, it->second, useCount);
+    if(!m_inventory.HasItemBySlot(inventoryType, slotPos, item_id, useCount))
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s:%d] 아이템을 사용할 수 없습니다. item_id=%d type=%s\n", __FUNCTION__, __LINE__, item_id, def->type.c_str());
         return false;
     }
 
     return true;
 }
 
-bool Player::UseItem(int itemId, int useCount)
+bool Player::UseItem(int inventoryType, int slotPos, int itemId, int useCount)
 {
    // 방어(실수 방지)
     if (useCount <= 0) return false;
@@ -205,13 +204,10 @@ bool Player::UseItem(int itemId, int useCount)
     const ItemInitData* def = ItemManager::GetInstance()->Find(itemId);
     if (!def) return false;
 
-    auto it = m_inven.find(itemId);
-    if (it == m_inven.end()) return false;
-
-    // 수량 차감
-    it->second -= useCount;
-    if (it->second <= 0) {
-        m_inven.erase(it);
+    if(!m_inventory.RemoveItemBySlot(inventoryType, slotPos, itemId, useCount))
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s:%d] 아이템을 사용할 수 없습니다. item_id=%d\n", __FUNCTION__, __LINE__, itemId);
+        return false;
     }
 
     // 효과 적용
@@ -233,10 +229,14 @@ bool Player::UseItem(int itemId, int useCount)
 
 }
 
-int Player::GetItemCount(int itemId) const
+int Player::GetItemCount(int inventoryType, int slotPos, int itemId) const
 {
-    auto it = m_inven.find(itemId);
-    return (it == m_inven.end()) ? 0 : it->second;
+    if(!m_inventory.HasItemBySlot(inventoryType,slotPos, itemId))
+    {
+        K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] 플레이어가 소유하지 않은 아이템입니다.\n", __FILE__, __FUNCTION__, __LINE__);
+        return 0;
+    }
+    return m_inventory.GetItemCount(inventoryType, slotPos, itemId);
 }
 
 int Player::GetSkillLevel(int skill_id) const

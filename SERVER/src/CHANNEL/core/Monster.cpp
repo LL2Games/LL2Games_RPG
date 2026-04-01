@@ -37,6 +37,10 @@ int Monster::Init(const MonsterTemplate &monsterTemplate, const MonsterSpawnData
 
 	m_respawnDelay = std::chrono::seconds(monsterspawnData.respawnDelay);
 	m_itemGroup = monsterspawnData.ItemId;
+
+	m_common_drop_Item_GroupId = monsterTemplate.common_drop_group_id;
+	m_unique_drop_Item_GroupId = monsterTemplate.unique_drop_group_id;
+
 	m_instanceId = monsterspawnData.instanceId;
 
 	m_state = E_Patrol;

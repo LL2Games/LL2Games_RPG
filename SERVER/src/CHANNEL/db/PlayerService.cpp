@@ -1,5 +1,5 @@
-#include "CHANNEL/db/PlayerService.h"
-#include "CHANNEL/db/RedisUtility.h"
+#include "PlayerService.h"
+#include "RedisUtility.h"
 #include "K_slog.h"
 #include <cstdio>
 #include <sstream>
@@ -168,4 +168,45 @@ std::unique_ptr<Player> PlayerService::LoadPlayer(int characterId)
     mysql_free_result(res);
     m_mySql->ReleaseConnection(conn);
     return player;
+}
+
+bool PlayerService::LoadInventory(int characterId, Inventory& Inventory)
+{
+    int result = 0;
+    MYSQL_RES *res = nullptr;
+    MYSQL_ROW row;
+    MYSQL* conn = m_mySql->GetConnection(); 
+    if(!conn) return false;
+    std::string query = "SELECT inventory_type, slot_pos, item_Id, item_count FROM character_inventory WHERE char_id = " + std::to_string(characterId);
+    result = mysql_query(conn, query.c_str());
+    if(result != 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "LoadPlayer Inventory ERROR [%s]", mysql_error(conn));
+        K_slog_trace(K_SLOG_ERROR, "SQL [%s]", query.c_str());
+        m_mySql->ReleaseConnection(conn);
+        return false;
+    }
+
+    res = mysql_store_result(conn);
+    if(!res)
+    {
+        K_slog_trace(K_SLOG_ERROR, "LoadPlayer ERROR [%s]", mysql_error(conn));
+        m_mySql->ReleaseConnection(conn);
+        return false;
+    }
+
+    // 캐릭터 인벤토리 아이템 저장
+    while((row = mysql_fetch_row(res)) != nullptr)
+    {
+        int inventoryType = std::atoi(row[0]);
+        int slotpos = std::atoi(row[1]);
+        int itemId = std::atoi(row[2]);
+        int itemCount = std::atoi(row[3]);
+        
+        Inventory.SetSlotItem(inventoryType, slotpos, itemId, itemCount);
+    }
+
+    mysql_free_result(res);
+    m_mySql->ReleaseConnection(conn);
+    return true;
 }

@@ -8,16 +8,16 @@ ItemService::ItemService()
 }
 
 
-int ItemService::HandleUseItem(Player* player, int itemId, int useCount, UseItemResult& result)
+int ItemService::HandleUseItem(Player* player, UseItem itemData, UseItemResult& result)
 {
     int is_use; 
-    if(!player->CanUseItem(itemId, useCount))
+    if(!player->CanUseItem(itemData.inventoryType, itemData.slotPos, itemData.itemId, itemData.useCount))
     {
-        K_slog_trace(K_SLOG_ERROR, "[%s:%d] [%d] 아이템 사용 불가\n", __FUNCTION__, __LINE__, itemId);
+        K_slog_trace(K_SLOG_ERROR, "[%s:%d] [%d] 아이템 사용 불가\n", __FUNCTION__, __LINE__, itemData.itemId);
         return EXIT_FAILURE;
     }
 
-    is_use = player->UseItem(itemId, useCount);
+    is_use = player->UseItem(itemData.inventoryType, itemData.slotPos, itemData.itemId, itemData.useCount);
 
     if(!is_use)
     {
@@ -30,9 +30,11 @@ int ItemService::HandleUseItem(Player* player, int itemId, int useCount, UseItem
     result.result = is_use;
     result.hp = player->GetCurHP();
     result.mp = player->GetCurMP();
-    result.item_id = itemId;
-    result.used_count = useCount;
-    result.remain_count = player->GetItemCount(itemId);
+    result.inventoryType = itemData.inventoryType;
+    result.slotPos = itemData.slotPos;
+    result.item_id = itemData.itemId;
+    result.used_count = itemData.useCount;
+    result.remain_count = player->GetItemCount(itemData.inventoryType, itemData.slotPos, itemData.itemId);
 
     return EXIT_SUCCESS;
 }

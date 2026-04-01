@@ -5,7 +5,11 @@
 #include "MapInstance.h"
 #include "ItemService.h"
 #include "PacketDTO.h"
+#include "Inventory_Info.h"
 #include "utility.h"
+
+
+bool TransferData(Str_UseItem& str_itemData, UseItem& itemData);
 
 
 void UseItemPacket(PacketContext * ctx)
@@ -14,13 +18,16 @@ void UseItemPacket(PacketContext * ctx)
     ItemService* item_service = nullptr;
     size_t offset = 0;
     UseItemResult result;
+
+    Str_UseItem str_itemData;
+    UseItem itemData;
     int rc = EXIT_SUCCESS;
 
-    std::string item_id;
-    std::string str_use_count;
+    std::string str_inventoryType;
+    std::string str_slotPos;
+    std::string str_itemId;
+    std::string str_useCount;
     std::string errMsg;
-
-    int use_count = 0;
 
     std::vector<std::string> useItem_Info;
      
@@ -50,12 +57,39 @@ void UseItemPacket(PacketContext * ctx)
         goto err;
     }
 
+    if(!PacketParser::ParseLengthPrefixedString(
+        ctx->payload,
+        ctx->payload_len,
+        offset,
+        str_inventoryType,
+        errMsg
+    ))
+    {
+        rc = EXIT_FAILURE;
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] ParseLengthPrefixedString fail", __FILE__, __FUNCTION__, __LINE__);
+        goto err;
+    }
+
+    if(!PacketParser::ParseLengthPrefixedString(
+        ctx->payload,
+        ctx->payload_len,
+        offset,
+        str_slotPos,
+        errMsg
+    ))
+    {
+        rc = EXIT_FAILURE;
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] ParseLengthPrefixedString fail", __FILE__, __FUNCTION__, __LINE__);
+        goto err;
+    }
+
+
     // item_id를 추출
      if(!PacketParser::ParseLengthPrefixedString(
         ctx->payload,
         ctx->payload_len,
         offset,
-        item_id,
+        str_itemId,
         errMsg
     ))
     {
@@ -69,7 +103,7 @@ void UseItemPacket(PacketContext * ctx)
         ctx->payload,
         ctx->payload_len,
         offset,
-        str_use_count,
+        str_useCount,
         errMsg
     ))
     {
@@ -78,22 +112,29 @@ void UseItemPacket(PacketContext * ctx)
         goto err;
     }
 
-    if(!utility::StringToInt(str_use_count, use_count))
+    str_itemData.str_inventoryType = str_inventoryType;
+    str_itemData.str_slotPos = str_slotPos;
+    str_itemData.str_itemId = str_itemId;
+    str_itemData.str_useCount =str_useCount;
+
+    if(!TransferData(str_itemData, itemData))
     {
         rc = EXIT_FAILURE;
-        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] str_use_count String to Int fail", __FILE__, __FUNCTION__, __LINE__);
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] Transfer fail", __FILE__, __FUNCTION__, __LINE__);
         goto err;
     }
 
     // ITEM 사용 가능 여부 확인 후 사용
     //Player* player, int itemId, int useCount
-    rc = item_service->HandleUseItem(session->GetPlayer(), stoi(item_id), use_count, result);
+    rc = item_service->HandleUseItem(session->GetPlayer(), itemData, result);
     if(rc == EXIT_FAILURE)
     {
         K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] HandleUseItem Failed", __FILE__, __FUNCTION__, __LINE__);
         goto err;
     }
 
+    useItem_Info.push_back(std::to_string(result.inventoryType));
+    useItem_Info.push_back(std::to_string(result.slotPos));
     useItem_Info.push_back(std::to_string(result.item_id));
     useItem_Info.push_back(std::to_string(result.used_count));
     useItem_Info.push_back(std::to_string(result.remain_count));
@@ -106,8 +147,39 @@ err:
         session->SendNok(PKT_PLAYER_USE_ITEM, errMsg);
     } else {
         K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] UseItemPacket END", __FILE__, __FUNCTION__, __LINE__);
-         session->SendOk(PKT_PLAYER_USE_ITEM, useItem_Info);
+        session->SendOk(PKT_PLAYER_USE_ITEM, useItem_Info);
     }
 
+
+}
+
+
+bool TransferData(Str_UseItem& str_itemData, UseItem& itemData)
+{
+    if(!utility::StringToInt(str_itemData.str_inventoryType , itemData.inventoryType))
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] str_inventoryType String to Int fail", __FILE__, __FUNCTION__, __LINE__);
+        return false;
+    }
+
+    if(!utility::StringToInt(str_itemData.str_useCount , itemData.useCount))
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] str_inventoryType String to Int fail", __FILE__, __FUNCTION__, __LINE__);
+        return false;
+    }
+
+    if(!utility::StringToInt(str_itemData.str_itemId , itemData.itemId))
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] str_inventoryType String to Int fail", __FILE__, __FUNCTION__, __LINE__);
+        return false;
+    }
+
+    if(!utility::StringToInt(str_itemData.str_slotPos , itemData.slotPos))
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] str_inventoryType String to Int fail", __FILE__, __FUNCTION__, __LINE__);
+        return false;
+    }
+
+    return true;
 
 }

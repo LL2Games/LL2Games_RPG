@@ -63,6 +63,10 @@ public:
 	float GetExp(){return m_exp;}
 
 	int GetItemGroup(){return m_itemGroup;}
+
+	std::string GetCommonItemGroupID(){return m_common_drop_Item_GroupId;}
+	std::string GetUniqueItemGroupID(){return m_unique_drop_Item_GroupId;}
+	
 	int GetInstanceId() const {return m_instanceId;}
 	int GetCurrentHP() {return m_hp;}
 	int GetMaxHP() {return m_maxhp;}
@@ -104,6 +108,8 @@ private:
 
 	// 몬스터 아이템 드롭 그룹
 	int m_itemGroup;
+	std::string m_common_drop_Item_GroupId;
+	std::string m_unique_drop_Item_GroupId;
 	
 	int m_lastAttackerId;
 	Player *m_lastAttacker;
