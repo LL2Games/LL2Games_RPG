@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "drop_groups": {
+    "UNIQUE_GREEN_SNAIL": {
+      "min_drop": 0,
+      "max_drop": 1,
+      "allow_duplicate": false,
+      "entries": [
+        {
+          "item_id": 4001001,
+          "drop_weight": 1000,
+          "min_count": 1,
+          "max_count": 1,
+          "tag": "snail_shell"
+        }
+      ]
+    },
+
+    "UNIQUE_BLUE_SNAIL": {
+      "min_drop": 0,
+      "max_drop": 1,
+      "allow_duplicate": false,
+      "entries": [
+        {
+          "item_id": 4001002,
+          "drop_weight": 1000,
+          "min_count": 1,
+          "max_count": 1,
+          "tag": "snail_shell"
+        }
+      ]
+    },
+    "UNIQUE_RED_SNAIL": {
+      "min_drop": 0,
+      "max_drop": 1,
+      "allow_duplicate": false,
+      "entries": [
+        {
+          "item_id": 4001003,
+          "drop_weight": 1000,
+          "min_count": 1,
+          "max_count": 1,
+          "tag": "snail_shell"
+        }
+      ]
+    },
+    "UNIQUE_SLIME": {
+      "min_drop": 0,
+      "max_drop": 1,
+      "allow_duplicate": false,
+      "entries": [
+        {
+          "item_id": 4001004,
+          "drop_weight": 900,
+          "min_count": 1,
+          "max_count": 1,
+          "tag": "slime_gel"
+        },
+        {
+          "item_id": 4010105,
+          "drop_weight": 100,
+          "min_count": 1,
+          "max_count": 1,
+          "tag": "rare_piece"
+        }
+      ] 
+    }
+  }
+}

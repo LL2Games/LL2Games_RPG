@@ -1,6 +1,6 @@
 #pragma once
-#include "CHANNEL/core/common.h"
-#include "CHANNEL/core/Player.h"
+#include "common.h"
+#include "Player.h"
 #include "ChannelPacketFactory.h"
 
 class ChannelServer;
@@ -37,7 +37,6 @@ public:
     
 
 private:
-    bool TryPopOnePacket(Packet& outpkt);
     void HandlePacket(const Packet& pkt);
 
     static constexpr size_t kHeaderSize = sizeof(PacketHeader);

@@ -5,13 +5,19 @@
 #include "PlayerService.h"
 #include "MapService.h"
 #include "MapManager.h"
+#include "MonsterManager.h"
 #include "MySqlConnectionPool.h"
 #include "RedisClient.h"
 #include "common.h"
 
 #include "StatService.h"
+#include "ItemManager.h"
+#include "SkillManager.h"
+#include "ItemService.h"
+
 #include "ThreadPool.h"
 #include "CommandReceiver.h"
+#include "CombatService.h"
 
 
 
@@ -31,6 +37,9 @@ public:
     MapService* GetMapService() {return &m_map_service;}
     PlayerService* GetPlayerService() {return &m_player_service;}
     StatService* GetStatService() {return &m_stat_service;}
+    ItemService* GetItemService() {return &m_item_service;}
+    CombatService* GetCombatService() {return &m_combat_service;}
+    ThreadPool* GetThreadPool() {return &m_pool;}
 private:
     bool InitListenSocket(int port);
     bool InitEpoll();
@@ -51,16 +60,17 @@ private:
     PlayerManager m_player_mamager;
     PlayerService m_player_service;
     MapManager m_map_manager;
+    ItemManager* m_item_manager;
+    MonsterManager* m_monster_manager;
+    SkillManager* m_skill_manager;
     //MySqlConnectionPool m_db;
     RedisClient m_redis;
-
+    
     MapService m_map_service;
     StatService m_stat_service;
-    
+    ItemService m_item_service;
+    CombatService m_combat_service;
 
-    //MapManager m_map_manager;
     ThreadPool m_pool;
     CommandReceiver m_cmd_receiver;
-
-
 };

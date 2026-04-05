@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "drop_groups": {
+    "FIELD_COMMON_LV1_20": {
+      "min_drop": 0,
+      "max_drop": 3,
+      "allow_duplicate": true,
+      "entries": [
+        { "type": "gold", "weight": 600, "min": 5,  "max": 25, "tag": "gold" },
+        { "type": "item", "item_id": 2000000, "weight": 180, "min_count": 1, "max_count": 2, "tag": "hp_potion" },
+        { "type": "item", "item_id": 2000001, "weight": 120, "min_count": 1, "max_count": 2, "tag": "mp_potion" },
+        { "type": "item", "item_id": 4000000, "weight": 220, "min_count": 1, "max_count": 3, "tag": "junk_material" },
+        { "type": "item", "item_id": 4010000, "weight": 40,  "min_count": 1, "max_count": 1, "tag": "ore" }
+      ]
+    },
+
+    "FIELD_COMMON_LV21_50": {
+      "min_drop": 1,
+      "max_drop": 4,
+      "allow_duplicate": true,
+      "entries": [
+        { "type": "gold", "weight": 550, "min": 20, "max": 90, "tag": "gold" },
+        { "type": "item", "item_id": 2000002, "weight": 160, "min_count": 1, "max_count": 2, "tag": "hp_potion" },
+        { "type": "item", "item_id": 2000003, "weight": 120, "min_count": 1, "max_count": 2, "tag": "mp_potion" },
+        { "type": "item", "item_id": 4000001, "weight": 220, "min_count": 1, "max_count": 4, "tag": "junk_material" },
+        { "type": "item", "item_id": 4010001, "weight": 50,  "min_count": 1, "max_count": 1, "tag": "ore" }
+      ]
+    }
+  }
+}

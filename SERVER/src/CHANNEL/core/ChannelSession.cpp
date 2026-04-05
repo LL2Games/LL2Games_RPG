@@ -3,14 +3,26 @@
 #include "PacketParser.h"
 #include "IPacketFactory.h"
 #include "Packet.h"
+#include "MapInstance.h"
 
-ChannelSession::ChannelSession(int fd, ChannelServer* server) : m_fd(fd), m_server(server)
+ChannelSession::ChannelSession(int fd, ChannelServer* server) : m_fd(fd), m_server(server), m_player(nullptr)
 {
     m_recvBuf.reserve(8192);
 }
 
 ChannelSession::~ChannelSession()
 {
+    if (m_player != nullptr)
+    {
+        MapInstance *map = m_player->GetCurrentMap();
+        if (map != nullptr)
+        {
+            //플레이어 접속 종료시 해당맵에서 퇴장
+            map->OnLeave(m_player->GetId());
+            K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d] map->OnLeave(Id:%d)", __FILE__, __FUNCTION__, __LINE__, m_player->GetId());
+        }
+    }
+    K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d] ChannelSession Destroy(fd:%d)", __FILE__, __FUNCTION__, __LINE__, m_fd);
 }
 
 
@@ -35,7 +47,7 @@ bool ChannelSession::OnBytes(const uint8_t* data, size_t len)
         ctx.type = pkt->type;
         ctx.channel_session = this;
         ctx.fd = m_fd;
-        ctx.pkt.type = pkt->type;
+        ctx.type = pkt->type;
         ctx.payload = const_cast<char*>(pkt->payload.c_str());
         ctx.payload_len = pkt->payload.size();
         
@@ -46,6 +58,8 @@ bool ChannelSession::OnBytes(const uint8_t* data, size_t len)
             ctx.map_service = m_server->GetMapService();
             ctx.player_service = m_server->GetPlayerService();
             ctx.stat_service = m_server->GetStatService();
+            ctx.item_service = m_server->GetItemService();
+            ctx.combat_service = m_server->GetCombatService();
         }
         
         handler->Execute(&ctx);
@@ -55,42 +69,6 @@ bool ChannelSession::OnBytes(const uint8_t* data, size_t len)
     return true;
 }
 
-
-bool ChannelSession::TryPopOnePacket(Packet& outPkt)
-{
-    if(m_recvBuf.size() < kHeaderSize)
-        return false;
-
-    PacketHeader netHeader{};
-    memcpy(&netHeader, m_recvBuf.data(), kHeaderSize);
-
-    const uint16_t totalLen = ntohs(netHeader.length);
-    const uint16_t type     = ntohs(netHeader.type);
-
-    if(totalLen < kHeaderSize || totalLen > kMaxPacketSize)
-    {
-       return false; 
-    }
-
-    if(m_recvBuf.size() < totalLen)
-        return false;
-
-    outPkt.header.length = totalLen;
-    outPkt.header.type = type;
-
-    const size_t payloadLen = totalLen - kHeaderSize;
-    outPkt.payload.resize(payloadLen);
-
-    if(payloadLen > 0)
-    {
-        memcpy(outPkt.payload.data(), m_recvBuf.data() + kHeaderSize, payloadLen);
-
-    }
-
-    m_recvBuf.erase(m_recvBuf.begin(), m_recvBuf.begin() + totalLen);
-    return true;
-
-}
 
 
 void ChannelSession::HandlePacket(const Packet& pkt)

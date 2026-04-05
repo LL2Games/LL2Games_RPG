@@ -1,8 +1,11 @@
+#pragma once
 #include "common.h"
 #include "CommonEnum.h"
+#include "Collider.h"
 #include <optional>
 #include <nlohmann/json.hpp>
 #include <mutex>
+
 class MonsterManager 
 {
 public:
@@ -13,9 +16,11 @@ public:
 	
 	static MonsterManager *GetInstance();
 
-    void Init();
+    bool Init();
     // 몬스터 정보가 없으면 로드, 있으면 True로 반환
     bool EnsureLoaded(int monster_id);
+
+    bool PreLoadAll();
 
     // 몬스터 정보가 반드시 존재한다는 가정하에 사용하는 함수 
     // 없으면 nullptr 반환
@@ -25,7 +30,7 @@ public:
 
 private: 
     // json 파일에서 몬스터 정보 읽어오는 함수
-    bool LoadFromFile(int monster_id, MonsterTemplate& monsterTemplate);
+    bool LoadJsonFile(int monster_id, MonsterTemplate& monsterTemplate);
 private:
     // 한번 Json파일에서 읽어온 몬스터 정보를 저장하는 맵
     std::unordered_map<int , MonsterTemplate> m_mops;
@@ -33,4 +38,10 @@ private:
     std::mutex m_mtx;
 
 	static MonsterManager *m_instance;
+
+private:
+    inline static constexpr float PLAYER_HALF_W = 14.f;
+    inline static constexpr float PLAYER_HALF_H = 12.f;
+    inline static constexpr float EXTRA = 12.f;
+
 };

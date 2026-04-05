@@ -2,16 +2,19 @@
 #include "common.h"
 #include "PlayerManager.h"
 #include "CommonEnum.h"
+#include "Skill_Info.h"
 #include "Monster.h"
 #include "MonsterManager.h"
 #include "Item.h"
 #include "Player.h"
 #include "ChannelSession.h"
+#include "CombatService.h"
+#include "Skill_Info.h"
 
 #include <nlohmann/json.hpp>
 #include <functional>
 
-
+class CombatService;
 
 class MapInstance 
 {
@@ -22,8 +25,11 @@ public:
     int Init(const MapInitData& data);
     int InitSpawnMonster();
     int SetMonster(MonsterType monsterType);
+
+    void SetCombatService(CombatService* combatservice){m_combatService = combatservice;};
     //int LoadMonsters(int monster_id);
     int Update();
+    int UpdateMonster();
     int SpawnMonster();
 
     void RemoveMap();
@@ -40,13 +46,19 @@ public:
     void HandleMonsterDead(Monster& monster);
 
     void GiveExp(int platerID, float exp);
-
     void GiveItem(int ItemGroup);
-
     void HandleMove(Player* sender, Vec2 pos, float speed);
-
+    void ResolveSkillHit(Player* Attacker, SkillDef& skillDef, std::vector<std::pair<Monster*, int>> hits);
+    void SetPlayerHitResult(Player* player, int monster_instacneId, PlayerHitResult& result);
+    
+private:
     void BroadcastMoveExcept(Player* sender, Vec2 pos, float speed);
+    void BroadcastMonsterHit(Player* Attacker, int SkillID, std::vector<MonsterHitResult> result);
+    void BroadcastPlayerHit(Player* Defender, PlayerHitResult result);
+    void BroadcastMapInfo();
 
+    // 몬스터와 플레이어의 접촉 시 
+    void ProcessContactDamage(int64_t nowMs);
 public:
 
     // int 매개변수를 받는 콜백 함수 이름 지정
@@ -57,11 +69,15 @@ public:
 
     uint16_t GetMapId() {return m_mapID;}
 
+    std::vector<Monster>& GetMonsterList(){ return m_monsterList;};
+
 private:
    	// 플레이어가 맵에 있는지 없는지 판단 변수
     bool m_has_player;
     bool m_destroyRequested;
-	
+
+    // 플레이어-몬스터 접촉 판정용 거리 임계값(반지름^2). 거리^2와 비교한다.
+    float m_contactCheckRadiusSq;
 	// 플레이어 수 
 	uint16_t m_playerCount;
     uint16_t m_mapID;
@@ -75,15 +91,16 @@ private:
     std::vector<Monster>::iterator m_monsterListIter;
 
     std::vector<Item> m_itemList;
-	
-	MonsterManager* m_monsterManager;
-	
 	// Map에 플레이어가 없을 때 딱 시간 찍는 변수
 	std::chrono::steady_clock::time_point m_emptyTime;
     // Map 사라지는 제한 시간
     std::chrono::minutes m_limit;
 
+    // 맵이 사라질 때 반환하는 예약 콜백 함수 
     DestroyReqFn m_onDestroyReq;
 
+private:
+    MonsterManager* m_monsterManager;
+    CombatService* m_combatService;
 
 };
