@@ -10,9 +10,11 @@
 #include "ChannelSession.h"
 #include "CombatService.h"
 #include "Skill_Info.h"
+#include "ProjectileManager.h"
 
 #include <nlohmann/json.hpp>
 #include <functional>
+#include <mutex>
 
 class CombatService;
 
@@ -59,6 +61,7 @@ private:
 
     // 몬스터와 플레이어의 접촉 시 
     void ProcessContactDamage(int64_t nowMs);
+    void ProcessRangedDamage(int64_t nowMs);
 public:
 
     // int 매개변수를 받는 콜백 함수 이름 지정
@@ -70,6 +73,7 @@ public:
     uint16_t GetMapId() {return m_mapID;}
 
     std::vector<Monster>& GetMonsterList(){ return m_monsterList;};
+    ProjectileManager& GetProjectileManager() { return m_projectileManager; }
 
 private:
    	// 플레이어가 맵에 있는지 없는지 판단 변수
@@ -98,6 +102,10 @@ private:
 
     // 맵이 사라질 때 반환하는 예약 콜백 함수 
     DestroyReqFn m_onDestroyReq;
+    ProjectileManager m_projectileManager;
+
+    // 동기화
+    std::mutex m_playerMutex;
 
 private:
     MonsterManager* m_monsterManager;

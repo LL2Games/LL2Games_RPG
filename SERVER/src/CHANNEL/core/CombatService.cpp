@@ -34,11 +34,23 @@ int CombatService::HandleAttack(Player* Attacker, int skill_id, std::string atta
     Attacker->UseSkill(&*skillDef);
 
     // MapInstance에서 해당 맵에 스폰된 몬스터들의 정보를 추출
-    std::vector<Monster> monster_list = map->GetMonsterList();
+    std::vector<Monster>& monster_list = map->GetMonsterList();
      
+
+#if 1 /*gunoo22 260223 맵내 모든 몬스터 피격 테스트*/
+    std::vector<Monster*> HitMonsters;
+    for (auto& m : monster_list)
+    {
+        HitMonsters.push_back(&m);
+    }
+    K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] 테스트 HitMonsters size[%d]", __FILE__, __FUNCTION__, __LINE__, HitMonsters.size());
+
+    (void)attack_dir; // 현재 테스트에서는 공격 방향 무시
+#else
     // ComputeHitMonsters(Player* attacker, const std::vector<Monster>& monsters, const SkillDef& skillDef, std::string attack_dir)
     // 몬스터들 중에서 피격된 몬스터들을 가져온다.
     std::vector<Monster*> HitMonsters = ComputeHitMonsters(Attacker, monster_list, *skillDef, attack_dir);
+#endif
 
     std::vector<std::pair<Monster*, int>> hitResults;
     hitResults.reserve(HitMonsters.size());
@@ -84,7 +96,8 @@ std::vector<Monster*> CombatService::ComputeHitMonsters(Player* attacker, const 
 
     attackerPos = attacker->GetPos();
 
-    for (Monster m : monsters)
+    //gunoo22 260226 몬스터 체력 안다는 이슈 -> 레퍼런스로 안받음
+    for (const Monster& m : monsters) 
     {
         Vec2 mp = m.GetPos();
 

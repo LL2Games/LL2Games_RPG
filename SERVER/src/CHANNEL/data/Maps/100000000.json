@@ -1,7 +1,7 @@
 {
   "mapId": 100000000,
   "name": "Henesys",
-  "respawnDelay" : 30, 
+  "respawnDelay" : 2, 
   "monsters": [
     { "monsterId": 100100, "xPos": -300.0, "yPos": 0.0, "group": 1 },
     { "monsterId": 100101, "xPos":  250.0, "yPos": 0.0, "group": 2 }

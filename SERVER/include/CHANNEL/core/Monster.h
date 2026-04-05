@@ -5,6 +5,7 @@
 //#include "Player.h"
 
 class Player;
+class MapInstance;
 
 struct MonsterHitResult {
     int monster_instance_id;
@@ -17,6 +18,7 @@ struct MonsterHitResult {
 enum MonsterState {
 	E_Patrol,
 	E_Chase,
+	E_RangeAttack,
 	E_Dead,
 };
 
@@ -51,11 +53,11 @@ public:
 public:
 	// 몬스터 위치 설정
     void SetPos(Vec2 Pos){this->m_Pos.xPos = Pos.xPos; this->m_Pos.yPos = Pos.yPos;}
-	Vec2 GetPos(){return m_Pos;}
+	Vec2 GetPos() const {return m_Pos;}
 
 	int GetLevel() const {return m_level;}
 
-	bool IsAlive() {return m_isAlive;}
+	bool IsAlive() const {return m_isAlive;}
 
 	int GetLastAttackerID() {return m_lastAttackerId;}
 	Player* GetLastAttacker() {return m_lastAttacker;}
@@ -64,11 +66,23 @@ public:
 
 	int GetItemGroup(){return m_itemGroup;}
 	int GetInstanceId() const {return m_instanceId;}
+
+	int GetCurrentHP() const {return m_hp;}
+	int GetMaxHP() const {return m_maxhp;}
 	int GetCurrentHP() {return m_hp;}
 	int GetMaxHP() {return m_maxhp;}
 
 	int GetDamage(){return m_attackDamage;}
 	Collider2D GetCollider() {return m_collider;}
+
+	//원거리공격 관련 메서드
+	bool IsRangedAttack() const { return m_isRangedAttack; }
+	Vec2 GetProjectilePos() const { return m_projectilePos; }
+	float GetProjectileDir() const { return m_projectileDir; }
+	bool IsAttackOnCooldown();
+	bool TryRangedAttack(const Vec2& dir);
+	MonsterState GetState() const { return m_state; }
+
 private:
     MonsterType m_type;
 	Collider2D m_collider;
@@ -78,7 +92,7 @@ private:
 
 	float m_rightBound;
 	float m_leftBound;
-	float m_dir;
+	Vec2 m_dir;
 
     bool m_isAlive;
 	bool m_deadRequest; 
@@ -110,4 +124,21 @@ private:
 
 	//스폰된 맵 ID
 	uint16_t m_mapId; 
+	MapInstance* m_mapInstance;
+
+	/***원거리 공격 관련 변수***/
+	//고정값
+	bool m_isRangedAttack; //원거리 공격 여부
+	int m_projectileId; //투사체 아이디
+	float m_projectileDamage; //투사체 데미지
+	float m_projectileSpeed; //투사체 속도
+	float m_ragedAttackRange; //투사체 공격 범위
+
+	//변동값
+	Vec2 m_projectilePos; //투사체 위치
+	float m_projectileDir; //투사체 방향
+	int64_t m_attackCooldown; //공격 쿨타임
+	int64_t m_lastAttackTime; //마지막 공격 시간
+	/***원거리 공격 관련 변수***/
+
 };

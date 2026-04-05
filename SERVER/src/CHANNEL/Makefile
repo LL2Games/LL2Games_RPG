@@ -72,6 +72,8 @@ SRCS := \
 	core/SkillManager.cpp \
 	core/ItemManager.cpp \
 	core/ItemService.cpp \
+	core/Projectile.cpp \
+	core/ProjectileManager.cpp \
     \
 	packet/ChannelPacketFactory.cpp \
 	packet/ChannelInitHandler.cpp \

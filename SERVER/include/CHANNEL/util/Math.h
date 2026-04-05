@@ -34,3 +34,5 @@ bool IsHitFrontBox2D(
 
 
 
+
+float Length(const Vec2& v);

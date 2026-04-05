@@ -4,6 +4,7 @@
 #include <nlohmann/json.hpp>
 #include <fstream>
 #include "CommonEnum.h"
+#include "IProjectile.h"
 #include "timeUtility.h"
 
 #define MAPDELETELIMIT 5
@@ -41,6 +42,7 @@ int MapInstance::Init(const MapInitData& data)
 
 int MapInstance::Update()
 {
+	K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d] MapInstance Pointer[%p]", __FILE__, __FUNCTION__, __LINE__, this);
 	if(!m_has_player)
 	{
 		RemoveMap();
@@ -49,6 +51,9 @@ int MapInstance::Update()
 	{
 		SpawnMonster();
 		UpdateMonster();
+		m_projectileManager.Update(); //투사체 업데이트
+		ProcessRangedDamage(NowMs()); //원거리 공격 판정 및 데미지 처리
+		//ProcessContactDamage(NowMs()); //플레이어-몬스터 접촉 판정 및 데미지 처리
 		BroadcastMapInfo();
 		ProcessContactDamage(NowMs());
 	}
@@ -62,7 +67,7 @@ void MapInstance::BroadcastMapInfo()
 	std::vector<std::string> payload;	
 
 	K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d]m_monsterList[size:%d]", __FILE__, __FUNCTION__, __LINE__, m_monsterList.size());
-	for (auto& monster : m_monsterList)
+	for (const auto& monster : m_monsterList)
 	{
 		if (monster.IsAlive())
 		{
@@ -73,13 +78,30 @@ void MapInstance::BroadcastMapInfo()
 			payload.push_back(std::to_string(monster.GetMaxHP()));
 		}
 	}
+		
+	//원거리 공격 투사체
+	K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d]projectiles[size:%d]", __FILE__, __FUNCTION__, __LINE__, m_projectileManager.GetProjectiles().size());
+	for (const auto& p : m_projectileManager.GetProjectiles())
+	{
+		payload.push_back("PROJECTILE"); //test
+		//id
+		payload.push_back(std::to_string(p->GetId()));
+		//좌표
+		payload.push_back(std::to_string(p->GetPos().xPos));
+		payload.push_back(std::to_string(p->GetPos().yPos));
+		//방향
+		payload.push_back(std::to_string(p->GetDir().xPos));
+		payload.push_back(std::to_string(p->GetDir().yPos));
+	}
 	
-	
-	K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d]m_playerList[size:%d]", __FILE__, __FUNCTION__, __LINE__, m_playerList.size());
-	for(auto it = m_playerList.begin(); it != m_playerList.end(); ++it)
-	{	
-		auto session = it->second->GetSession();	
-		session->Send(PKT_MONSTER_MOVE, payload);
+	{
+		std::lock_guard<std::mutex> lock(m_playerMutex);
+		K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d]m_playerList[size:%d]", __FILE__, __FUNCTION__, __LINE__, m_playerList.size());
+		for(auto it = m_playerList.begin(); it != m_playerList.end(); ++it)
+		{	
+			auto session = it->second->GetSession();	
+			session->Send(PKT_MONSTER_MOVE, payload);
+		}
 	}
 }
 
@@ -112,6 +134,7 @@ int MapInstance::InitSpawnMonster()
 		if(monsterTemplate.has_value())
 		{
 			(*monsterTemplate).mapId = m_mapID;
+			(*monsterTemplate).mapInstance = this;
 			monster.Init(*monsterTemplate, *m_monsterSpawnListIter);
 		}else {
 			K_slog_trace(K_SLOG_ERROR, "[%s][%d] MonsterTemplate Get Failed Monster_Id[%d] FILE", __FUNCTION__, __LINE__, m_monsterSpawnListIter->monsterId);
@@ -160,9 +183,12 @@ int MapInstance::SpawnMonster()
 
 void MapInstance::OnEnter(int PlayerID, Player* player)
 {
-	auto it = m_playerList.find(PlayerID);
+	{
+		std::lock_guard<std::mutex> lock(m_playerMutex);
+		auto it = m_playerList.find(PlayerID);
 
-	if(it != m_playerList.end()) return;
+		if(it != m_playerList.end()) return;
+	}
 
 	m_playerList[PlayerID] = player;
 
@@ -178,12 +204,14 @@ void MapInstance::OnEnter(int PlayerID, Player* player)
 
 void MapInstance::OnLeave(int PlayerID)
 {
+	std::lock_guard<std::mutex> lock(m_playerMutex);
+		
 	auto it = m_playerList.find(PlayerID);
 
 	if(it == m_playerList.end()) return;
-
+	
 	m_playerList.erase(it);
-
+	
 	m_playerCount--;
 	if(m_playerCount == 0)
 	{
@@ -226,12 +254,15 @@ void MapInstance::HandleMove(Player* sender, Vec2 pos, float speed)
 
 	K_slog_trace(K_SLOG_TRACE, "[%s][%d] 플레이어 ID [%d]", __FUNCTION__, __LINE__, sender->GetId());
 	
-	auto it = m_playerList.find(sender->GetId());
-
-	if(it == m_playerList.end())
 	{
-		K_slog_trace(K_SLOG_ERROR, "[%s][%d] [%d]해당 맵에 존재하지 않은 플레이어 입니다.", __FUNCTION__, __LINE__, m_mapID);
-		return;
+		std::lock_guard<std::mutex> lock(m_playerMutex);
+		auto it = m_playerList.find(sender->GetId());
+
+		if(it == m_playerList.end())
+		{
+			K_slog_trace(K_SLOG_ERROR, "[%s][%d] [%d]해당 맵에 존재하지 않은 플레이어 입니다.", __FUNCTION__, __LINE__, m_mapID);
+			return;
+		}
 	}
 
 	sender->SetPos(pos);
@@ -254,13 +285,16 @@ void MapInstance::BroadcastMoveExcept(Player* sender, Vec2 pos, float speed)
 	payload.push_back(std::to_string(pos.yPos));
 	payload.push_back(std::to_string(speed));
 
-	for(auto it = m_playerList.begin(); it != m_playerList.end(); ++it)
 	{
-		if(it->second == sender) continue;
-		
-		auto session = it->second->GetSession();
-		
-		session->Send(PKT_PLAYER_MOVE, payload);
+		std::lock_guard<std::mutex> lock(m_playerMutex);
+		for(auto it = m_playerList.begin(); it != m_playerList.end(); ++it)
+		{
+			if(it->second == sender) continue;
+
+			auto session = it->second->GetSession();
+
+			session->Send(PKT_PLAYER_MOVE, payload);
+		}
 	}
 }
 
@@ -282,6 +316,8 @@ void MapInstance::ResolveSkillHit(Player* Attacker, SkillDef& skillDef, std::vec
 {
 	//skillDef는 상태이상 적용 시 필요한 정보 : 현재는 필요 없지만 후에 필요할지 몰라서 일단 매개변수로 추가해놓음
 	(void)skillDef;
+
+	K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d] MapInstance Pointer[%p]", __FILE__, __FUNCTION__, __LINE__, this);
 
 	std::vector<MonsterHitResult> results;
     results.reserve(hits.size());
@@ -311,15 +347,55 @@ void MapInstance::BroadcastMonsterHit(Player* Attacker, int SkillID, std::vector
     	payload.push_back(std::to_string(r.max_hp));
     	payload.push_back(r.dead ? "1" : "0");
 	}
-	for(auto it = m_playerList.begin(); it != m_playerList.end(); ++it)
-	{
-		//if(it->second == Attacker) continue;
-		
-		auto session = it->second->GetSession();
-		
-		session->Send(PKT_MONSTER_ONDAMAGED, payload);
-	}
 
+	{
+		std::lock_guard<std::mutex> lock(m_playerMutex);
+		for(auto it = m_playerList.begin(); it != m_playerList.end(); ++it)
+		{
+			//if(it->second == Attacker) continue;
+
+			auto session = it->second->GetSession();
+
+			session->Send(PKT_MONSTER_ONDAMAGED, payload);
+		}
+	}
+}
+
+/*gunoo22 260223 원거리 공격 처리*/
+void MapInstance::ProcessRangedDamage(int64_t nowMs)
+{
+	{
+		std::lock_guard<std::mutex> lock(m_playerMutex);
+   		for(auto p : m_playerList)
+   		{
+				Player* player = p.second;
+		
+				// 플레이어가 죽었다면 스킵
+				if(!player || !player->IsAlive()) continue;
+		
+				// 플레이어가 이미 피격 당했고 무적 상태라면 스킵
+				if(!player->CanTakeAnyContactDamage(nowMs)) continue;
+		
+				const Vec2 player_pos = player->GetPos();
+		
+				K_slog_trace(K_SLOG_TRACE, "\n\n[%s:%s][%d] PLAYER POS [%f, %f]", __FILE__, __FUNCTION__, __LINE__, player_pos.xPos, player_pos.yPos);
+				for (const auto& p : m_projectileManager.GetProjectiles())
+				{
+					const Vec2& projectile_pos = p->GetPos();
+				
+					K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d] PROJECTILE POS [%f, %f]", __FILE__, __FUNCTION__, __LINE__, projectile_pos.xPos, projectile_pos.yPos);
+				
+					//플레이어와 투사체 거리가 일정거리 이상이라면 스킵
+					if (Distancesquare(player_pos, projectile_pos) > m_contactCheckRadiusSq) continue;
+				
+					 // 정밀 충돌(AABB/원형)
+					if (!Collision::Intersects(player_pos, player->GetCollider(), projectile_pos, p->GetCollider())) continue;
+				
+					//플레이어 온데미지
+					player->OnDamaged(p->GetDamage(), nowMs);
+				}
+   		}
+	}
 }
 
 void MapInstance::BroadcastPlayerHit(Player* Defender, PlayerHitResult result)
@@ -360,22 +436,24 @@ void MapInstance::BroadcastPlayerHit(Player* Defender, PlayerHitResult result)
 void MapInstance::ProcessContactDamage(int64_t nowMs)
 {
 
-   for(auto p : m_playerList)
-   {
-		Player* player = p.second;
+	{
+		std::lock_guard<std::mutex> lock(m_playerMutex);
+	   for(auto p : m_playerList)
+	   {
+			Player* player = p.second;
 
-		// 플레이어가 죽었다면 스킵
-		if(!player || !player->IsAlive()) continue;
+			// 플레이어가 죽었다면 스킵
+			if(!player || !player->IsAlive()) continue;
 
-		// 플레이어가 이미 피격 당했고 무적 상태라면 스킵
-		if(!player->CanTakeAnyContactDamage(nowMs)) continue;
+			// 플레이어가 이미 피격 당했고 무적 상태라면 스킵
+			if(!player->CanTakeAnyContactDamage(nowMs)) continue;
 
-		const Vec2 player_pos = player->GetPos();
+			const Vec2 player_pos = player->GetPos();
 
-		for(Monster& monster : m_monsterList)
-		{
-			// 몬스터가 죽은 상태라면 스킵
-			if(!monster.IsAlive()) continue;
+			for(Monster& monster : m_monsterList)
+			{
+				// 몬스터가 죽은 상태라면 스킵
+				if(!monster.IsAlive()) continue;
 
 			const Vec2 monster_pos = monster.GetPos();
 			// 플레이어와 몬스터의 거리가 일정 이상이라면 스킵

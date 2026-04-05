@@ -8,11 +8,25 @@
     "moveSpeed" : 10,
 
     "common_drop_group_id": "FIELD_COMMON_LV1_20",
-    "unique_drop_group_id": "UNIQUE_GRREN_SLIME",
+    "unique_drop_group_id": "UNIQUE_GREEN_SLIME",
 
     "collider" :[{
         "type" : "Rect2D",
         "offset" : {"x" : 0, "y" : 12},
         "half": {"w" :14, "h": 10}
+    }],
+
+    "isRanged" : true,
+    "projectile" :[{
+        "id" : 1,
+        "damage" : 3,
+        "speed" : 15,
+        "range" : 30,
+        "coolDown" : 1800,
+        "collider" : [{
+            "type" : "Circle2D",
+            "offset" : {"x" : 0, "y" : 0},
+            "radius": 2
+        }]
     }]
 }

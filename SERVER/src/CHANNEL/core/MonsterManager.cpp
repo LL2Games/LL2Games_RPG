@@ -57,7 +57,10 @@ bool MonsterManager::PreLoadAll()
 
         bool is_Load = LoadJsonFile(monster_id, monsterTemplate);
         if (!is_Load)
+        {
+            // K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d]gunoo22_TEST", __FILE__, __FUNCTION__, __LINE__);
             return false;
+        }
 
         m_mops.emplace(monster_id, std::move(monsterTemplate));
     }
@@ -186,6 +189,33 @@ bool MonsterManager::LoadJsonFile(int monster_id, MonsterTemplate& monsterTempla
 
     monsterTemplate.broadCutSq = r * r;
 
+    //투사체 정보 입력
+    monsterTemplate.isRanged = j.at("isRanged").get<bool>();
+    // K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d]gunoo22_TEST", __FILE__, __FUNCTION__, __LINE__);
+    if (monsterTemplate.isRanged) {
+        const auto& mPro = j.at("projectile").at(0);
+        monsterTemplate.projectileData.id = mPro.at("id").get<int>();
+        monsterTemplate.projectileData.damage = mPro.at("damage").get<float>();
+        monsterTemplate.projectileData.speed = mPro.at("speed").get<float>();
+        monsterTemplate.projectileData.range = mPro.at("range").get<float>();
+        monsterTemplate.projectileData.coolDown = mPro.at("coolDown").get<int64_t>();
+        // K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d]gunoo22_TEST coolDown[%ld]", __FILE__, __FUNCTION__, __LINE__, monsterTemplate.projectileData.coolDown);
+
+        const auto& mProCol = mPro.at("collider").at(0);
+        monsterTemplate.projectileData.collider.type = Collision::SetCollisionType(mProCol.at("type").get<std::string>());
+        // K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d]gunoo22_TEST", __FILE__, __FUNCTION__, __LINE__);
+        if (monsterTemplate.projectileData.collider.type == ColliderType::Rect2D) {
+            monsterTemplate.projectileData.collider.rect.offset.xPos = mProCol.at("offset").at("x").get<float>();
+            monsterTemplate.projectileData.collider.rect.offset.yPos = mProCol.at("offset").at("y").get<float>();
+            monsterTemplate.projectileData.collider.rect.halfW = mProCol.at("half").at("w").get<float>();
+            monsterTemplate.projectileData.collider.rect.halfH = mProCol.at("half").at("h").get<float>();
+        } else if (monsterTemplate.projectileData.collider.type == ColliderType::Circle2D) {
+            monsterTemplate.projectileData.collider.circle.offset.xPos = mProCol.at("offset").at("x").get<float>();
+            monsterTemplate.projectileData.collider.circle.offset.yPos = mProCol.at("offset").at("y").get<float>();
+            monsterTemplate.projectileData.collider.circle.radius = mProCol.at("radius").get<float>();
+        }
+        // K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d]gunoo22_TEST", __FILE__, __FUNCTION__, __LINE__);
+    }
     
 	return true;
 }
