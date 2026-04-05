@@ -9,7 +9,7 @@
 
 #define MAPDELETELIMIT 5
 
-MapInstance::MapInstance() : m_playerCount(0), m_limit(std::chrono::minutes{MAPDELETELIMIT})
+MapInstance::MapInstance() : m_playerCount(0), m_limit(std::chrono::minutes{MAPDELETELIMIT}), m_combatService(nullptr)
 {
 	m_monsterManager = MonsterManager::GetInstance();
 }
@@ -55,6 +55,7 @@ int MapInstance::Update()
 		ProcessRangedDamage(NowMs()); //원거리 공격 판정 및 데미지 처리
 		//ProcessContactDamage(NowMs()); //플레이어-몬스터 접촉 판정 및 데미지 처리
 		BroadcastMapInfo();
+		ProcessContactDamage(NowMs());
 	}
 
     return 1;
@@ -333,7 +334,7 @@ void MapInstance::ResolveSkillHit(Player* Attacker, SkillDef& skillDef, std::vec
 void MapInstance::BroadcastMonsterHit(Player* Attacker, int SkillID, std::vector<MonsterHitResult> result)
 {
 	std::vector<std::string> payload;
-	payload.reserve(4);
+	payload.reserve(result.size());
 
 	payload.push_back(std::to_string(Attacker->GetId()));
 	payload.push_back(std::to_string(SkillID));
@@ -397,6 +398,41 @@ void MapInstance::ProcessRangedDamage(int64_t nowMs)
 	}
 }
 
+void MapInstance::BroadcastPlayerHit(Player* Defender, PlayerHitResult result)
+{
+	  for (auto& [id, p] : m_playerList)
+    		{
+        	if (!p) continue;
+
+        	auto session = p->GetSession();
+        	if (!session) continue;
+
+        	std::vector<std::string> payload;
+        	payload.reserve(6);
+
+        	if (p == Defender)
+        	{
+        	    // 본인: 상세
+        	    payload.push_back(std::to_string(result.player_id));
+        	    payload.push_back(std::to_string(result.attacker_instance_id));
+        	    payload.push_back(std::to_string(result.damage));
+        	    payload.push_back(std::to_string(result.cur_hp));
+        	    payload.push_back(std::to_string(result.max_hp));
+        	    payload.push_back(std::to_string(static_cast<int>(result.state)));
+        	}
+        	else
+        	{
+        	    // 타인: 최소(HP 미공개)
+        	    payload.push_back(std::to_string(result.player_id));
+        	    payload.push_back(std::to_string(result.attacker_instance_id));
+        	    payload.push_back(std::to_string(result.damage));
+        	    payload.push_back(std::to_string(static_cast<int>(result.state)));
+        	}
+
+        	session->Send(PKT_PLAYER_ONDAMAGED, payload);
+    }	
+}
+
 void MapInstance::ProcessContactDamage(int64_t nowMs)
 {
 
@@ -419,13 +455,33 @@ void MapInstance::ProcessContactDamage(int64_t nowMs)
 				// 몬스터가 죽은 상태라면 스킵
 				if(!monster.IsAlive()) continue;
 
-				const Vec2 monster_pos = monster.GetPos();
-				// 플레이어와 몬스터의 거리가 일정 이상이라면 스킵
-				if(Distancesquare(player_pos, monster_pos) > m_contactCheckRadiusSq) continue;
+			const Vec2 monster_pos = monster.GetPos();
+			// 플레이어와 몬스터의 거리가 일정 이상이라면 스킵
+			if(Distancesquare(player_pos, monster_pos) > m_contactCheckRadiusSq) continue;
+			
+			 // 정밀 충돌(AABB/원형)
+            if (!Collision::Intersects(player_pos, player->GetCollider(), monster_pos, monster.GetCollider())) continue;
 
-				 // 정밀 충돌(AABB/원형)
-	            if (!Collision::Intersects(player_pos, player->GetCollider(), monster_pos, monster.GetCollider())) continue;
-			}
-	   }
-	}
+			int dmg = m_combatService->ApplyContactDamage(player, monster);
+			
+			player->OnDamaged(dmg,nowMs);
+
+			PlayerHitResult result;
+
+			result.damage = dmg;
+			SetPlayerHitResult(player, monster.GetInstanceId(), result);
+
+			BroadcastPlayerHit(player, result);
+		}
+   }
+
+}
+
+void MapInstance::SetPlayerHitResult(Player* player, int monster_instanceId, PlayerHitResult& result)
+{
+	result.attacker_instance_id = monster_instanceId;
+	result.player_id = player->GetId();
+	result.cur_hp = player->GetCurHP();
+	result.max_hp = player->GetMaxHP();
+	result.state = player->GetState();
 }

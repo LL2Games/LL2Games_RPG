@@ -7,6 +7,12 @@
 #include "Projectile.h"
 #include "ProjectileManager.h"
 
+
+Monster::Monster() : m_lastAttacker(nullptr)
+{
+
+}
+
 int Monster::Init(const MonsterTemplate &monsterTemplate, const MonsterSpawnData &monsterspawnData)
 {
 

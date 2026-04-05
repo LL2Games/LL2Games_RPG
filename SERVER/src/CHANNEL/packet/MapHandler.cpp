@@ -3,6 +3,7 @@
 #include "ChannelSession.h"
 #include "PacketParser.h"
 #include "K_slog.h"
+#include "utility.h"
 #include <sstream>
 #include <stdexcept>
 
@@ -11,11 +12,11 @@ void MapHandler::Execute(PacketContext * ctx)
 {
     ChannelSession *session = nullptr;
     int rc = EXIT_SUCCESS;
-    std::string errMsg;
-    size_t offset = 0;
     int mapId = 0;
     int playerid = 0;
 
+    size_t offset = 0;
+    std::string errMsg;
     std::string player_id;
     std::string map_id;
 
@@ -31,14 +32,14 @@ void MapHandler::Execute(PacketContext * ctx)
     session = ctx->channel_session;
     if(session == nullptr)
     {
-          K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] session is nullptr\n", __FILE__, __FUNCTION__, __LINE__);
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] session is nullptr\n", __FILE__, __FUNCTION__, __LINE__);
         rc = EXIT_FAILURE;
         errMsg = "[" + std::to_string(rc) + "]session is nullptr";
         goto err;
     }
 
     
-   // ���� �������� playerID ���� 
+   // playerID 
     if(!PacketParser::ParseLengthPrefixedString(
         ctx->payload,
         ctx->payload_len,
@@ -54,7 +55,7 @@ void MapHandler::Execute(PacketContext * ctx)
 
     K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] PlayerID [%s]", __FILE__, __FUNCTION__, __LINE__, player_id.c_str());
 
-    // ���� �������� mapID ����
+    // mapID 
      if(!PacketParser::ParseLengthPrefixedString(
         ctx->payload,
         ctx->payload_len,
@@ -68,8 +69,19 @@ void MapHandler::Execute(PacketContext * ctx)
         goto err;
     }
 
-    playerid = stoi(player_id);
-    mapId = stoi(map_id);
+    if(!utility::StringToInt(player_id, playerid))
+    {
+        rc = EXIT_FAILURE;
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] playerid String To Int Fail", __FILE__, __FUNCTION__, __LINE__);
+        goto err;
+    }
+
+    if(!utility::StringToInt(map_id, mapId))
+    {
+        rc = EXIT_FAILURE;
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] mapId String To Int Fail", __FILE__, __FUNCTION__, __LINE__);
+        goto err;
+    }
 
     if(!ctx->map_service)
     {

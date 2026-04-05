@@ -37,7 +37,6 @@ public:
     
 
 private:
-    bool TryPopOnePacket(Packet& outpkt);
     void HandlePacket(const Packet& pkt);
 
     static constexpr size_t kHeaderSize = sizeof(PacketHeader);

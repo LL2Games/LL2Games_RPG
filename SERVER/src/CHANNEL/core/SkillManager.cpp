@@ -25,6 +25,7 @@ SkillManager *SkillManager::GetInstance()
 
 bool SkillManager::Init()
 {
+    K_slog_trace(K_SLOG_TRACE, "[%s][%d] Init Error", __FUNCTION__, __LINE__);
     if(!PreLoadAll()) return false;
     return true;
 }
@@ -59,7 +60,7 @@ bool SkillManager::PreLoadAll()
 
         m_skills.emplace(skill_id, std::move(skillDef));
     }
-
+    K_slog_trace(K_SLOG_TRACE, "[%s][%d] Skill PreLoadAll Success", __FUNCTION__, __LINE__);
     return true;
 }
 
@@ -98,6 +99,7 @@ bool SkillManager::LoadJsonFile(const std::string& path, SkillDef& skillDef)
     }
     catch (const nlohmann::json::parse_error &e)
     {
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] JSON Error", __FUNCTION__, __LINE__);
         // JSON 문법 깨짐/파싱 실패
         return false;
     }
@@ -115,7 +117,7 @@ bool SkillManager::LoadJsonFile(const std::string& path, SkillDef& skillDef)
 
 void SkillManager::LoadSkill(nlohmann::json& j, SkillDef& skillDef)
 {
-
+    K_slog_trace(K_SLOG_TRACE, "[%s][%d] LoadSkill Start", __FUNCTION__, __LINE__);
     skillDef.skill_id = j.at("skill_id").get<int>();
 	skillDef.key = j.at("key").get<std::string>();
 
@@ -137,7 +139,7 @@ void SkillManager::LoadSkill(nlohmann::json& j, SkillDef& skillDef)
     const auto& damange = j.at("damage").at(0);
 
     skillDef.damage.multiplier = damange.at("multiplier").get<float>();
-    skillDef.damage.flat_add = damange.at("flat_add").get<int16_t>();
+    skillDef.damage.flat_add = damange.at("flat_add").get<int>();
 
  
     // Skill Json 파일에서 requirements 배열의 정보들 가져옴

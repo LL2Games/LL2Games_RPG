@@ -26,7 +26,7 @@ enum MonsterState {
 class Monster
 {
 public:
-    Monster(){};
+    Monster();
     ~Monster(){};
 	
 	// 몬스터 정보와 스폰 정보 설정 
@@ -65,12 +65,14 @@ public:
 	float GetExp(){return m_exp;}
 
 	int GetItemGroup(){return m_itemGroup;}
-
 	int GetInstanceId() const {return m_instanceId;}
 
 	int GetCurrentHP() const {return m_hp;}
 	int GetMaxHP() const {return m_maxhp;}
+	int GetCurrentHP() {return m_hp;}
+	int GetMaxHP() {return m_maxhp;}
 
+	int GetDamage(){return m_attackDamage;}
 	Collider2D GetCollider() {return m_collider;}
 
 	//원거리공격 관련 메서드
@@ -102,7 +104,7 @@ private:
     //몬스터 상태 값 나중에 추가해야함
     MonsterState m_state;
 	float m_exp;
-    float m_attackDamage;
+    int m_attackDamage;
     int m_level;
 	int m_moveSpeed;
 

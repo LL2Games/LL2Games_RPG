@@ -27,6 +27,8 @@ public:
     int Init(const MapInitData& data);
     int InitSpawnMonster();
     int SetMonster(MonsterType monsterType);
+
+    void SetCombatService(CombatService* combatservice){m_combatService = combatservice;};
     //int LoadMonsters(int monster_id);
     int Update();
     int UpdateMonster();
@@ -49,12 +51,15 @@ public:
     void GiveItem(int ItemGroup);
     void HandleMove(Player* sender, Vec2 pos, float speed);
     void ResolveSkillHit(Player* Attacker, SkillDef& skillDef, std::vector<std::pair<Monster*, int>> hits);
+    void SetPlayerHitResult(Player* player, int monster_instacneId, PlayerHitResult& result);
     
 private:
     void BroadcastMoveExcept(Player* sender, Vec2 pos, float speed);
     void BroadcastMonsterHit(Player* Attacker, int SkillID, std::vector<MonsterHitResult> result);
+    void BroadcastPlayerHit(Player* Defender, PlayerHitResult result);
     void BroadcastMapInfo();
 
+    // 몬스터와 플레이어의 접촉 시 
     void ProcessContactDamage(int64_t nowMs);
     void ProcessRangedDamage(int64_t nowMs);
 public:
@@ -66,7 +71,6 @@ public:
     void SetDestroyCallback(DestroyReqFn cb) {m_onDestroyReq = std::move(cb);}
 
     uint16_t GetMapId() {return m_mapID;}
-
 
     std::vector<Monster>& GetMonsterList(){ return m_monsterList;};
     ProjectileManager& GetProjectileManager() { return m_projectileManager; }
@@ -91,14 +95,10 @@ private:
     std::vector<Monster>::iterator m_monsterListIter;
 
     std::vector<Item> m_itemList;
-	
-	MonsterManager* m_monsterManager;
-	
 	// Map에 플레이어가 없을 때 딱 시간 찍는 변수
 	std::chrono::steady_clock::time_point m_emptyTime;
     // Map 사라지는 제한 시간
     std::chrono::minutes m_limit;
-
 
     // 맵이 사라질 때 반환하는 예약 콜백 함수 
     DestroyReqFn m_onDestroyReq;
@@ -107,5 +107,8 @@ private:
     // 동기화
     std::mutex m_playerMutex;
 
+private:
+    MonsterManager* m_monsterManager;
+    CombatService* m_combatService;
 
 };

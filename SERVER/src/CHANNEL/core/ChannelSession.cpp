@@ -70,42 +70,6 @@ bool ChannelSession::OnBytes(const uint8_t* data, size_t len)
 }
 
 
-bool ChannelSession::TryPopOnePacket(Packet& outPkt)
-{
-    if(m_recvBuf.size() < kHeaderSize)
-        return false;
-
-    PacketHeader netHeader{};
-    memcpy(&netHeader, m_recvBuf.data(), kHeaderSize);
-
-    const uint16_t totalLen = ntohs(netHeader.length);
-    const uint16_t type     = ntohs(netHeader.type);
-
-    if(totalLen < kHeaderSize || totalLen > kMaxPacketSize)
-    {
-       return false; 
-    }
-
-    if(m_recvBuf.size() < totalLen)
-        return false;
-
-    outPkt.header.length = totalLen;
-    outPkt.header.type = type;
-
-    const size_t payloadLen = totalLen - kHeaderSize;
-    outPkt.payload.resize(payloadLen);
-
-    if(payloadLen > 0)
-    {
-        memcpy(outPkt.payload.data(), m_recvBuf.data() + kHeaderSize, payloadLen);
-
-    }
-
-    m_recvBuf.erase(m_recvBuf.begin(), m_recvBuf.begin() + totalLen);
-    return true;
-
-}
-
 
 void ChannelSession::HandlePacket(const Packet& pkt)
 {

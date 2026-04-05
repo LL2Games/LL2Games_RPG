@@ -3,7 +3,7 @@
 #include "ItemManager.h"
 
 
-Player::Player() : m_char_id(0), m_name("")
+Player::Player() : m_char_id(0), m_name(""), m_current_map(nullptr), m_session(nullptr)
 {
     m_collider.type = ColliderType::Rect2D;
     // 일단 콜라이더 offset과 halfW, halfH 고정으로 설정 나중에 리소스 크기에 따라서 변경 해야함

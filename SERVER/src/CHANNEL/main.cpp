@@ -23,8 +23,6 @@ int main(int ac, char** av)
     MapManager map_manager;
     map_manager.Init();
 
-  
-
 #else
     bool Start = false;
 
