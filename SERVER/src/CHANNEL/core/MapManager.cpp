@@ -65,9 +65,6 @@ MapInstance *MapManager::GetOrCreate(int mapId)
         K_slog_trace(K_SLOG_TRACE, "[%s][%d] 이미 생성되어 있는 맵입니다. 맵의 정보를 반환합니다.", __FUNCTION__, __LINE__);
         return it->second;
     }
-
-    K_slog_trace(K_SLOG_TRACE, "[%s][%d] MAPINIT START", __FUNCTION__, __LINE__);
-
     MapInitData mapData;
 
     auto itInit = m_maps_initData.find(mapId);
@@ -133,7 +130,7 @@ bool MapManager::PreLoadAll()
 
         m_maps_initData.emplace(map_id, std::move(mapData));
     }
-
+    K_slog_trace(K_SLOG_TRACE, "[%s][%d] Map PreLoadAll Success", __FUNCTION__, __LINE__);
     return true;
 }
 
@@ -148,9 +145,7 @@ bool MapManager::LoadJsonFile(int mapId, MapInitData &mapData)
         K_slog_trace(K_SLOG_ERROR, "[%s][%d] FAILED OPEN [%s] FILE", __FUNCTION__, __LINE__, path.c_str());
         return false;
     }
-    K_slog_trace(K_SLOG_DEBUG, "[%s][%d] OPEN [%s] SUCCESS", __FUNCTION__, __LINE__, path.c_str());
-
-
+    
     // JSON 파일 파싱
     nlohmann::json j;
     try
@@ -171,13 +166,6 @@ bool MapManager::LoadJsonFile(int mapId, MapInitData &mapData)
 
     // Json 파일에서 몬스터 데이터 읽어오기
     LoadMonster(j, mapData.MonstersData);
-
-    //gunoo22_TEST
-    K_slog_trace(K_SLOG_TRACE, "[%s][%d]gunoo22_TEST mapData.nams[%s]", __FUNCTION__, __LINE__, mapData.name.c_str());
-    K_slog_trace(K_SLOG_TRACE, "[%s][%d]gunoo22_TEST mapData.mapID[%d]", __FUNCTION__, __LINE__, mapData.mapID);
-
-
-    K_slog_trace(K_SLOG_TRACE, "[%s][%d] Map ID [%d]", __FUNCTION__, __LINE__, mapId);
     return true;
 }
 
@@ -206,14 +194,6 @@ void MapManager::LoadMonster(nlohmann::json &j, std::vector<MonsterSpawnData>& M
 
         MonstersData.push_back(std::move(data));
     }
-
-    for (auto &md : MonstersData)
-    {
-        K_slog_trace(K_SLOG_TRACE, "[%s][%d]gunoo22_TEST monsterid[%d]", __FUNCTION__, __LINE__, md.monsterId);
-    }
-
-
-    K_slog_trace(K_SLOG_TRACE, "[%s][%d] MonsterLoad Success", __FUNCTION__, __LINE__);
 }
 
 void MapManager::RemoveMap()

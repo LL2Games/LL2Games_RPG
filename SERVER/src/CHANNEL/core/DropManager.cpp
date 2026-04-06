@@ -50,6 +50,7 @@ bool DropManager::PreLoadAll()
             if(!is_uniqueLoad) return false;
         }        
     }
+    K_slog_trace(K_SLOG_TRACE, "[%s][%d] DropManager PreLoadAll Success", __FUNCTION__, __LINE__);
     return true;
 }
 

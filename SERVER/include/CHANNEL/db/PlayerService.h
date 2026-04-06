@@ -16,7 +16,8 @@ public:
     ~PlayerService();
     
     static std::unique_ptr<Player> LoadPlayer(int characterId);
-    static bool LoadInventory(int characterId, Inventory& Inventory);
+    static bool LoadInventoryMeta(Player* player);
+    static bool LoadInventory(Player* player);
     static bool SavePlayer(std::unique_ptr<Player> player);
     static bool UpdatePlayerPosition(int playerId, float x, float y);
 

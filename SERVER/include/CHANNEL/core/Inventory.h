@@ -6,23 +6,30 @@ class Inventory
 {
 
 public:
-    Inventory();
+    Inventory() = default;
     ~Inventory(){};
 
-    bool SetSlotItem(int inventoryType, int slotPos, int itemId, int count);
-    bool RemoveItemBySlot(int inventoryType, int slotPos, int itemId,int count);
-    bool HasItemBySlot(int inventoryType, int slotPos, int itemId, int count) const;
-    bool HasItemBySlot(int inventoryType, int slotPos, int itemId) const;
+    Inventory(int inventoryType, int maxSlot, int current_slot_size);
+
+    bool SetSlotItem(int slotPos, int itemId, int count);
+    bool RemoveItemBySlot(int slotPos, int itemId,int count);
+    bool HasItemBySlot(int slotPos, int itemId, int count) const;
+    bool HasItemBySlot(int slotPos, int itemId) const;
+
+    InventorySlot* FindSlot(int slotPos);
 
     bool AddItem(int itemId, int count);    
 
-    const std::map<std::pair<int, int>, InventorySlot>& GetAllItems() const;
+    const std::map<int, InventorySlot>& GetAllItems() const;
     void Clear();
 
 public:
-    int GetItemCount(int inventoryType, int slotPos, int itemId) const;
+    int GetItemCount(int slotPos, int itemId) const;
 
 private:
     // key : 인벤토리 타입, 슬롯 위치, value : 인벤토리 타입, 슬롯 위치, 아이템 아이디, 개수
-    std::map<std::pair<int, int>, InventorySlot> m_slots;
+    std::unordered_map<int, InventorySlot> m_slots;
+    int m_inventoryType;
+    int m_maxSlot;
+    int m_current_slot_size;
 };      

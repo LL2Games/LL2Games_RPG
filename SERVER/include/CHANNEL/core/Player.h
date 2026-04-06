@@ -4,6 +4,7 @@
 #include "util/PlayerData.h"
 #include "CharacterStat.h"
 #include "Inventory.h"
+#include "InventroyManager.h"
 #include "PlayerState.h"
 #include "PlayerData.h"
 #include "Skill_Info.h"
@@ -51,11 +52,14 @@ public:
     int GetCurHP(){return m_stat.GetCurHp();}
     int GetCurMP(){return m_stat.GetCurMp();}
     int GetMaxHP(){return m_stat.GetMaxHp();}
+    int GetJob() {return m_job;}
     int GetId() {return m_char_id;}
+    int GetMapId() {return m_map_id;}
     int GetLevel() const {return m_level;}
     PlayerState GetState(){return m_CurrentState;}
 
     Inventory& GetInventory(){return m_inventory;}
+    InventoryManager& GetInventoryManager() {return m_inventoryManager;}
 
     bool IsAlive(){return m_CurrentState != PlayerState::DEAD ? true : false;}
 
@@ -131,6 +135,7 @@ private:
 
     CharacterStat m_stat;
     Inventory m_inventory;
+    InventoryManager m_inventoryManager;
    
     int64_t m_nextContactDamageAllowedMs;
     int64_t m_contactDamageCooldownMs;

@@ -1,23 +1,33 @@
 #include "Inventory.h"
 
 
-Inventory::Inventory()
+Inventory::Inventory(int inventoryType, int maxSlot, int current_slot_size)
 {
+    m_inventoryType = inventoryType;
+    m_maxSlot = maxSlot;
+    m_current_slot_size = current_slot_size;
 
+    m_slots.reserve(m_maxSlot);
+    for(int i = 0; i < m_maxSlot; i++)
+    {
+        m_slots[i].slotPos = i + 1;
+        m_slots[i].isEnable = m_slots[i].isEnable = (i <= m_current_slot_size);
+    }
 }
 
+
+
 // DB에서 아이템 조회 후 저장하는 함수
-bool Inventory::SetSlotItem(int inventoryType, int slotPos, int itemId, int count)
+bool Inventory::SetSlotItem(int slotPos, int itemId, int count)
 {
     InventorySlot items;
 
-    items.inventoryType = inventoryType;
+    items.inventoryType = m_inventoryType;
     items.slotPos = slotPos;
     items.itemId = itemId;
     items.itemCount = count;
 
-    std::pair<int, int> key = {inventoryType, slotPos};
-    m_slots[key] = items;
+    m_slots[slotPos] = items;
 
     return true;
 }
@@ -30,11 +40,11 @@ bool Inventory::AddItem(int itemId, int count)
 }
 
 // 아이템 사용 시 아이템 개수 변경
-bool Inventory::RemoveItemBySlot(int inventoryType, int slotPos, int itemId,int count)
+bool Inventory::RemoveItemBySlot(int slotPos, int itemId,int count)
 {
-    std::pair<int,int> key = {inventoryType, slotPos};
+    
 
-    auto it = m_slots.find(key);
+    auto it = m_slots.find(slotPos);
 
     if(it == m_slots.end())
     {
@@ -50,7 +60,7 @@ bool Inventory::RemoveItemBySlot(int inventoryType, int slotPos, int itemId,int 
     
      if (it->second.itemCount < count)
     {
-        K_slog_trace(K_SLOG_ERROR, "[%d][%s] 아이템 개수가 충분하지 않습니다. have=%d need=%d",__FUNCTION__, __LINE__,inventoryType, slotPos,it->second.itemCount, count);
+        K_slog_trace(K_SLOG_ERROR, "[%d][%s] 아이템 개수가 충분하지 않습니다. have=%d need=%d",__FUNCTION__, __LINE__, slotPos,it->second.itemCount, count);
         return false;
     }
 
@@ -65,11 +75,10 @@ bool Inventory::RemoveItemBySlot(int inventoryType, int slotPos, int itemId,int 
 
 }
 
-bool Inventory::HasItemBySlot(int inventoryType, int slotPos, int itemId, int count) const
+bool Inventory::HasItemBySlot(int slotPos, int itemId, int count) const
 {
-    std::pair<int, int> key = {inventoryType, slotPos};
 
-    auto it = m_slots.find(key);
+    auto it = m_slots.find(slotPos);
 
     if(it == m_slots.end())
     {
@@ -79,24 +88,23 @@ bool Inventory::HasItemBySlot(int inventoryType, int slotPos, int itemId, int co
 
     if(it->second.itemId != itemId)
     {
-         K_slog_trace(K_SLOG_ERROR, "[%s][%d] 아이템 ID가 다릅니다.",__FUNCTION__, __LINE__,inventoryType, slotPos,it->second.itemCount, count);
+         K_slog_trace(K_SLOG_ERROR, "[%s][%d] 아이템 ID가 다릅니다.",__FUNCTION__, __LINE__);
         return false;
     }
 
     if(it->second.itemCount < count)
     {
-        K_slog_trace(K_SLOG_ERROR, "[%s][%d] 아이템 개수가 충분하지 않습니다. inventoryType=%d slotPos=%d have=%d need=%d",__FUNCTION__, __LINE__,inventoryType, slotPos,it->second.itemCount, count);
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] 아이템 개수가 충분하지 않습니다. inventoryType=%d slotPos=%d have=%d need=%d",__FUNCTION__, __LINE__);
         return false;
     }
 
     return true;
 }
 
-bool Inventory::HasItemBySlot(int inventoryType, int slotPos, int itemId) const
+bool Inventory::HasItemBySlot(int slotPos, int itemId) const
 {
-    std::pair<int, int> key = {inventoryType, slotPos};
-
-    auto it = m_slots.find(key);
+   
+    auto it = m_slots.find(slotPos);
 
     if(it == m_slots.end())
     {
@@ -113,11 +121,22 @@ bool Inventory::HasItemBySlot(int inventoryType, int slotPos, int itemId) const
     return true;
 }
 
-int Inventory::GetItemCount(int inventoryType, int slotPos, int itemId) const
+InventorySlot* Inventory::FindSlot(int slotPos)
 {
-    std::pair<int, int> key = {inventoryType, slotPos};
+    auto it = m_slots.find(slotPos);
 
-    auto it = m_slots.find(key);
+    if (it != m_slots.end())
+    {
+    	return &(it->second);
+    }
+
+    return nullptr;
+}
+
+int Inventory::GetItemCount(int slotPos, int itemId) const
+{
+
+    auto it = m_slots.find(slotPos);
 
     if(it == m_slots.end())
     {

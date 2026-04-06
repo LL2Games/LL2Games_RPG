@@ -177,12 +177,8 @@ bool MonsterManager::LoadJsonFile(int monster_id, MonsterTemplate& monsterTempla
 	
     float Rp = Collision::RectToRadiusFast(MonsterManager::PLAYER_HALF_W, MonsterManager::PLAYER_HALF_H);
     float Rm = Collision::RectToRadiusFast(monsterTemplate.half.xPos, monsterTemplate.half.yPos); // JSON에서 읽은 값
-
-    K_slog_trace(K_SLOG_TRACE, "[%s][%d] Rp [%2f]", __FUNCTION__, __LINE__, Rp);
-    K_slog_trace(K_SLOG_TRACE, "[%s][%d] Rm [%2f]", __FUNCTION__, __LINE__, Rm);
-
     float r = Rp + Rm + MonsterManager::EXTRA;
-    K_slog_trace(K_SLOG_TRACE, "[%s][%d] r [%2f]", __FUNCTION__, __LINE__, r);
+
 
     monsterTemplate.broadCutSq = r * r;
 

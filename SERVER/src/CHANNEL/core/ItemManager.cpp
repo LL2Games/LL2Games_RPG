@@ -8,7 +8,6 @@ ItemManager *ItemManager::m_instance =nullptr;
 
 bool ItemManager::Init()
 {
-    K_slog_trace(K_SLOG_TRACE, "[%s][%d] ItemManagerInit Start",__FUNCTION__, __LINE__);
     if(!PreLoadAll()) return false;
     return true;
 }
@@ -38,11 +37,9 @@ bool ItemManager::PreLoadAll()
             delete itemData;
             return false;
         }
-
-        K_slog_trace(K_SLOG_DEBUG, "[%s][%d] ITEM ID [%d]",__FUNCTION__, __LINE__, item_id);
-        K_slog_trace(K_SLOG_DEBUG, "[%s][%d] ITEM Manager Pointer [%p]",__FUNCTION__, __LINE__, this);
         m_item_initData.emplace(item_id, itemData);
     }
+    K_slog_trace(K_SLOG_TRACE, "[%s][%d] Item PreLoadAll Success", __FUNCTION__, __LINE__);
     return true;
 }
 
@@ -78,8 +75,6 @@ bool ItemManager::LoadJsonFile(const std::string& path, ItemInitData& itemData)
         effect.cooldown_ms = ue.at("cooldown_ms").get<int>();
         itemData.use_effect = effect;
     }
-
-    K_slog_trace(K_SLOG_TRACE, "[%s][%d] ItemID [%d]",__FUNCTION__, __LINE__, itemData.item_id);
 
     return true;
 }

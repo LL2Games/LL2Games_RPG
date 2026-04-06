@@ -39,7 +39,7 @@ struct DropItems
     Vec2 pos;
 
     int64_t expireTimeMs =0;
-    uint64_t ownerExpireTimeMs = 0;
+    int64_t ownerExpireTimeMs = 0;
 
     Player* owner;
 

@@ -22,5 +22,6 @@ struct InventorySlot
     int slotPos = 0;
     int itemId = 0;
     int itemCount = 0;
+    bool isEnable = true;
 };
 

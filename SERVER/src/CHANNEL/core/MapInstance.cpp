@@ -198,13 +198,6 @@ void MapInstance::OnLeave(int PlayerID)
 	K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d] m_playerCount(%d)", __FILE__, __FUNCTION__, __LINE__, m_playerCount);
 }
 
-void MapInstance::HandleMonsterDead(Monster& monster)
-{
-	int killer = monster.GetLastAttackerID();
-	
-	GiveExp(killer, monster.GetExp());
-	GiveItem(monster.GetItemGroup());
-}
 
 void MapInstance::GiveExp(int playerID, float exp)
 {
@@ -212,13 +205,6 @@ void MapInstance::GiveExp(int playerID, float exp)
 	(void)exp;
 }
 
-
-void MapInstance::GiveItem(int ItemGroup)
-{
-	(void)ItemGroup;
-
-
-}
 
 void MapInstance::HandleMove(Player* sender, Vec2 pos, float speed)
 {
@@ -429,8 +415,8 @@ bool MapInstance::SpawnDropItem(Monster* monster, std::vector<DropResult> dropIt
 		Item.dropId = m_dropItems.size() + 1;
 		Item.pos = monster->GetPos();
 		Item.owner = monster->GetLastAttacker();
-		Item.ownerExpireTimeMs = NowMs() + 3000;
-		Item.expireTimeMs = NowMs() + 30000;
+		Item.ownerExpireTimeMs = NowMs() + 60000; // 1분
+		Item.expireTimeMs = NowMs() + 120000; // 2분
 
 		m_dropItems[Item.itemId] = Item;
 
@@ -445,31 +431,77 @@ bool MapInstance::SpawnDropItem(Monster* monster, std::vector<DropResult> dropIt
 		m_spawnInfos.push_back(info);
 	}
 
-	BroadcaseDropSpawn(m_spawnInfos);
+	BroadcastDropSpawn(m_spawnInfos);
 
 	return true;
 }
 
-void MapInstance::BroadcaseDropSpawn(std::vector<DropSpawnInfo> spawnedInfos)
+void MapInstance::BroadcastDropSpawn(std::vector<DropSpawnInfo> spawnedInfos)
 {
 	for (auto& [id, p] : m_playerList)
-    		{
-        	if (!p) continue;
+    {
+        if (!p) continue;
+        auto session = p->GetSession();
+        if (!session) continue;
+        std::vector<std::string> payload;
+		
+		for(size_t i =0; i < spawnedInfos.size(); i++)
+		{
+        	payload.push_back(std::to_string(spawnedInfos[i].dropId));
+        	payload.push_back(std::to_string(spawnedInfos[i].itemId));
+        	payload.push_back(std::to_string(static_cast<int>(spawnedInfos[i].type)));
+        	payload.push_back(std::to_string(spawnedInfos[i].count));
+        	payload.push_back(std::to_string(spawnedInfos[i].xPos));
+        	payload.push_back(std::to_string(spawnedInfos[i].yPos));
+        	session->Send(PKT_DROPITEMS, payload);
+		}
+    }	
+}
 
-        	auto session = p->GetSession();
-        	if (!session) continue;
 
-        	std::vector<std::string> payload;
-			
-			for(size_t i =0; i < spawnedInfos.size(); i++)
-			{
-        		payload.push_back(std::to_string(spawnedInfos[i].dropId));
-        		payload.push_back(std::to_string(spawnedInfos[i].itemId));
-        		payload.push_back(std::to_string(static_cast<int>(spawnedInfos[i].type)));
-        		payload.push_back(std::to_string(spawnedInfos[i].count));
-        		payload.push_back(std::to_string(spawnedInfos[i].xPos));
-        		payload.push_back(std::to_string(spawnedInfos[i].yPos));
-        		session->Send(PKT_DROPITEMS, payload);
-			}
+void MapInstance::CheckDropItem()
+{
+	int64_t nowMs = NowMs();
+	std::vector<int> removeItems;
+
+	for (auto it = m_dropItems.begin(); it != m_dropItems.end(); )
+	{
+    	auto& item = it->second;
+
+    	if (item.owner != nullptr && item.ownerExpireTimeMs <= nowMs)
+    	{
+    	    item.owner = nullptr; // 누구나 먹을 수 있게
+    	}
+
+    	if (item.expireTimeMs <= nowMs)
+    	{
+			//삭제 아이템에 대한 정보 전달
+			removeItems.push_back(it->second.dropId);
+    	    it = m_dropItems.erase(it);
+    	}
+    	else
+    	{
+    	    ++it;
+    	}
+	}
+	BroadcastRemoveItem(removeItems);
+}
+
+
+void MapInstance::BroadcastRemoveItem(std::vector<int> removeItems)
+{
+	for (auto& [id, p] : m_playerList)
+    {
+        if (!p) continue;
+        auto session = p->GetSession();
+        if (!session) continue;
+        std::vector<std::string> payload;
+		
+		for(size_t i =0; i < removeItems.size(); i++)
+		{
+        	payload.push_back(std::to_string(removeItems[i]));
+
+        	session->Send(PKT_REMOVEITEMS, payload);
+		}
     }	
 }

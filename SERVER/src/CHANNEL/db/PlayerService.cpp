@@ -1,10 +1,13 @@
 #include "PlayerService.h"
 #include "RedisUtility.h"
+#include "CharacterStat.h"
+#include "InventroyManager.h"
+
 #include "K_slog.h"
 #include <cstdio>
 #include <sstream>
 #include <string>
-#include "CharacterStat.h"
+
 
 MySqlConnectionPool *PlayerService::m_mySql = MySqlConnectionPool::GetInstance();
 RedisClient *PlayerService::m_redis = nullptr;
@@ -170,18 +173,20 @@ std::unique_ptr<Player> PlayerService::LoadPlayer(int characterId)
     return player;
 }
 
-bool PlayerService::LoadInventory(int characterId, Inventory& Inventory)
+bool PlayerService::LoadInventoryMeta(Player* player)
 {
     int result = 0;
     MYSQL_RES *res = nullptr;
     MYSQL_ROW row;
     MYSQL* conn = m_mySql->GetConnection(); 
+
+    auto InventoryManager = player->GetInventoryManager();
     if(!conn) return false;
-    std::string query = "SELECT inventory_type, slot_pos, item_Id, item_count FROM character_inventory WHERE char_id = " + std::to_string(characterId);
+    std::string query = "SELECT char_id, inventory_type, max_slot, current_slot_count FROM character_inventory_meta WHERE char_id = " + std::to_string(player->GetId());
     result = mysql_query(conn, query.c_str());
     if(result != 0)
     {
-        K_slog_trace(K_SLOG_ERROR, "LoadPlayer Inventory ERROR [%s]", mysql_error(conn));
+        K_slog_trace(K_SLOG_ERROR, "LoadInventoryMeta ERROR [%s]", mysql_error(conn));
         K_slog_trace(K_SLOG_ERROR, "SQL [%s]", query.c_str());
         m_mySql->ReleaseConnection(conn);
         return false;
@@ -190,7 +195,48 @@ bool PlayerService::LoadInventory(int characterId, Inventory& Inventory)
     res = mysql_store_result(conn);
     if(!res)
     {
-        K_slog_trace(K_SLOG_ERROR, "LoadPlayer ERROR [%s]", mysql_error(conn));
+        K_slog_trace(K_SLOG_ERROR, "LoadInventoryMeta ERROR [%s]", mysql_error(conn));
+        m_mySql->ReleaseConnection(conn);
+        return false;
+    }
+
+    while((row = mysql_fetch_row(res)) != nullptr)
+    {
+        int inventoryType = std::atoi(row[0]);
+        int slotpos = std::atoi(row[1]);
+        int itemId = std::atoi(row[2]);
+        int itemCount = std::atoi(row[3]);
+        
+        InventoryManager.CreateInventory()
+    }
+
+
+}
+
+
+bool PlayerService::LoadInventory(Player* player)
+{
+    int result = 0;
+    MYSQL_RES *res = nullptr;
+    MYSQL_ROW row;
+    MYSQL* conn = m_mySql->GetConnection(); 
+    if(!conn) return false;
+
+    
+    std::string query = "SELECT inventory_type, slot_pos, item_Id, item_count FROM character_inventory WHERE char_id = " + std::to_string(player->GetId());
+    result = mysql_query(conn, query.c_str());
+    if(result != 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "LoadInventory ERROR [%s]", mysql_error(conn));
+        K_slog_trace(K_SLOG_ERROR, "SQL [%s]", query.c_str());
+        m_mySql->ReleaseConnection(conn);
+        return false;
+    }
+
+    res = mysql_store_result(conn);
+    if(!res)
+    {
+        K_slog_trace(K_SLOG_ERROR, "LoadInventory ERROR [%s]", mysql_error(conn));
         m_mySql->ReleaseConnection(conn);
         return false;
     }

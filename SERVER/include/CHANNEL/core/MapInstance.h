@@ -45,22 +45,21 @@ public:
 	// 플레이어 나갔을 때 처리 함수
 	void OnLeave(int PlayerID);
 
-    // 몬스터 죽었을 떄 관리
-    void HandleMonsterDead(Monster& monster);
-
     void GiveExp(int platerID, float exp);
-    void GiveItem(int ItemGroup);
     void HandleMove(Player* sender, Vec2 pos, float speed);
     void ResolveSkillHit(Player* Attacker, SkillDef& skillDef, std::vector<std::pair<Monster*, int>> hits);
     void SetPlayerHitResult(Player* player, int monster_instacneId, PlayerHitResult& result);
     
     bool SpawnDropItem(Monster* monster, std::vector<DropResult> dropItems);
+
+    void CheckDropItem();
     
 private:
     void BroadcastMoveExcept(Player* sender, Vec2 pos, float speed);
     void BroadcastMonsterHit(Player* Attacker, int SkillID, std::vector<MonsterHitResult> result);
     void BroadcastPlayerHit(Player* Defender, PlayerHitResult result);
-    void BroadcaseDropSpawn(std::vector<DropSpawnInfo> spawnedInfos);
+    void BroadcastDropSpawn(std::vector<DropSpawnInfo> spawnedInfos);
+    void BroadcastRemoveItem(std::vector<int> removeItems);
     void BroadcastMapInfo();
 
     // 몬스터와 플레이어의 접촉 시 
