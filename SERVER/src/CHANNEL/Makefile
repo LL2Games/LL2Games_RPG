@@ -74,6 +74,9 @@ SRCS := \
 	core/ItemService.cpp \
 	core/Inventory.cpp \
 	core/DropManager.cpp\
+	core/InventoryManager.cpp\
+	core/PlayerPacketSender.cpp\
+	core/InventoryPacketSender.cpp\
     \
 	packet/ChannelPacketFactory.cpp \
 	packet/ChannelInitHandler.cpp \

@@ -182,7 +182,7 @@ bool PlayerService::LoadInventoryMeta(Player* player)
 
     auto InventoryManager = player->GetInventoryManager();
     if(!conn) return false;
-    std::string query = "SELECT char_id, inventory_type, max_slot, current_slot_count FROM character_inventory_meta WHERE char_id = " + std::to_string(player->GetId());
+    std::string query = "SELECT inventory_type, max_slot, current_slot_count FROM character_inventory_meta WHERE char_id = " + std::to_string(player->GetId());
     result = mysql_query(conn, query.c_str());
     if(result != 0)
     {
@@ -202,14 +202,17 @@ bool PlayerService::LoadInventoryMeta(Player* player)
 
     while((row = mysql_fetch_row(res)) != nullptr)
     {
-        int inventoryType = std::atoi(row[0]);
-        int slotpos = std::atoi(row[1]);
-        int itemId = std::atoi(row[2]);
-        int itemCount = std::atoi(row[3]);
+        InventoryMetaInfo inventoryMetaInfo;
+        inventoryMetaInfo.inventoryType = std::atoi(row[0]);
+        inventoryMetaInfo.max_slots = std::atoi(row[1]);
+        inventoryMetaInfo.currnet_slots_size = std::atoi(row[2]);
         
-        InventoryManager.CreateInventory()
+        InventoryManager->CreateInventory(inventoryMetaInfo);
     }
 
+     K_slog_trace(K_SLOG_TRACE, "LoadInventoryMeta Success");
+
+    return true;
 
 }
 
@@ -241,6 +244,8 @@ bool PlayerService::LoadInventory(Player* player)
         return false;
     }
 
+    auto inventoryManager = player->GetInventoryManager();
+
     // 캐릭터 인벤토리 아이템 저장
     while((row = mysql_fetch_row(res)) != nullptr)
     {
@@ -249,7 +254,13 @@ bool PlayerService::LoadInventory(Player* player)
         int itemId = std::atoi(row[2]);
         int itemCount = std::atoi(row[3]);
         
-        Inventory.SetSlotItem(inventoryType, slotpos, itemId, itemCount);
+        auto inventory =inventoryManager->GetInventory(inventoryType);
+        if(inventory == nullptr)
+        {
+            K_slog_trace(K_SLOG_ERROR, "inventory is nullptr");
+            break;
+        }
+        inventory->SetSlotItem(slotpos, itemId, itemCount);
     }
 
     mysql_free_result(res);

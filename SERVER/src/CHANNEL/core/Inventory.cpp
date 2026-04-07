@@ -1,18 +1,19 @@
 #include "Inventory.h"
 
 
-Inventory::Inventory(int inventoryType, int maxSlot, int current_slot_size)
+Inventory::Inventory(InventoryMetaInfo& inventoryMetaInfo)
 {
-    m_inventoryType = inventoryType;
-    m_maxSlot = maxSlot;
-    m_current_slot_size = current_slot_size;
+    m_inventoryType = inventoryMetaInfo.inventoryType;
+    m_maxSlot = inventoryMetaInfo.max_slots;
+    m_current_slot_size = inventoryMetaInfo.currnet_slots_size;
 
     m_slots.reserve(m_maxSlot);
     for(int i = 0; i < m_maxSlot; i++)
     {
         m_slots[i].slotPos = i + 1;
-        m_slots[i].isEnable = m_slots[i].isEnable = (i <= m_current_slot_size);
+        m_slots[i].isEnable = (i <= m_current_slot_size);
     }
+    K_slog_trace(K_SLOG_DEBUG, "Inventory Init Success");
 }
 
 
@@ -151,4 +152,22 @@ int Inventory::GetItemCount(int slotPos, int itemId) const
     }
 
     return it->second.itemCount;
+}
+
+std::vector<InventoryItemInfo> Inventory::MakeItemInfos() const
+{
+    std::vector<InventoryItemInfo> inventoryItemInfos;
+
+    for(auto [slotpos, item] : m_slots)
+    {
+        InventoryItemInfo iteminfo;
+
+        iteminfo.inventoryType =item.inventoryType;
+        iteminfo.slotPos = item.slotPos;
+        iteminfo.itemCount =item.itemCount;
+        iteminfo.itemId = item.itemId;
+
+        inventoryItemInfos.push_back(iteminfo);
+    }
+    return inventoryItemInfos;
 }

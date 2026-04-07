@@ -6,8 +6,8 @@ class InventoryManager
 {
 public:
     
-	bool CreateInventory(int inventoryType, int maxSlot, int currnet_slot_size);
-	void EnsureInventory(int inventoryType, int maxSlot, int currnet_slot_size);
+	bool CreateInventory(InventoryMetaInfo& inventoryMetaInfo);
+	void EnsureInventory(InventoryMetaInfo& inventoryMetaInfo);
 
 	
 	Inventory* GetInventory(int inventoryType);
@@ -16,7 +16,11 @@ public:
 	InventorySlot* FindSlot(int inventoryType, int slotPos);
 	//const InventorySlot* FindSlot(int inventoryType, int slotPos) const;
 
+	std::vector<InventoryMetaInfo> GetAllMetaInfos() const;
+	std::vector<InventoryItemInfo> GetAllItemInfos() const;
+
 	void Clear();
 private:
     std::unordered_map<int, Inventory> m_inventories;
+
 };

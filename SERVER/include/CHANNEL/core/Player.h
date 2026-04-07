@@ -3,7 +3,6 @@
 #include "CommonEnum.h"
 #include "util/PlayerData.h"
 #include "CharacterStat.h"
-#include "Inventory.h"
 #include "InventroyManager.h"
 #include "PlayerState.h"
 #include "PlayerData.h"
@@ -58,8 +57,7 @@ public:
     int GetLevel() const {return m_level;}
     PlayerState GetState(){return m_CurrentState;}
 
-    Inventory& GetInventory(){return m_inventory;}
-    InventoryManager& GetInventoryManager() {return m_inventoryManager;}
+    InventoryManager* GetInventoryManager() {return &m_inventoryManager;}
 
     bool IsAlive(){return m_CurrentState != PlayerState::DEAD ? true : false;}
 
@@ -126,15 +124,13 @@ private:
     // 사용한 스킬쿨들을 저장
     std::unordered_map<int, int64_t> skillCooldownEndMs;
 
-    // 플레이어가 들고 있는 아이템 정보들
-    std::unordered_map<int, int> m_inven;
+
 private:
     bool m_isChangedInventory;
     bool m_isChangedStatas;
     bool m_isChangedPositon;
 
     CharacterStat m_stat;
-    Inventory m_inventory;
     InventoryManager m_inventoryManager;
    
     int64_t m_nextContactDamageAllowedMs;

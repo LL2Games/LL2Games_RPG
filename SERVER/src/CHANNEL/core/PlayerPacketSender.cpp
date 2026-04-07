@@ -7,7 +7,6 @@
 void PlayerPacketSender::SendPlayerInfo(Player* player)
 {
     auto session = player->GetSession();
-    
     if(!session) 
     {
         K_slog_trace(K_SLOG_ERROR, "[%s][%d] session이 nullptr입니다.", __FUNCTION__, __LINE__);
@@ -23,7 +22,6 @@ void PlayerPacketSender::SendPlayerInfo(Player* player)
     payload.push_back(std::to_string(player->GetMapId()));
     payload.push_back(std::to_string(player->GetPos().xPos));
     payload.push_back(std::to_string(player->GetPos().yPos));
-
     session->Send(PKT_PLAYER_INFO, payload);
 }
 

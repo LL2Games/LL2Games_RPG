@@ -187,7 +187,9 @@ bool Player::CanUseItem(int inventoryType, int slotPos, int item_id, int useCoun
         return false;
     }
 
-    if(!m_inventory.HasItemBySlot(inventoryType, slotPos, item_id, useCount))
+    auto inventory = m_inventoryManager.GetInventory(inventoryType);
+
+    if(!inventory->HasItemBySlot(slotPos, item_id, useCount))
     {
         K_slog_trace(K_SLOG_ERROR, "[%s:%d] 아이템을 사용할 수 없습니다. item_id=%d type=%s\n", __FUNCTION__, __LINE__, item_id, def->type.c_str());
         return false;
@@ -204,7 +206,9 @@ bool Player::UseItem(int inventoryType, int slotPos, int itemId, int useCount)
     const ItemInitData* def = ItemManager::GetInstance()->Find(itemId);
     if (!def) return false;
 
-    if(!m_inventory.RemoveItemBySlot(inventoryType, slotPos, itemId, useCount))
+    auto inventory = m_inventoryManager.GetInventory(inventoryType);
+
+    if(!inventory->RemoveItemBySlot(slotPos, itemId, useCount))
     {
         K_slog_trace(K_SLOG_ERROR, "[%s:%d] 아이템을 사용할 수 없습니다. item_id=%d\n", __FUNCTION__, __LINE__, itemId);
         return false;
@@ -231,12 +235,14 @@ bool Player::UseItem(int inventoryType, int slotPos, int itemId, int useCount)
 
 int Player::GetItemCount(int inventoryType, int slotPos, int itemId) const
 {
-    if(!m_inventory.HasItemBySlot(inventoryType,slotPos, itemId))
+    
+    auto inventory = m_inventoryManager.GetInventory(inventoryType);
+    if(!inventory->HasItemBySlot(inventoryType,slotPos, itemId))
     {
         K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] 플레이어가 소유하지 않은 아이템입니다.\n", __FILE__, __FUNCTION__, __LINE__);
         return 0;
     }
-    return m_inventory.GetItemCount(inventoryType, slotPos, itemId);
+    return inventory->GetItemCount(slotPos, itemId);
 }
 
 int Player::GetSkillLevel(int skill_id) const

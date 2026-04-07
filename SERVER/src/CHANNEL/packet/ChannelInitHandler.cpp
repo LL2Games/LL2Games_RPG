@@ -6,6 +6,7 @@
 #include "PlayerManager.h"
 #include "PacketParser.h"
 #include "PlayerPacketSender.h"
+#include "InventoryPacketSender.h"
 #include "K_slog.h"
 #include "utility.h"
 #include <sstream>
@@ -93,8 +94,8 @@ void ChannelInitHandler::HandleChannelAuth(PacketContext *ctx)
     }
 
     K_slog_trace(K_SLOG_TRACE, "HandleChannelAuth: 플레이어 로드 성공 [%d]", characterId);
-
-    PlayerService::LoadInventory(player->GetId(), player->GetInventory());
+    PlayerService::LoadInventoryMeta(player.get());
+    PlayerService::LoadInventory(player.get());
 
     K_slog_trace(K_SLOG_TRACE, "HandleChannelAuth: 플레이어 인벤토리 로드 성공 [%d]", characterId);
 
@@ -105,17 +106,18 @@ void ChannelInitHandler::HandleChannelAuth(PacketContext *ctx)
     K_slog_trace(K_SLOG_DEBUG, " [%s][%d] player_manager [%p]", __FUNCTION__ , __LINE__, ctx->player_manager);  
     // PlayerManager에 등록 (안전 체크)
     if (ctx->player_manager) {
+        Player* playerPtr = player.get();
         bool success = ctx->player_manager->AddPlayer(std::move(player));
         if (success) {
             K_slog_trace(K_SLOG_TRACE, "HandleChannelAuth: PlayerManager 등록 성공");
             // 이때 클라이언트한테 정보를 보내줘야 한다.
 
             // 플레이어 정보 보내기
-            PlayerPacketSender::SendPlayerInfo(player.get());
-            PlayerPacketSender::SendPlayerStat(player.get());
-            // 인벤토리 정보도 보내야 한다.
+            PlayerPacketSender::SendPlayerInfo(playerPtr);
+            PlayerPacketSender::SendPlayerStat(playerPtr);
 
-            
+            InventoryPacketSender::SendInventoryMeta(playerPtr);
+            InventoryPacketSender::SendInventoryItems(playerPtr);            // 인벤토리 정보도 보내야 한다.    
         } else {
             K_slog_trace(K_SLOG_ERROR, "HandleChannelAuth: PlayerManager 등록 실패, 이미 접속한 플레이어 입니다.");
             rc = EXIT_FAILURE;
