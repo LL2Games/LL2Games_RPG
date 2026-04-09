@@ -4,6 +4,7 @@
 #include "IPacketFactory.h"
 #include "Packet.h"
 #include "MapInstance.h"
+#include "PlayerManager.h"
 
 ChannelSession::ChannelSession(int fd, ChannelServer* server) : m_fd(fd), m_server(server), m_player(nullptr)
 {
@@ -15,12 +16,15 @@ ChannelSession::~ChannelSession()
     if (m_player != nullptr)
     {
         MapInstance *map = m_player->GetCurrentMap();
+        
         if (map != nullptr)
         {
             //플레이어 접속 종료시 해당맵에서 퇴장
             map->OnLeave(m_player->GetId());
             K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d] map->OnLeave(Id:%d)", __FILE__, __FUNCTION__, __LINE__, m_player->GetId());
         }
+
+        m_playerManager->RemovePlayer(m_player->GetId());
     }
     K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d] ChannelSession Destroy(fd:%d)", __FILE__, __FUNCTION__, __LINE__, m_fd);
 }
@@ -69,88 +73,6 @@ bool ChannelSession::OnBytes(const uint8_t* data, size_t len)
     return true;
 }
 
-
-
-void ChannelSession::HandlePacket(const Packet& pkt)
-{
-    // header type에 따라서 스위치 문을 통해 특정 함수가 실행되도옥 구성 예정
-    (void)pkt;
-
-}
-
-
-bool ChannelSession::EnqueueSend(uint16_t type, const void* payload, uint16_t payloadLen)
-{
-    Packet pkt;
-    pkt.header.type = type;
-    pkt.payload.resize(payloadLen);
-
-    if(payloadLen > 0)
-    {
-        memcpy(pkt.payload.data(), payload, payloadLen);
-    }
-
-    return EnqueueSend(pkt);
-}
-
-bool ChannelSession::EnqueueSend(const Packet& pkt)
-{
-    const size_t totalLen = kHeaderSize + pkt.payload.size();
-    if(totalLen > kMaxPacketSize)
-        return false;
-
-    PacketHeader netHeader{};
-    netHeader.length = htons(static_cast<uint16_t>(totalLen));
-    netHeader.type    = htons(pkt.header.type);
-
-    std::vector<uint8_t> bytes(totalLen);
-    memcpy(bytes.data(), &netHeader, kHeaderSize);
-
-    if(!pkt.payload.empty())
-    {
-        memcpy(bytes.data() + kHeaderSize, pkt.payload.data(), pkt.payload.size());
-
-    }
-
-    m_sendQueue.emplace_back(std::move(bytes));
-    return true;
-}
-
-bool ChannelSession::FlushSend()
-{
-    while(!m_sendQueue.empty())
-    {
-        std::vector<uint8_t>& front = m_sendQueue.front();
-        const uint8_t* p =front.data() + m_sendOffset;
-        const size_t remain = front.size() - m_sendOffset;
-
-        ssize_t sent = send(m_fd, p, remain,0);
-        if(sent < 0)
-        {
-            if(errno == EAGAIN || errno == EWOULDBLOCK)
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        if(sent == 0)
-        {
-            return false;
-        }
-
-        m_sendOffset += static_cast<size_t>(sent);
-
-        if(m_sendOffset == front.size())
-        {
-            m_sendQueue.pop_front();
-            m_sendOffset = 0;
-        }
-    }
-
-    return true;
-}
 
 // 지금 방식은 클라이언트 하나에 해당해서 Send를 하는 방식인데 Player 클래스를 vector로 가지고 있고
 // 같은 맵, 시야 범위 등등 환경요소들을 확인해서 보내는 방식으로 변경 필요

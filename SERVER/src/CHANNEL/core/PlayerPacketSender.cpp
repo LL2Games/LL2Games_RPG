@@ -23,6 +23,8 @@ void PlayerPacketSender::SendPlayerInfo(Player* player)
     payload.push_back(std::to_string(player->GetPos().xPos));
     payload.push_back(std::to_string(player->GetPos().yPos));
     session->Send(PKT_PLAYER_INFO, payload);
+
+    K_slog_trace(K_SLOG_TRACE, "[%s][%d] PlayerInfo Send Success.", __FUNCTION__, __LINE__);
 }
 
 
@@ -41,16 +43,20 @@ void PlayerPacketSender::SendPlayerStat(Player* player)
     std::vector<std::string> payload;
 
     // 나중에 스탯 정보에 공격력도 들어가야함
-    payload.push_back(std::to_string(playerStat.GetMaxHp()));
-    payload.push_back(std::to_string(playerStat.GetMaxMp()));
-    payload.push_back(std::to_string(playerStat.GetCurHp()));
-    payload.push_back(std::to_string(playerStat.GetCurMp()));
     payload.push_back(std::to_string(playerBastStat.str));
     payload.push_back(std::to_string(playerBastStat.dex));
     payload.push_back(std::to_string(playerBastStat.intel));
     payload.push_back(std::to_string(playerBastStat.luck));
+
+    payload.push_back(std::to_string(playerStat.GetMaxHp()));
+    payload.push_back(std::to_string(playerStat.GetMaxMp()));
+
+    payload.push_back(std::to_string(playerStat.GetCurHp()));
+    payload.push_back(std::to_string(playerStat.GetCurMp()));
     payload.push_back(std::to_string(playerStat.GetRemainAp()));
 
 
     session->Send(PKT_PLAYER_STAT, payload);
+
+    K_slog_trace(K_SLOG_TRACE, "[%s][%d] SendPlayerStat Send Success.", __FUNCTION__, __LINE__);
 }

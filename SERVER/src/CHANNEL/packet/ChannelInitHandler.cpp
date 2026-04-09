@@ -101,6 +101,8 @@ void ChannelInitHandler::HandleChannelAuth(PacketContext *ctx)
 
     // 세션에 플레이어 연결
     ctx->channel_session->SetPlayer(player.get());
+    // 세션에 플레이어 매니저 연결
+    ctx->channel_session->SetPlayerManager(ctx->player_manager);
     player->SetSession(ctx->channel_session);
 
     K_slog_trace(K_SLOG_DEBUG, " [%s][%d] player_manager [%p]", __FUNCTION__ , __LINE__, ctx->player_manager);  

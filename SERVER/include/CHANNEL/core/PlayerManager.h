@@ -14,9 +14,10 @@ public:
     bool Init();
     bool AddPlayer(std::unique_ptr<Player> player);
 
-    bool MovePlayer(int playerID, Vec2 pos, float speed);
+    bool MovePlayer(int playerId, Vec2 pos, float speed);
+    bool RemovePlayer(int playerId);
 public:
-    Player* GetPlayer(int playerID);
+    Player* GetPlayer(int playerId);
 
 
 private:
