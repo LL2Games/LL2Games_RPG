@@ -472,9 +472,9 @@ void MapInstance::ProcessContactDamage(int64_t nowMs)
 			SetPlayerHitResult(player, monster.GetInstanceId(), result);
 
 			BroadcastPlayerHit(player, result);
+			}
 		}
-   }
-
+	}
 }
 
 void MapInstance::SetPlayerHitResult(Player* player, int monster_instanceId, PlayerHitResult& result)
