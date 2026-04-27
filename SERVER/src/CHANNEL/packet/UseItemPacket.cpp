@@ -19,8 +19,8 @@ void UseItemPacket(PacketContext * ctx)
     size_t offset = 0;
     UseItemResult result;
 
-    Str_UseItem str_itemData;
-    UseItem itemData;
+    Str_UseItem str_itemData{};
+    UseItem itemData{};
     int rc = EXIT_SUCCESS;
 
     std::string str_inventoryType;
@@ -126,13 +126,16 @@ void UseItemPacket(PacketContext * ctx)
 
     // ITEM 사용 가능 여부 확인 후 사용
     //Player* player, int itemId, int useCount
+
+    K_slog_trace(K_SLOG_DEBUG, "[%s : %s : %d] itemData UseCount [%d]", __FILE__, __FUNCTION__, __LINE__, itemData.useCount);
     rc = item_service->HandleUseItem(session->GetPlayer(), itemData, result);
     if(rc == EXIT_FAILURE)
     {
-        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] HandleUseItem Failed", __FILE__, __FUNCTION__, __LINE__);
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] HandleUseItem Failed", __FILE__, __FUNCTION__, __LINE__);
         goto err;
     }
-
+    useItem_Info.push_back(std::to_string(result.result));
+    useItem_Info.push_back(std::to_string(result.errcode));
     useItem_Info.push_back(std::to_string(result.inventoryType));
     useItem_Info.push_back(std::to_string(result.slotPos));
     useItem_Info.push_back(std::to_string(result.item_id));
@@ -146,8 +149,8 @@ err:
     if (rc != EXIT_SUCCESS) {
         session->SendNok(PKT_PLAYER_USE_ITEM, errMsg);
     } else {
-        K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] UseItemPacket END", __FILE__, __FUNCTION__, __LINE__);
-        session->SendOk(PKT_PLAYER_USE_ITEM, useItem_Info);
+        K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] UseItemPacket END", __FILE__, __FUNCTION__, __LINE__);
+        session->Send(PKT_PLAYER_USE_ITEM, useItem_Info);
     }
 
 
@@ -179,6 +182,11 @@ bool TransferData(Str_UseItem& str_itemData, UseItem& itemData)
         K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] str_inventoryType String to Int fail", __FILE__, __FUNCTION__, __LINE__);
         return false;
     }
+
+    K_slog_trace(K_SLOG_DEBUG, "[%s : %s][%d] itemData.inventoryType [%d]", __FILE__, __FUNCTION__, __LINE__, itemData.inventoryType);
+    K_slog_trace(K_SLOG_DEBUG, "[%s : %s][%d] itemData.useCount [%d]", __FILE__, __FUNCTION__, __LINE__, itemData.useCount);
+    K_slog_trace(K_SLOG_DEBUG, "[%s : %s][%d] itemData.itemId [%d]", __FILE__, __FUNCTION__, __LINE__, itemData.itemId);
+    K_slog_trace(K_SLOG_DEBUG, "[%s : %s][%d] itemData.slotPos [%d]", __FILE__, __FUNCTION__, __LINE__, itemData.slotPos);
 
     return true;
 

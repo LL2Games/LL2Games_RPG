@@ -58,6 +58,7 @@ enum PACKET_TYPE : uint16_t {
     PKT_PLAYER_USE_ITEM     = 0x0023,
     PKT_PLAYER_INFO         = 0x0024,
     PKT_PLAYER_STAT         = 0x0025,
+    PKT_PLAYER_SKILLLIST    = 0x0026,
 
     // 0x0040 ~ 0x005F : 몬스터
     PKT_MONSTER_MOVE        = 0x0040,
@@ -74,6 +75,7 @@ enum PACKET_TYPE : uint16_t {
     // 0x1000 ~ : 테스트 / UI / 특수
     PKT_STAT_VIEW           = 0x1000,
     PKT_STAT_UP             = 0x1001,
+    PKT_QUICKSLOT_LIST      = 0x1002,
 };
 
 struct ParsedPacket

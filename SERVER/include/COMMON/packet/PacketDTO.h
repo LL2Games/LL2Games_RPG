@@ -11,6 +11,7 @@
 // 플레이어가 아이템 사용 시 반환 구조체
 struct UseItemResult {
     int result;
+    int errcode;
     int inventoryType;
     int slotPos;
     int item_id;

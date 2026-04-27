@@ -7,6 +7,7 @@
 #include "PacketParser.h"
 #include "PlayerPacketSender.h"
 #include "InventoryPacketSender.h"
+#include "QuickSlotPacketSender.h"
 #include "K_slog.h"
 #include "utility.h"
 #include <sstream>
@@ -96,6 +97,8 @@ void ChannelInitHandler::HandleChannelAuth(PacketContext *ctx)
     K_slog_trace(K_SLOG_TRACE, "HandleChannelAuth: 플레이어 로드 성공 [%d]", characterId);
     PlayerService::LoadInventoryMeta(player.get());
     PlayerService::LoadInventory(player.get());
+    PlayerService::LoadLearnedSkill(player.get());
+    PlayerService::LoadSlotSetting(player.get());
 
     K_slog_trace(K_SLOG_TRACE, "HandleChannelAuth: 플레이어 인벤토리 로드 성공 [%d]", characterId);
 
@@ -117,9 +120,12 @@ void ChannelInitHandler::HandleChannelAuth(PacketContext *ctx)
             // 플레이어 정보 보내기
             PlayerPacketSender::SendPlayerInfo(playerPtr);
             PlayerPacketSender::SendPlayerStat(playerPtr);
+            PlayerPacketSender::SendPlayerSkillList(playerPtr);
 
             InventoryPacketSender::SendInventoryMeta(playerPtr);
             InventoryPacketSender::SendInventoryItems(playerPtr);            // 인벤토리 정보도 보내야 한다.    
+
+            QuickSlotPacketSender::SendQuickSlotList(playerPtr);
         } else {
             K_slog_trace(K_SLOG_ERROR, "HandleChannelAuth: PlayerManager 등록 실패, 이미 접속한 플레이어 입니다.");
             rc = EXIT_FAILURE;

@@ -9,6 +9,8 @@
 #include "Skill_Info.h"
 #include "time.h"
 #include "Collider.h"
+#include "SkillManager.h"
+#include "QuickSlotManager.h"
 
 class ChannelSession;
 class MapInstance;
@@ -47,6 +49,8 @@ public:
     void SetCurrentMap(MapInstance* map) {m_current_map = map;}
     void SetSession(ChannelSession* session) {m_session = session;}
 
+    void SetLearnedSkill(const LearnedSkill& learnedSkill){m_learnedSkills[learnedSkill.skill_id] = learnedSkill;}
+
 public:
     int GetCurHP(){return m_stat.GetCurHp();}
     int GetCurMP(){return m_stat.GetCurMp();}
@@ -55,9 +59,12 @@ public:
     int GetId() {return m_char_id;}
     int GetMapId() {return m_map_id;}
     int GetLevel() const {return m_level;}
+    int GetSkillLevel(int skill_id) const;
     PlayerState GetState(){return m_CurrentState;}
 
     InventoryManager* GetInventoryManager() {return &m_inventoryManager;}
+    SkillManager* GetSkillManager() {return m_skillManager;}
+    QuickSlotManager* GetQuickSlotManager() {return &m_quickSlotManager;}
 
     bool IsAlive(){return m_CurrentState != PlayerState::DEAD ? true : false;}
 
@@ -74,6 +81,8 @@ public:
     RootJob GetRootJob() const {return m_root_job;}
     Collider2D GetCollider() {return m_collider;}
 
+    std::vector<LearnedSkill> GetPlayerSkillList() const;
+
 public:
 
     // 현재 플레이어가 공격 가능 상태인지 확인한다.
@@ -82,10 +91,7 @@ public:
     bool CanUseItem(int inventoryType, int slotPos, int item_id, int useCount);
     bool UseItem(int inventoryType, int slotPos, int itemId, int useCount);
 
-    int GetSkillLevel(int skill_id) const;
     void UseSkill(SkillDef* skillDef);
-    
-
     void AddHP(int HP);
     void AddMP(int MP);
 
@@ -119,8 +125,10 @@ private:
 
     PlayerState m_CurrentState;
 
-    // 플레이어가 배운 스킬들 저장 string은 skillID, int는 스킬 레벨
-    std::unordered_map<int , int> m_learnedSkills;
+    // 플레이어가 배운 스킬들 저장 key는 skillID,
+    std::unordered_map<int , LearnedSkill> m_learnedSkills;
+    // 플레이어가 설정한 스킬 슬롯
+    std::unordered_map<int,int> m_skillSlots;
     // 사용한 스킬쿨들을 저장
     std::unordered_map<int, int64_t> skillCooldownEndMs;
 
@@ -132,6 +140,8 @@ private:
 
     CharacterStat m_stat;
     InventoryManager m_inventoryManager;
+    SkillManager* m_skillManager;
+    QuickSlotManager m_quickSlotManager;
    
     int64_t m_nextContactDamageAllowedMs;
     int64_t m_contactDamageCooldownMs;

@@ -7,11 +7,20 @@ Inventory::Inventory(InventoryMetaInfo& inventoryMetaInfo)
     m_maxSlot = inventoryMetaInfo.max_slots;
     m_current_slot_size = inventoryMetaInfo.currnet_slots_size;
 
+    K_slog_trace(K_SLOG_DEBUG, "[%s][%d] m_inventoryType = %d",__FUNCTION__, __LINE__, m_inventoryType);
+    K_slog_trace(K_SLOG_DEBUG, "[%s][%d] m_maxSlot = %d",__FUNCTION__, __LINE__, m_maxSlot);
+    K_slog_trace(K_SLOG_DEBUG, "[%s][%d] m_current_slot_size = %d",__FUNCTION__, __LINE__, m_current_slot_size);
+
     m_slots.reserve(m_maxSlot);
     for(int i = 0; i < m_maxSlot; i++)
     {
-        m_slots[i].slotPos = i + 1;
-        m_slots[i].isEnable = (i <= m_current_slot_size);
+        InventorySlot slot{};
+        slot.slotPos = i;
+        slot.isEnable = (i <= m_current_slot_size);
+        slot.inventoryType = m_inventoryType;
+        slot.itemId = 0;
+        slot.itemCount = 0;
+        m_slots.emplace(i, slot);
     }
     K_slog_trace(K_SLOG_DEBUG, "Inventory Init Success");
 }
@@ -41,10 +50,10 @@ bool Inventory::AddItem(int itemId, int count)
 }
 
 // 아이템 사용 시 아이템 개수 변경
-bool Inventory::RemoveItemBySlot(int slotPos, int itemId,int count)
+bool Inventory::RemoveItemBySlot(int slotPos, int itemId, int count)
 {
     
-
+    K_slog_trace(K_SLOG_DEBUG, "[%s : %s][%d] itemData UseCount [%d]", __FILE__, __FUNCTION__, __LINE__, count);
     auto it = m_slots.find(slotPos);
 
     if(it == m_slots.end())
@@ -61,7 +70,7 @@ bool Inventory::RemoveItemBySlot(int slotPos, int itemId,int count)
     
      if (it->second.itemCount < count)
     {
-        K_slog_trace(K_SLOG_ERROR, "[%d][%s] 아이템 개수가 충분하지 않습니다. have=%d need=%d",__FUNCTION__, __LINE__, slotPos,it->second.itemCount, count);
+        K_slog_trace(K_SLOG_ERROR, "[%d][%s] 아이템 개수가 충분하지 않습니다. have=%d need=%d",__FUNCTION__, __LINE__, it->second.itemCount, count);
         return false;
     }
 
@@ -78,24 +87,25 @@ bool Inventory::RemoveItemBySlot(int slotPos, int itemId,int count)
 
 bool Inventory::HasItemBySlot(int slotPos, int itemId, int count) const
 {
-
+    K_slog_trace(K_SLOG_DEBUG, "[%s : %s][%d] 아이템 사용 개수 [%d]", __FILE__, __FUNCTION__, __LINE__, count);
     auto it = m_slots.find(slotPos);
 
     if(it == m_slots.end())
     {
-        K_slog_trace(K_SLOG_ERROR, "[%s][%d] 플레이어가 가지고 있지 않은 아이템입니다.", __FUNCTION__,__LINE__);
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d]  플레이어가 가지고 있지 않은 아이템입니다.", __FILE__, __FUNCTION__, __LINE__);
         return false;
     }
 
     if(it->second.itemId != itemId)
     {
-         K_slog_trace(K_SLOG_ERROR, "[%s][%d] 아이템 ID가 다릅니다.",__FUNCTION__, __LINE__);
+         K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] 아이템 ID가 다릅니다.", __FILE__, __FUNCTION__, __LINE__);
         return false;
     }
 
     if(it->second.itemCount < count)
     {
-        K_slog_trace(K_SLOG_ERROR, "[%s][%d] 아이템 개수가 충분하지 않습니다. inventoryType=%d slotPos=%d have=%d need=%d",__FUNCTION__, __LINE__);
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] 아이템 개수가 충분하지 않습니다. inventoryType=%d slotPos=%d have=%d need=%d"
+            ,__FILE__, __FUNCTION__, __LINE__, it->second.inventoryType, it->second.slotPos, it->second.itemCount, count);
         return false;
     }
 
@@ -162,7 +172,7 @@ std::vector<InventoryItemInfo> Inventory::MakeItemInfos() const
     {
         InventoryItemInfo iteminfo;
 
-        iteminfo.inventoryType =item.inventoryType;
+        iteminfo.inventoryType =m_inventoryType;
         iteminfo.slotPos = item.slotPos;
         iteminfo.itemCount =item.itemCount;
         iteminfo.itemId = item.itemId;

@@ -85,7 +85,7 @@ int ChannelSession::Send(int type, const std::vector<std::string>& payload)
     std::string body = PacketParser::MakeBody(payload);
     std::string packet = PacketParser::MakePacket(type, body);
     send(m_fd, packet.c_str(), packet.size(), 0);
-
+   
     return 0;
 }
 

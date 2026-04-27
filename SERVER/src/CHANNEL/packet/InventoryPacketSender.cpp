@@ -55,5 +55,7 @@ void InventoryPacketSender::SendInventoryItems(Player* player)
         payload.push_back(std::to_string(itemInfos.slotPos));
     }
 
+    
+
     session->Send(PKT_INVENTORY_ITEM_INFO, payload);
 }

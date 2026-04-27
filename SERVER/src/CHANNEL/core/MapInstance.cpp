@@ -63,7 +63,7 @@ void MapInstance::BroadcastMapInfo()
 {
 	std::vector<std::string> payload;	
 
-	K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d]m_monsterList[size:%d]", __FILE__, __FUNCTION__, __LINE__, m_monsterList.size());
+	//K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d]m_monsterList[size:%d]", __FILE__, __FUNCTION__, __LINE__, m_monsterList.size());
 	for (auto& monster : m_monsterList)
 	{
 		if (monster.IsAlive())
@@ -77,7 +77,7 @@ void MapInstance::BroadcastMapInfo()
 	}
 	
 	
-	K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d]m_playerList[size:%d]", __FILE__, __FUNCTION__, __LINE__, m_playerList.size());
+	//K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d]m_playerList[size:%d]", __FILE__, __FUNCTION__, __LINE__, m_playerList.size());
 	for(auto it = m_playerList.begin(); it != m_playerList.end(); ++it)
 	{	
 		auto session = it->second->GetSession();	

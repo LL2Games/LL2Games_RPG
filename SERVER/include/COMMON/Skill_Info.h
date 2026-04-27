@@ -65,6 +65,18 @@ struct SkillDef
     std::vector<EffectDef> effects;
 };
 
+struct LearnedSkill
+{
+    // 나중에 확장을 위해서 구조체로 정의
+    int skill_id;
+    int skill_level;
+};
+
+struct LearnedSkillSlot
+{
+    int slot_index;
+    int skill_id;
+};
 
 namespace Skill
 {

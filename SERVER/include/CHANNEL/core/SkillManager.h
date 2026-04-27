@@ -8,8 +8,6 @@
 #include "utility.h"
 
 
-
-
 class SkillManager
 {
 public:
@@ -25,7 +23,6 @@ public:
     std::optional<SkillDef> GetSkill(int skill_id);
 
 public:
-
 
 private:
     std::unordered_map<int, SkillDef> m_skills;
