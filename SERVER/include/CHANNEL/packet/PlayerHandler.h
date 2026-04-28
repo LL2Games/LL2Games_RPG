@@ -19,6 +19,9 @@ public:
     //stat
     void HandleStatView(PacketContext* ctx);
     void HandleStatUp(PacketContext* ctx);
+
+    //trade
+    void HandleTradeRequest(PacketContext* ctx);
   
 private:
     uint16_t m_type;

@@ -1,6 +1,7 @@
 #pragma once
 #include "common.h"
 #include "Player.h"
+#include "PlayerManager.h"
 #include "ChannelPacketFactory.h"
 
 class ChannelServer;
@@ -10,9 +11,6 @@ class ChannelSession
 public:
     explicit ChannelSession(int fd, ChannelServer* server = nullptr);
     ~ChannelSession();
-
-
-    int GetFd() const {return m_fd;}
 
     bool OnBytes(const uint8_t* data, size_t len);
 
@@ -34,7 +32,8 @@ public:
     void SetPlayer(Player* player) {m_player = player;}
     Player* GetPlayer() const {return m_player;}
 
-    
+    void SetPlayerManager(PlayerManager* playerManager) {m_playerManager = playerManager;}
+    int GetFd() const {return m_fd;}
 
 private:
     void HandlePacket(const Packet& pkt);
@@ -54,5 +53,6 @@ private:
     size_t m_sendOffset = 0;
 
     Player* m_player;
+    PlayerManager* m_playerManager;
     ChannelPacketFactory m_factory;
 };

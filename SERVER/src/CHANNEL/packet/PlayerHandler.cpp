@@ -40,6 +40,9 @@ void PlayerHandler::Execute(PacketContext * ctx)
           case PKT_STAT_UP:
                 HandleStatUp(ctx);
                 break;
+          case PKT_TRADE_REQUEST:
+               HandleTradeRequest(ctx);
+               break;
           default :
                break;
      }

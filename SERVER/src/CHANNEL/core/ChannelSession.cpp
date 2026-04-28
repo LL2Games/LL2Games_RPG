@@ -7,7 +7,7 @@
 
 ChannelSession::ChannelSession(int fd, ChannelServer* server) : m_fd(fd), m_server(server), m_player(nullptr)
 {
-    m_recvBuf.reserve(8192);
+   m_recvBuf.reserve(8192);
 }
 
 ChannelSession::~ChannelSession()
@@ -60,6 +60,7 @@ bool ChannelSession::OnBytes(const uint8_t* data, size_t len)
             ctx.stat_service = m_server->GetStatService();
             ctx.item_service = m_server->GetItemService();
             ctx.combat_service = m_server->GetCombatService();
+            ctx.trade_service = m_server->GetTradeService();
         }
         
         handler->Execute(&ctx);

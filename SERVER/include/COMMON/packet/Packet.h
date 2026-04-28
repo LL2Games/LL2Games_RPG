@@ -23,6 +23,7 @@ class StatService;
 class ItemManager;
 class ItemService;
 class CombatService;
+class TradeService;
 
 class CommandDispatcher;
 
@@ -39,25 +40,49 @@ struct PacketHeader
 
 // 패킷타입 정의
 enum PACKET_TYPE : uint16_t {
-    PKT_LOGIN = 0x01,
-    PKT_REGISTER = 0x02,
-    PKT_CHAT_INIT = 0x03,
-    PKT_CHAT = 0x04,
-    PKT_INIT_WORLD = 0x05,
-    PKT_SELECT_CHARACTER = 0x06,
-    PKT_SELECT_CHANNEL = 0x07,
-    PKT_INIT_CHANNEL = 0x08,
-    PKT_CHANNEL_AUTH = 0x09,
-    PKT_ENTER_MAP = 0x0A,
-    PKT_PLAYER_MOVE = 0x0B,
-    PKT_PLAYER_ATTACK = 0x0C,
-    PKT_PLAYER_ONDAMAGED = 0x0D,
-    PKT_PLAYER_USE_ITEM = 0x0E,
-    PKT_MONSTER_MOVE = 0x0F,
-    PKT_MONSTER_ONDAMAGED = 0x10,
+     // 0x0001 ~ 0x001F : 로그인 / 월드
+    PKT_LOGIN               = 0x0001,
+    PKT_REGISTER            = 0x0002,
+    PKT_CHAT_INIT           = 0x0003,
+    PKT_CHAT                = 0x0004,
+    PKT_INIT_WORLD          = 0x0005,
+    PKT_SELECT_CHARACTER    = 0x0006,
+    PKT_SELECT_CHANNEL      = 0x0007,
+    PKT_INIT_CHANNEL        = 0x0008,
+    PKT_CHANNEL_AUTH        = 0x0009,
+    PKT_ENTER_MAP           = 0x000A,
 
-    PKT_STAT_VIEW=0x1000,
-    PKT_STAT_UP,
+    // 0x0020 ~ 0x003F : 플레이어
+    PKT_PLAYER_MOVE         = 0x0020,
+    PKT_PLAYER_ATTACK       = 0x0021,
+    PKT_PLAYER_ONDAMAGED    = 0x0022,
+    PKT_PLAYER_USE_ITEM     = 0x0023,
+    PKT_PLAYER_INFO         = 0x0024,
+    PKT_PLAYER_STAT         = 0x0025,
+    PKT_PLAYER_SKILLLIST    = 0x0026,
+
+    // 0x0040 ~ 0x005F : 몬스터
+    PKT_MONSTER_MOVE        = 0x0040,
+    PKT_MONSTER_ONDAMAGED   = 0x0041,
+
+    // 0x0060 ~ 0x007F : 드롭
+    PKT_DROPITEMS           = 0x0060,
+    PKT_REMOVEITEMS         = 0x0061,
+
+    // 0x0080 ~ 0x009F : 인벤토리
+    PKT_INVENTORY_META_INFO = 0x0080,
+    PKT_INVENTORY_ITEM_INFO = 0x0081,
+
+    // 0x0100 ~ 0x010F : 교환
+    PKT_TRADE_REQUEST        = 0x0100,  // 교환 신청
+    PKT_TRADE_ACCEPT         = 0x0101,  // 교환 수락
+    PKT_TRADE_EXECUTE        = 0x0102,  // 교환 완료(실행)
+    PKT_TRADE_CANCEL         = 0x0103,  // 교환 취소
+
+    // 0x1000 ~ : 테스트 / UI / 특수
+    PKT_STAT_VIEW           = 0x1000,
+    PKT_STAT_UP             = 0x1001,
+    PKT_QUICKSLOT_LIST      = 0x1002,
 };
 
 struct ParsedPacket
@@ -93,6 +118,7 @@ struct PacketContext
     ItemManager* item_manager =nullptr;
     ItemService* item_service = nullptr;
     CombatService* combat_service = nullptr;
+    TradeService* trade_service = nullptr;
 };
 
 typedef struct packet
