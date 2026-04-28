@@ -76,7 +76,7 @@ enum PACKET_TYPE : uint16_t {
     // 0x0100 ~ 0x010F : 교환
     PKT_TRADE_REQUEST        = 0x0100,  // 교환 신청
     PKT_TRADE_ACCEPT         = 0x0101,  // 교환 수락
-    PKT_TRADE_EXECUTE        = 0x0102,  // 교환 완료(실행)
+    PKT_TRADE_EXECUTE        = 0x0102,  // 교환 실행
     PKT_TRADE_CANCEL         = 0x0103,  // 교환 취소
 
     // 0x1000 ~ : 테스트 / UI / 특수
