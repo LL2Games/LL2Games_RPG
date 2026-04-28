@@ -21,13 +21,13 @@ public:
 
     bool NeadWriteEvent() const {return !m_sendQueue.empty();}
 
-    int Send(int type, const std::vector<std::string>& payload);
+    int Send(int type, std::vector<std::string> payload={});
     int SendOk(int type, std::vector<std::string> payload={});
     int SendNok(int type, const std::string &errMsg);
 
 public: 
     int OnPacket(Packet packet);
-    int Send(int type ,std::string data);
+    //int Send(int type ,std::string data);
 
     void SetPlayer(Player* player) {m_player = player;}
     Player* GetPlayer() const {return m_player;}

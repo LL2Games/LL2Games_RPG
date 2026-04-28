@@ -31,7 +31,7 @@ int TradeService::Request(Player* requester, Player* target_player, std::string 
     }
 
     //3. target_player에게 거래 요청 패킷 보내기
-    target_player->GetSession()->SendOk(PKT_TRADE_REQUEST, {std::to_string(requester->GetId())});
+    target_player->GetSession()->Send(PKT_TRADE_REQUEST, {std::to_string(requester->GetId())});
 
     return 0;
 }
