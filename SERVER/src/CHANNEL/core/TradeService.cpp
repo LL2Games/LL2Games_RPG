@@ -37,7 +37,7 @@ int TradeService::Request(Player* requester, Player* target_player, std::string 
     return 0;
 }
 
-int TradeService::Execute(Player* requester, Player* accepter, std::string &errMsg)
+int TradeService::Start(Player* requester, Player* accepter, std::string &errMsg)
 {
 
     //1. 예외처리: target_player와 requester 객체가 유효한지
@@ -72,8 +72,8 @@ int TradeService::Execute(Player* requester, Player* accepter, std::string &errM
     }
 
     //3. player들에게 교환 실행 패킷 보내기
-    requester->GetSession()->Send(PKT_TRADE_EXECUTE, {std::to_string(accepter->GetId())});
-    accepter->GetSession()->Send(PKT_TRADE_EXECUTE, {std::to_string(requester->GetId())});
+    requester->GetSession()->Send(PKT_TRADE_START, {std::to_string(accepter->GetId())});
+    accepter->GetSession()->Send(PKT_TRADE_START, {std::to_string(requester->GetId())});
 
     return 0;
 }

@@ -176,7 +176,7 @@ void PlayerHandler::HandleTradeAccept(PacketContext* ctx)
         goto err;
     }
 
-    rc = trade_service->Execute(request_player, player, errMsg);
+    rc = trade_service->Start(request_player, player, errMsg);
 
 err:
 
@@ -186,7 +186,7 @@ if (rc != EXIT_SUCCESS)
     }
     else
     {
-        //성공시에는 교환 실행 패킷이 trade_service->Execute에서 갈 예정
+        //성공시에는 교환 실행 패킷이 trade_service->Start에서 갈 예정
         //session->SendOk(PKT_TRADE_ACCEPT);
     }
 
