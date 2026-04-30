@@ -46,6 +46,9 @@ void PlayerHandler::Execute(PacketContext * ctx)
           case PKT_TRADE_ACCEPT:
                HandleTradeAccept(ctx);
                break;
+          case PKT_TRADE_READY:
+               HandleTradeReady(ctx);
+               break;
           default :
                break;
      }
