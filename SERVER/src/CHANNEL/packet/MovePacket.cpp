@@ -1,3 +1,4 @@
+#include "PlayerHandler.h"
 #include "common.h"
 #include "PacketParser.h"
 #include "ChannelSession.h"
@@ -6,7 +7,7 @@
 #include "utility.h"
 
 
-void MovePacket(PacketContext * ctx)
+void PlayerHandler::MovePacket(PacketContext * ctx)
 {
     ChannelSession *session = nullptr;
     Player* player = nullptr;
@@ -123,7 +124,6 @@ err:
     if (rc != EXIT_SUCCESS) {
         session->SendNok(PKT_ENTER_MAP, errMsg);
     } else {
-        K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] MAP HANDLER END", __FILE__, __FUNCTION__, __LINE__);
         session->SendOk(PKT_ENTER_MAP);
     }
 }

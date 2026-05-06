@@ -1,3 +1,4 @@
+#include "PlayerHandler.h"
 #include "common.h"
 #include "PacketParser.h"
 #include "ChannelSession.h"
@@ -20,7 +21,7 @@
 
 */
 
-void OnDamagedPacket(PacketContext * ctx)
+void PlayerHandler::OnDamagedPacket(PacketContext * ctx)
 {
      (void)ctx;
      

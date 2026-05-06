@@ -11,6 +11,7 @@
 #include "Collider.h"
 #include "SkillManager.h"
 #include "QuickSlotManager.h"
+#include "Weapon_Info.h"
 
 class ChannelSession;
 class MapInstance;
@@ -60,6 +61,7 @@ public:
     int GetMapId() {return m_map_id;}
     int GetLevel() const {return m_level;}
     int GetSkillLevel(int skill_id) const;
+    WeaponType GetWeaponType() const {return m_weaponType;}
     PlayerState GetState(){return m_CurrentState;}
 
     InventoryManager* GetInventoryManager() {return &m_inventoryManager;}
@@ -111,6 +113,7 @@ private:
     std::string m_name;
    
     RootJob m_root_job;
+    WeaponType m_weaponType = WeaponType::One_Hand;
 
     int m_level;
     int m_job;

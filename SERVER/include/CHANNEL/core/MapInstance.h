@@ -49,18 +49,15 @@ public:
     void HandleMove(Player* sender, Vec2 pos, float speed);
     void ResolveSkillHit(Player* Attacker, SkillDef& skillDef, std::vector<std::pair<Monster*, int>> hits);
     void SetPlayerHitResult(Player* player, int monster_instacneId, PlayerHitResult& result);
-    
     bool SpawnDropItem(Monster* monster, std::vector<DropResult> dropItems);
-
     void CheckDropItem();
     
 private:
-    void BroadcastMoveExcept(Player* sender, Vec2 pos, float speed);
-    void BroadcastMonsterHit(Player* Attacker, int SkillID, std::vector<MonsterHitResult> result);
-    void BroadcastPlayerHit(Player* Defender, PlayerHitResult result);
     void BroadcastDropSpawn(std::vector<DropSpawnInfo> spawnedInfos);
     void BroadcastRemoveItem(std::vector<int> removeItems);
-    void BroadcastMapInfo();
+    void SendMapInfo();
+    void SendMonsterSnapshot(Player* Enter_player);  
+    void SendMonsterMove(Player* player);
 
     // 몬스터와 플레이어의 접촉 시 
     void ProcessContactDamage(int64_t nowMs);

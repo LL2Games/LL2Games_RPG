@@ -6,7 +6,7 @@
 #include "K_slog.h"
 std::unique_ptr<IPacketHandler> ChannelPacketFactory::Create(uint16_t type)
 {
-    K_slog_trace(K_SLOG_DEBUG, "[%d][%s]type=%d", __LINE__, __FUNCTION__, type);
+    //K_slog_trace(K_SLOG_DEBUG, "[%s : %s : %d] type=%d",  __FILE__, __FUNCTION__, __LINE__, type);
     switch(type)
     {
         case PKT_INIT_CHANNEL:
@@ -18,6 +18,7 @@ std::unique_ptr<IPacketHandler> ChannelPacketFactory::Create(uint16_t type)
             break;
         case PKT_PLAYER_MOVE:
         case PKT_PLAYER_ATTACK:
+        case PKT_PLAYER_BASIC_ATTACK:
         case PKT_PLAYER_ONDAMAGED:
         case PKT_PLAYER_USE_ITEM:
         case PKT_STAT_VIEW:

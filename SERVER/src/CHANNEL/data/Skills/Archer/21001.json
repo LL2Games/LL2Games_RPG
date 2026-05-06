@@ -1,7 +1,8 @@
 {
   "skill_id": 21001,
   "key": "Archer.Shot_01",
-  "type": "MELEE_ARC",
+  "category": "PROJECTILE",
+  "cast_type": "MELEE_ARC",
 
   "cooldown_ms": 500,
   "mp_cost": 10,

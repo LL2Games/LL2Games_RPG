@@ -90,6 +90,8 @@ SRCS := \
 	packet/PlayerPacketSender.cpp\
 	packet/InventoryPacketSender.cpp\
 	packet/QuickSlotPacketSender.cpp\
+	packet/MonsterPacketSender.cpp\
+	packet/ItemPacketSender.cpp\
     \
     db/MySqlConnectionPool.cpp \
 	db/PlayerService.cpp \
