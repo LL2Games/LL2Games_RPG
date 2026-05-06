@@ -42,6 +42,7 @@ public:
     int Request(Player* requester, Player* target_player, std::string &errMsg);
     int Start(Player* requester, Player* accepter, std::string &errMsg);
     int Ready(Player*, const std::vector<TradeItem>&, std::string &errMsg);
+    int Cancel(Player* requester, std::string &errMsg);
 
 private:
     MySqlConnectionPool* m_mySql;

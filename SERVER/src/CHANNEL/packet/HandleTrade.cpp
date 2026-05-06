@@ -344,3 +344,98 @@ err:
         session->SendOk(PKT_TRADE_CONFIRM);
     }
 }
+
+void PlayerHandler::HandleTradeCancel(PacketContext* ctx)
+{
+    int rc = EXIT_SUCCESS;
+    ChannelSession *session = nullptr;
+    Player *player = nullptr;
+    TradeService* trade_service = nullptr;
+    std::string target_player_id;
+    Player *target_player = nullptr;
+    PlayerManager* player_manager = nullptr;
+    size_t offset = 0;
+    std::string errMsg;
+
+    if (ctx == nullptr)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] ctx is nullptr\n", __FUNCTION__, __LINE__);
+        rc = EXIT_FAILURE;
+        errMsg = "[" + std::to_string(rc) + "]ctx is nullptr";
+        goto err;
+    }
+    session = ctx->channel_session;
+    if (session == nullptr)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] session is nullptr\n", __FUNCTION__, __LINE__);
+        rc = EXIT_FAILURE;
+        errMsg = "[" + std::to_string(rc) + "]session is nullptr";
+        goto err;
+    }
+
+    player = session->GetPlayer();
+    if (player == nullptr)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] player is nullptr\n", __FUNCTION__, __LINE__);
+        rc = EXIT_FAILURE;
+        errMsg = "[" + std::to_string(rc) + "]player is nullptr";
+        goto err;
+    }
+
+    player_manager = ctx->player_manager;
+    if (player_manager == nullptr)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] player_manager is nullptr\n", __FUNCTION__, __LINE__);
+        rc = EXIT_FAILURE;
+        errMsg = "[" + std::to_string(rc) + "]player_manager is nullptr";
+        goto err;
+    }
+
+    trade_service = ctx->trade_service;
+    if (trade_service == nullptr)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] trade_service is nullptr\n", __FUNCTION__, __LINE__);
+        rc = EXIT_FAILURE;
+        errMsg = "[" + std::to_string(rc) + "]trade_service is nullptr";
+        goto err;
+    }
+
+    //교환신청 상대방 Player id추출
+    if (!PacketParser::ParseLengthPrefixedString(
+            ctx->payload,
+            ctx->payload_len,
+            offset,
+            target_player_id,
+            errMsg))
+    {
+        rc = EXIT_FAILURE;
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] ParseLengthPrefixedString fail", __FUNCTION__, __LINE__);
+        goto err;
+    }
+
+    //교환신청 상대방 Player 객체 추출
+    target_player = player_manager->GetPlayer(atoi(target_player_id.c_str()));
+    if (target_player == nullptr)
+    {
+        rc = EXIT_FAILURE;
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] target_player is nullptr\n", __FUNCTION__, __LINE__);
+        errMsg = "[" + std::to_string(rc) + "]target_player is nullptr";
+        goto err;
+    }
+
+
+    rc = trade_service->Cancel(player, errMsg);
+
+err:
+
+    if (rc != EXIT_SUCCESS)
+    {
+        session->SendNok(PKT_TRADE_CANCEL, errMsg);
+    }
+    else
+    {
+        //상대 player에게 교환 성사 패킷 전송
+        target_player->GetSession()->SendOk(PKT_TRADE_CANCEL);
+        session->SendOk(PKT_TRADE_CANCEL);
+    }
+}

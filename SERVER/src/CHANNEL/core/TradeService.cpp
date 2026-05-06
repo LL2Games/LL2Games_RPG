@@ -215,6 +215,34 @@ err:
     return 0;
 }
 
+
+int TradeService::Cancel(Player *requester, std::string &errMsg)
+{
+    TradeSession *session = nullptr;
+
+    // 1. 예외처리: target_player와 requester 객체가 유효한지
+    if (requester == nullptr)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] Invalid player", __FUNCTION__, __LINE__);
+        errMsg = "Invalid player";
+        return -1;
+    }
+
+    session = m_sessions[requester->GetId()];
+    // 2. 예외처리: player의 TradeSession 유효하지않음
+    if (session == nullptr)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] player trade session Not Found", __FUNCTION__, __LINE__);
+        errMsg = "player trade session Not Found";
+        return -1;
+    }
+
+    //3. 교환세션 삭제
+    DeleteTradeSession(session); 
+
+    return 0;
+}
+
 void TradeService::CreateTradeSession(Player *a_player, Player *b_player)
 {
     if (a_player == nullptr || b_player == nullptr)
