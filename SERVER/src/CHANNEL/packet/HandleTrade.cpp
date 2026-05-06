@@ -314,6 +314,7 @@ void PlayerHandler::HandleTradeReady(PacketContext* ctx)
 
         TradeItem trade_item;
         trade_item.id = item_id;
+        trade_item.type = item_id.substr(0, 1); //id의 첫글자로 타입 구분 ex) 2000000 -> type 2 
         trade_item.amount = atoi(item_amount.c_str());
 
         trade_items.push_back(trade_item);
@@ -339,7 +340,7 @@ err:
     else
     {
         //상대 player에게 교환 성사 패킷 전송
-        target_player->GetSession()->SendOk(PKT_TRADE_READY);
-        session->SendOk(PKT_TRADE_READY);
+        target_player->GetSession()->SendOk(PKT_TRADE_CONFIRM);
+        session->SendOk(PKT_TRADE_CONFIRM);
     }
 }

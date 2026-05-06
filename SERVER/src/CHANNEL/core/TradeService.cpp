@@ -1,6 +1,8 @@
 #include "TradeService.h"
 #include "TradeRequestTask.h"
 #include "MapInstance.h"
+#include "MySqlConnectionPool.h"
+//#include "RedisClient.h"
 #include "K_slog.h"
 
 std::unordered_map<int, TradeSession *> TradeService::m_sessions;
@@ -8,6 +10,7 @@ std::unordered_map<int, TradeSession *> TradeService::m_sessions;
 TradeService::TradeService()
 {
     m_mySql = MySqlConnectionPool::GetInstance();
+    //m_redis = RedisClient::GetInstance();
 }
 TradeService::~TradeService()
 {
@@ -126,11 +129,27 @@ int TradeService::Ready(Player* player, const std::vector<TradeItem>& items, std
 
 int TradeService::Execute(TradeSession *session)
 {
+    MYSQL *conn = m_mySql->GetConnection();
+    std::string query;
+    int result = 0;
+
     if (session == nullptr)
     {
         K_slog_trace(K_SLOG_ERROR, "[%s][%d] session is nullptr", __FUNCTION__, __LINE__);
         return -1;
     }
+
+    if (!conn)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] MYSQL GetConnection failed", __FUNCTION__, __LINE__);
+        return -1;
+    }
+
+    mysql_query(conn, "START TRANSACTION");
+
+    //0. 아이템 검증(예외처리)
+    //A player DB에서 A items 존재 및 수량 확인
+    //B player DB에서 B items 존재 및 수량 확인
 
     //1. 아이템 교환
     //A player DB에서 A items 임시 제거
@@ -144,8 +163,55 @@ int TradeService::Execute(TradeSession *session)
     //A player DB에 A items 삭제 및 B items 추가
     //B player DB에 B items 삭제 및 A items 추가
 
-    //4. 교환세션 삭제
-    DeleteTradeSession(session); 
+    for (const auto& item : session->a_items)
+    {
+        //3-1 A인벤에 A의 아이템 삭제
+        if (DecreaseItem(conn, std::to_string(session->a_id), item) != 0)
+        {
+            K_slog_trace(K_SLOG_ERROR, "[%s][%d] DecreaseItem failed", __FUNCTION__, __LINE__);
+            goto err;
+        }
+
+        //3-2 B인벤에 A의 아이템 추가
+        if (IncreaseItem(conn, std::to_string(session->b_id), item) != 0)
+        {
+            K_slog_trace(K_SLOG_ERROR, "[%s][%d] IncreaseItem failed", __FUNCTION__, __LINE__);
+            goto err;
+        }
+    }
+
+    for (const auto& item : session->b_items)
+    {
+        //3-3 B인벤에 B의 아이템 삭제
+        if (DecreaseItem(conn, std::to_string(session->b_id), item) != 0)
+        {
+            K_slog_trace(K_SLOG_ERROR, "[%s][%d] DecreaseItem failed", __FUNCTION__, __LINE__);
+            goto err;
+        } 
+    
+        //3-4 A인벤에 B의 아이템 추가
+        if (IncreaseItem(conn, std::to_string(session->a_id), item) != 0)
+        {
+            K_slog_trace(K_SLOG_ERROR, "[%s][%d] IncreaseItem failed", __FUNCTION__, __LINE__);
+            goto err;
+        }
+
+    }
+
+err:
+    if (result != 0)
+    {
+        mysql_query(conn, "ROLLBACK");
+        return -1;
+    }
+    else
+    {
+        mysql_query(conn, "COMMIT");
+
+        //4. 교환세션 삭제
+        DeleteTradeSession(session); 
+    }
+
     return 0;
 }
 
@@ -195,4 +261,52 @@ TradeSession *TradeService::GetTradeSession(Player *player)
     }
 
     return it->second;
+}
+
+int TradeService::DecreaseItem(MYSQL *conn, const std::string &char_id, const TradeItem &item)
+{
+    std::string query;
+    int result = 0;
+
+    //UPDATE (수량 감소)
+    query = "UPDATE character_inventory SET item_count = item_count - " + std::to_string(item.amount) + " WHERE char_id = " + char_id + " AND item_id = " + item.id;
+
+    K_slog_trace(K_SLOG_DEBUG, "[%s][%d] query: %s", __FUNCTION__, __LINE__, query.c_str());
+    result = mysql_query(conn, query.c_str());
+    if (result != 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] UPDATE FAIL: %s", __FUNCTION__, __LINE__, mysql_error(conn));
+        return -1;
+    }
+
+    //DELETE(수량 0 일경우)
+    query = "DELETE FROM character_inventory WHERE char_id = " + char_id + " AND item_id = " + item.id + " AND item_count <= 0";
+    K_slog_trace(K_SLOG_DEBUG, "[%s][%d] query: %s", __FUNCTION__, __LINE__, query.c_str());
+    result = mysql_query(conn, query.c_str());
+    if (result != 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] DELETE FAIL: %s", __FUNCTION__, __LINE__, mysql_error(conn));
+        return -1;
+    }
+
+    return 0;
+}
+
+int TradeService::IncreaseItem(MYSQL *conn, const std::string &char_id, const TradeItem &item)
+{
+    std::string query;
+    int result = 0;
+
+    //INSERT (아이템이 없을 경우) 있으면 UPDATE
+    query = "INSERT INTO character_inventory (char_id, inventory_type, slot_pos, item_id, item_count) VALUES (" + char_id + "," +  item.type + ", 9," + item.id + ", " + std::to_string(item.amount) + ") ON DUPLICATE KEY UPDATE item_count = item_count + " + std::to_string(item.amount);
+
+    K_slog_trace(K_SLOG_DEBUG, "[%s][%d] query: %s", __FUNCTION__, __LINE__, query.c_str());
+    result = mysql_query(conn, query.c_str());
+    if (result != 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] INSERT FAIL: %s", __FUNCTION__, __LINE__, mysql_error(conn));
+        return -1;
+    }
+
+    return 0;
 }

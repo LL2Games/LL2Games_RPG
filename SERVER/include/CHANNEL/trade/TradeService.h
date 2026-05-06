@@ -1,11 +1,13 @@
 #pragma once
 #include "Player.h"
 #include "MySqlConnectionPool.h"
+//#include "RedisClient.h"
 #include <vector>
 #include <unordered_map>
 struct TradeItem
 {
     std::string id;
+    std::string type;
     size_t amount;
 };
 struct TradeSession
@@ -30,6 +32,9 @@ public:
 
 private:
     int Execute(TradeSession *);
+    int DecreaseItem(MYSQL *conn, const std::string &char_id, const TradeItem &item);
+    int IncreaseItem(MYSQL *conn, const std::string &char_id, const TradeItem &item);
+
 public:
     TradeService();
     ~TradeService();
@@ -40,5 +45,5 @@ public:
 
 private:
     MySqlConnectionPool* m_mySql;
-
+    //RedisClient* m_redis;
 };
