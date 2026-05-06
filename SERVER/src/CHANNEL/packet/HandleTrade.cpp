@@ -326,22 +326,22 @@ void PlayerHandler::HandleTradeReady(PacketContext* ctx)
         K_slog_trace(K_SLOG_DEBUG, "[%s][%d]gunoo22_TEST", __FUNCTION__, __LINE__);
 
 err:
-
-    if (rc == -1)
+    if (rc == EXIT_SUCCESS)
     {
-        session->SendNok(PKT_TRADE_READY, errMsg);
+        //상대 player에게 교환 성사 패킷 전송
+        target_player->GetSession()->SendOk(PKT_TRADE_CONFIRM);
+        session->SendOk(PKT_TRADE_CONFIRM);
+        
     }
-    else if (rc == 1) //상대 교환준비 대기
+    else if (rc == 2) //상대 교환준비 대기
     {
         //상대 player에게 교환 준비 상태 패킷 전송
         target_player->GetSession()->Send(PKT_TRADE_READY, {std::to_string(player->GetId())});
         session->Send(PKT_TRADE_READY, {"wait"});
     }
-    else
+    else 
     {
-        //상대 player에게 교환 성사 패킷 전송
-        target_player->GetSession()->SendOk(PKT_TRADE_CONFIRM);
-        session->SendOk(PKT_TRADE_CONFIRM);
+        session->SendNok(PKT_TRADE_READY, errMsg);
     }
 }
 

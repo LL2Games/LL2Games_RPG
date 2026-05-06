@@ -124,7 +124,7 @@ int TradeService::Ready(Player* player, const std::vector<TradeItem>& items, std
         return Execute(session);
     }
 
-    return 1; //상대방 교환 준비 대기
+    return 2; //상대방 교환 준비 대기
 }
 
 int TradeService::Execute(TradeSession *session)
