@@ -128,18 +128,7 @@ bool MonsterManager::LoadJsonFile(int monster_id, MonsterTemplate& monsterTempla
     nlohmann::json j;
     file >> j;
 	
-	/*
-	struct MonsterTemplate {
-    int monsterId;
-    int level;
-    int hp;
-    int attackDamage;
-    float exp;
-    float moveSpeed;
-    std::string name;
-};
 	
-	*/
     // 이렇게 json 파일을 읽을 때 가져오는 데이터 타입을 정해주면 안전하다.
                                   //= j["monster_id"];
 	monsterTemplate.monsterId     = j.at("monster_id").get<int>();

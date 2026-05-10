@@ -284,7 +284,7 @@ void ChannelServer::OnReceive(int fd)
         buf.append(temp, tempLen);
     } while (tempLen == BUFFER_SIZE);
 
-     K_slog_trace(K_SLOG_DEBUG, "fd %d\n", fd);
+    //K_slog_trace(K_SLOG_DEBUG, "fd %d\n", fd);
     auto it = m_sessions.find(fd);
     if(it == m_sessions.end())
     {

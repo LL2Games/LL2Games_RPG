@@ -195,7 +195,7 @@ void MapInstance::HandleMove(Player* sender, Vec2 pos, float speed)
 {
 	if(!sender) return;
 
-	K_slog_trace(K_SLOG_TRACE, "[%s][%d] 플레이어 ID [%d]", __FUNCTION__, __LINE__, sender->GetId());
+	//K_slog_trace(K_SLOG_TRACE, "[%s][%d] 플레이어 ID [%d]", __FUNCTION__, __LINE__, sender->GetId());
 	
 	auto it = m_playerList.find(sender->GetId());
 
@@ -249,7 +249,7 @@ void MapInstance::SendMonsterSnapshot(Player* player)
     {
         if (!monster.IsAlive())
             continue;
-
+		monster.SetState(MonsterState::E_Move);
         aliveMonsters.push_back(&monster);
     }
 	MonsterPacketSender::SendMonsterMove(player, aliveMonsters);
@@ -291,6 +291,7 @@ void MapInstance::ResolveSkillHit(Player* Attacker, SkillDef& skillDef, std::vec
 			// 아이템 스폰
 			SpawnDropItem(m, dropItems);
 		}	
+		
 		results.push_back({m->GetInstanceId(), dmg, m->GetCurrentHP(), m->GetMaxHP(), isDead});
 	}
     K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] SendMonsterOnDamaged.\n", __FILE__, __FUNCTION__, __LINE__);    

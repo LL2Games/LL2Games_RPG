@@ -41,7 +41,7 @@ bool ChannelSession::OnBytes(const uint8_t* data, size_t len)
         K_slog_trace(K_SLOG_ERROR, "[%s][%d] Packet Parse failed", __FUNCTION__, __LINE__);
         return false;
     }
-    //K_slog_trace(K_SLOG_DEBUG, "[%s : %s : %d] parsed packet type=%x, payload len=%d", __FILE__, __FUNCTION__, __LINE__, pkt->type, (int)pkt->payload.size());
+    
 
 
     auto handler = m_factory.Create(pkt->type);

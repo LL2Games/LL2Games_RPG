@@ -126,6 +126,7 @@ std::vector<Monster*> CombatService::ComputeHitMonsters(Player* attacker, std::v
     {
         Vec2 mp = m.GetPos();
 
+        if(!m.IsAlive()) continue;
         if (!IsHitFrontBox2D(
                 attackerPos,
                 attack_dir,

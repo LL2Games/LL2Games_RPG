@@ -16,21 +16,6 @@
 
 void ChannelInitHandler::Execute(PacketContext* ctx)
 {
-    //std::string payload(ctx->payload, ctx->payload_len);
-    //auto tokens = ParsePayload(payload);
-
-
-    // 패킷 타입에 따른 처리 (임시로 주석 처리)
-    /*
-    switch(패킷타입) {
-        case PKT_CHANNEL_AUTH:
-            HandleChannelAuth(ctx, tokens);
-            break;
-        default:
-            break;
-    }
-    */
-    
     // 임시로 인증 처리
     K_slog_trace(K_SLOG_TRACE, " [%s][%d] LJH TEST", __FUNCTION__ , __LINE__);   
     HandleChannelAuth(ctx);
