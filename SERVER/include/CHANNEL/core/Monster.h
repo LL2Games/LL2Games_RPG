@@ -46,15 +46,12 @@ public:
 	// 죽고난 후 시간 확인 
 	bool CheckRespawnTime(std::chrono::steady_clock::time_point now);
 	
-	
-	
 public:
 	// 몬스터 위치 설정
     void SetPos(Vec2 Pos){this->m_Pos.xPos = Pos.xPos; this->m_Pos.yPos = Pos.yPos;}
 	Vec2 GetPos(){return m_Pos;}
 
 	int GetLevel() const {return m_level;}
-
 	bool IsAlive() {return m_isAlive;}
 
 	int GetLastAttackerID() {return m_lastAttackerId;}
@@ -68,8 +65,12 @@ public:
 	std::string GetUniqueItemGroupID(){return m_unique_drop_Item_GroupId;}
 	
 	int GetInstanceId() const {return m_instanceId;}
+	int GetId() const {return m_monsterId;}
 	int GetCurrentHP() {return m_hp;}
 	int GetMaxHP() {return m_maxhp;}
+	int GetDir() {return m_dir;}
+	int GetMoveSpeed() {return m_moveSpeed;}
+	MonsterState GetState(){return m_state;}
 
 	int GetDamage(){return m_attackDamage;}
 	Collider2D GetCollider() {return m_collider;}
@@ -100,6 +101,7 @@ private:
 
 	// 같은 몬스터라도 구별할 수 있는 고유 값이 필요하기 때문에 추가
 	int m_instanceId;
+	int m_monsterId;
 	
 	// 죽었을 때 찍히는 시간
 	std::chrono::steady_clock::time_point m_deadTime;

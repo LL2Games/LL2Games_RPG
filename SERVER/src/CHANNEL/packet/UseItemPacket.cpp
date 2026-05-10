@@ -1,3 +1,4 @@
+#include "PlayerHandler.h"
 #include "common.h"
 #include "PacketParser.h"
 #include "ChannelSession.h"
@@ -12,7 +13,7 @@
 bool TransferData(Str_UseItem& str_itemData, UseItem& itemData);
 
 
-void UseItemPacket(PacketContext * ctx)
+void PlayerHandler:: UseItemPacket(PacketContext * ctx)
 {
     ChannelSession *session = nullptr;
     ItemService* item_service = nullptr;
@@ -79,7 +80,7 @@ void UseItemPacket(PacketContext * ctx)
     ))
     {
         rc = EXIT_FAILURE;
-        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] ParseLengthPrefixedString fail", __FILE__, __FUNCTION__, __LINE__);
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] ParseLengthPrefixedString fail", __FILE__, __FUNCTION__, __LINE__);
         goto err;
     }
 
@@ -94,7 +95,7 @@ void UseItemPacket(PacketContext * ctx)
     ))
     {
         rc = EXIT_FAILURE;
-        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] ParseLengthPrefixedString fail", __FILE__, __FUNCTION__, __LINE__);
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] ParseLengthPrefixedString fail", __FILE__, __FUNCTION__, __LINE__);
         goto err;
     }
 

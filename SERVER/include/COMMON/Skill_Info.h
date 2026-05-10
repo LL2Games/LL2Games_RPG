@@ -2,13 +2,28 @@
 #include "common.h"
 #include "PlayerData.h"
 
-enum class SkillType 
+enum class AttackDir
 {
-    NONE,
-    BASIC,
-    MELEE_ARC,
-    ENUMEND
+    Left = -1,
+    Right = 1,
 };
+
+enum class SkillCategory
+{
+    BASIC_ATTACK,
+    ACTIVE,
+    PASSIVE,
+    NONE
+};
+
+enum class SkillCastType
+{
+    MELEE_ARC,
+    PROJECTILE,
+    AREA,
+    NONE
+};
+
 enum class HitShape  
 {
     NONE,
@@ -34,7 +49,8 @@ struct SkillDef
     int skill_id;
     std::string key;
 
-    SkillType type;
+    SkillCategory category;
+    SkillCastType cast_type;
 
     struct Hit
     {
@@ -80,12 +96,21 @@ struct LearnedSkillSlot
 
 namespace Skill
 {
-    inline SkillType SetSkillType(std::string skillType )
+    inline SkillCastType SetSkillCastType(std::string skillCastType )
     {
-        if(skillType == "BASIC") return SkillType::BASIC;
-        if(skillType == "MELEE_ARC") return SkillType::MELEE_ARC;
-        return SkillType::NONE;
+        if(skillCastType == "PROJECTILE") return SkillCastType::PROJECTILE;
+        if(skillCastType == "MELEE_ARC") return SkillCastType::MELEE_ARC;
+        if(skillCastType == "AREA") return SkillCastType::AREA;
+        return SkillCastType::NONE;
     };
+
+    inline SkillCategory SetSkillCategory(std::string skillCategory)
+    {
+        if(skillCategory == "BASIC_ATTACK") return SkillCategory::BASIC_ATTACK;
+        if(skillCategory == "ACTIVE") return SkillCategory::ACTIVE;
+        if(skillCategory == "PASSIVE") return SkillCategory::PASSIVE;
+        return SkillCategory::NONE;
+    }
 
     inline HitShape SetHitShape(std::string hitType)
     {

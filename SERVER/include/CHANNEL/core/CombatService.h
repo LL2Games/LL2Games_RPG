@@ -13,7 +13,8 @@ public:
     CombatService();
     ~CombatService();
 
-    int HandleAttack(Player* Attacker, int skill_id, std::string attack_dir);
+    int HandleAttack(Player* Attacker, int skill_id, int attack_dir);
+    int HandleBasicAttack(Player* Attacker, int attack_dir);
     int ApplyContactDamage(Player* player, Monster& monster);
     int CalculateSkillBaseDamage(const Player* attacker, const SkillDef& skillDef); 
 
@@ -23,7 +24,7 @@ public:
     int CalculateFinalDamage(Player* player, Monster& m) const;
 
 
-    std::vector<Monster*> ComputeHitMonsters(Player* attacker, const std::vector<Monster>& monsters, const SkillDef& skillDef, std::string attack_dir);
+    std::vector<Monster*> ComputeHitMonsters(Player* attacker, std::vector<Monster>& monsters, const SkillDef& skillDef, int attack_dir);
 private:
     static constexpr int kLevelRateMinPct = 30;
     static constexpr int kLevelRateMaxPct = 120;

@@ -5,14 +5,14 @@
 #include "K_slog.h"
 
 
-Monster::Monster() : m_lastAttacker(nullptr)
+Monster::Monster() : m_deadRequest(false),m_lastAttacker(nullptr)
 {
 
 }
 
 int Monster::Init(const MonsterTemplate &monsterTemplate, const MonsterSpawnData &monsterspawnData)
 {
-
+	m_monsterId = monsterTemplate.monsterId;
 	m_name = monsterTemplate.name;
 	m_hp = monsterTemplate.hp;
 	m_maxhp = monsterTemplate.hp;
@@ -144,6 +144,7 @@ int Monster::Dead()
 {
 	if (m_isAlive && !m_deadRequest)
 	{
+		 K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] Is Dead", __FILE__, __FUNCTION__, __LINE__);
 		m_deadRequest = true;
 		m_deadTime = std::chrono::steady_clock::now();
 		m_isAlive = false;
@@ -175,9 +176,18 @@ bool Monster::OnDamaged(Player *Attacker, int damage)
 {
 	// 죽은 뒤 / 죽는 중이라면 무시
 	if (!m_isAlive || m_deadRequest)
+	{
+		K_slog_trace(K_SLOG_ERROR, "[%s: %s : %d] m_isAlive [%d]", __FILE__, __FUNCTION__, __LINE__,m_isAlive);
+		K_slog_trace(K_SLOG_ERROR, "[%s: %s : %d] m_deadRequest [%d]", __FILE__, __FUNCTION__, __LINE__,m_deadRequest);
 		return false;
+	}
+		
 	if (damage <= 0)
+	{
+		K_slog_trace(K_SLOG_ERROR, "[%s: %s : %d] damage [%d]", __FILE__, __FUNCTION__, __LINE__, damage);
 		return false;
+	}
+		
 
 	m_lastAttackerId = Attacker->GetId();
 	m_lastAttacker = Attacker;
@@ -185,7 +195,7 @@ bool Monster::OnDamaged(Player *Attacker, int damage)
 	m_state = E_Chase;
 
 	m_hp -= damage;
-
+	K_slog_trace(K_SLOG_TRACE, "[%s: %s : %d] m_hp [%d]", __FILE__, __FUNCTION__, __LINE__, m_hp);
 	if (m_hp <= 0)
 	{
 		m_hp = 0;
