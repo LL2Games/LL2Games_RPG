@@ -19,7 +19,13 @@ public:
     //stat
     void HandleStatView(PacketContext* ctx);
     void HandleStatUp(PacketContext* ctx);
-  
+
+    //trade
+    void HandleTradeRequest(PacketContext* ctx);
+    void HandleTradeAccept(PacketContext* ctx);
+    void HandleTradeReady(PacketContext* ctx);
+    void HandleTradeCancel(PacketContext* ctx);
+
 private:
     uint16_t m_type;
 };

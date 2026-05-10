@@ -41,7 +41,8 @@ INCLUDES := \
     -I$(INC_DIR)/CHANNEL/packet \
 	-I$(INC_DIR)/CHANNEL/stat \
 	-I$(INC_DIR)/CHANNEL/ipc \
-	-I$(INC_DIR)/CHANNEL/util
+	-I$(INC_DIR)/CHANNEL/util \
+	-I$(INC_DIR)/CHANNEL/trade
 
 LIB_PATH := \
     -L$(LIB_DIR)/common \
@@ -74,6 +75,7 @@ SRCS := \
 	core/ItemService.cpp \
 	core/Projectile.cpp \
 	core/ProjectileManager.cpp \
+	core/TradeService.cpp\
     \
 	packet/ChannelPacketFactory.cpp \
 	packet/ChannelInitHandler.cpp \
@@ -85,6 +87,7 @@ SRCS := \
 	packet/AttackPacket.cpp \
 	packet/OnDamagedPacket.cpp \
 	packet/UseItemPacket.cpp \
+	packet/HandleTrade.cpp \
     \
     db/MySqlConnectionPool.cpp \
 	db/PlayerService.cpp \

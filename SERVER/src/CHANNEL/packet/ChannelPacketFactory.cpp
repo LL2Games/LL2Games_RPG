@@ -22,6 +22,10 @@ std::unique_ptr<IPacketHandler> ChannelPacketFactory::Create(uint16_t type)
         case PKT_PLAYER_USE_ITEM:
         case PKT_STAT_VIEW:
         case PKT_STAT_UP:
+        case PKT_TRADE_REQUEST:
+        case PKT_TRADE_ACCEPT:
+        case PKT_TRADE_READY:
+        case PKT_TRADE_CANCEL:
             return std::make_unique<PlayerHandler>(type);
         default:
             break;
