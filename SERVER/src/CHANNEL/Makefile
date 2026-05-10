@@ -73,6 +73,10 @@ SRCS := \
 	core/SkillManager.cpp \
 	core/ItemManager.cpp \
 	core/ItemService.cpp \
+	core/Inventory.cpp \
+	core/DropManager.cpp\
+	core/InventoryManager.cpp\
+	core/QuickSlotManager.cpp\
 	core/Projectile.cpp \
 	core/ProjectileManager.cpp \
 	core/TradeService.cpp\
@@ -87,6 +91,11 @@ SRCS := \
 	packet/AttackPacket.cpp \
 	packet/OnDamagedPacket.cpp \
 	packet/UseItemPacket.cpp \
+	packet/PlayerPacketSender.cpp\
+	packet/InventoryPacketSender.cpp\
+	packet/QuickSlotPacketSender.cpp\
+	packet/MonsterPacketSender.cpp\
+	packet/ItemPacketSender.cpp\
 	packet/HandleTrade.cpp \
     \
     db/MySqlConnectionPool.cpp \
@@ -124,7 +133,7 @@ $(TARGET): $(OBJS) | $(BIN_DIR) $(LOG_DIR)
 $(OBJ_DIR)/%.o: %.cpp
 	@mkdir -p $(dir $@)
 	@echo " [CXX] $<"
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@ $(LIB_PATH) $(LFLAGS) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@ $(LIB_PATH) $(LFLAGS) $(LDFLAGS) -DGLOBAL
 
 # ==================================
 # Directories

@@ -1,7 +1,8 @@
 {
   "skill_id": 20001,
   "key": "knight.slash_01",
-  "type": "MELEE_ARC",
+  "category": "ACTIVE",
+  "cast_type": "MELEE_ARC",
 
   "cooldown_ms": 500,
   "mp_cost": 10,

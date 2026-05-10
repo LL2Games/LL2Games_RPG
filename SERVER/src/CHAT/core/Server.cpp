@@ -143,7 +143,7 @@ void Server::ProcessClient(Client *cli)
         K_slog_trace(K_SLOG_ERROR, "[%s][%d] Packet Parse failed", __FUNCTION__, __LINE__);
         return;
     }
-    K_slog_trace(K_SLOG_DEBUG, "[%s][%d] parsed packet type=%x, payload len=%d", __FUNCTION__, __LINE__, pkt->type, (int)pkt->payload.size());
+    
 
     auto handler = m_factory.Create(pkt->type);
     PacketContext ctx;

@@ -1,0 +1,27 @@
+{
+  "skill_id": 29001,
+  "key": "common.basic_attack.onehand_sword",
+  "category": "BASIC_ATTACK",
+  "cast_type": "MELEE_ARC",
+
+  "cooldown_ms": 500,
+  "mp_cost": 0,
+
+  "requirements": [{"root_job": 0,"min_tier": 0,"min_skill_level": 0}],
+
+  "hit": [{ "shape": "ARC", "range": 80.0, "angle_deg": 45.0, "max_targets": 1, "hit_count": 1 }],
+  "damage": [{ "multiplier": 1.0, "flat_add": 0 }],
+
+  "effects": [{ "type": "", "force": 0 }],
+
+  "client": { "anim": "ANIM_BASIC_ATTACK", "vfx": "", "sfx": "" },
+
+
+  "__comments": [
+    "20000~20999: 전사 계열",
+    "21000~21999: 궁수 계열",
+    "22000~22999: 마법사 계열",
+    "23000~23999: 도적 계열",
+    "29000~29999: common(공용)"
+  ]
+}

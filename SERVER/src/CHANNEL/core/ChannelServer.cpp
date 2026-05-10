@@ -11,6 +11,7 @@ ChannelServer::ChannelServer() : m_channel_id(0), m_listen_fd(0), m_epfd(0), m_r
     m_item_manager = ItemManager::GetInstance();
     m_monster_manager = MonsterManager::GetInstance();
     m_skill_manager = SkillManager::GetInstance();
+    m_drop_manager = DropManager::GetInstance();
 }
 
 ChannelServer::~ChannelServer()
@@ -37,6 +38,7 @@ bool ChannelServer::Init(const int port)
     if(!m_item_manager->Init()) return false;
     if(!m_monster_manager->Init()) return false;
     if(!m_skill_manager->Init()) return false;
+    if(!m_drop_manager->Init()) return false;
 
 
    if(!InitListenSocket(port))
@@ -282,7 +284,7 @@ void ChannelServer::OnReceive(int fd)
         buf.append(temp, tempLen);
     } while (tempLen == BUFFER_SIZE);
 
-     K_slog_trace(K_SLOG_DEBUG, "fd %d\n", fd);
+    //K_slog_trace(K_SLOG_DEBUG, "fd %d\n", fd);
     auto it = m_sessions.find(fd);
     if(it == m_sessions.end())
     {

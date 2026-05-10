@@ -8,14 +8,14 @@
 #include "ProjectileManager.h"
 
 
-Monster::Monster() : m_lastAttacker(nullptr)
+Monster::Monster() : m_deadRequest(false),m_lastAttacker(nullptr)
 {
 
 }
 
 int Monster::Init(const MonsterTemplate &monsterTemplate, const MonsterSpawnData &monsterspawnData)
 {
-
+	m_monsterId = monsterTemplate.monsterId;
 	m_name = monsterTemplate.name;
 	m_hp = monsterTemplate.hp;
 	m_maxhp = monsterTemplate.hp;
@@ -41,8 +41,15 @@ int Monster::Init(const MonsterTemplate &monsterTemplate, const MonsterSpawnData
 	m_spawnPos.xPos = monsterspawnData.spawnPos.xPos;
 	m_spawnPos.yPos = monsterspawnData.spawnPos.yPos;
 
+	K_slog_trace(K_SLOG_DEBUG, "[MonsterInit] instanceId=%d monsterId=%d respawnDelayRaw=%d",monsterspawnData.instanceId,
+    monsterspawnData.monsterId,
+    monsterspawnData.respawnDelay);
 	m_respawnDelay = std::chrono::seconds(monsterspawnData.respawnDelay);
 	m_itemGroup = monsterspawnData.ItemId;
+
+	m_common_drop_Item_GroupId = monsterTemplate.common_drop_group_id;
+	m_unique_drop_Item_GroupId = monsterTemplate.unique_drop_group_id;
+
 	m_instanceId = monsterspawnData.instanceId;
 
 	m_state = E_Patrol;
@@ -92,8 +99,9 @@ int Monster::Update(float dt)
 
 	switch (m_state)
 	{
-	case E_Patrol:
-		K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d] state=[Patrol]", __FILE__, __FUNCTION__, __LINE__);
+		case E_Idle:
+		case E_Patrol:
+		//K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d] state=[Patrol]", __FILE__, __FUNCTION__, __LINE__);
 		UpdatePatrol(dt);
 		break;
 
@@ -110,6 +118,11 @@ int Monster::Update(float dt)
 	case E_Dead:
 		K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d] state=[Dead]", __FILE__, __FUNCTION__, __LINE__);
 		break;
+
+		case E_Move:
+		case E_Hit:
+		case E_NONE:
+			break;
 	}
 	return 0;
 }
@@ -236,10 +249,11 @@ int Monster::Dead()
 {
 	if (m_isAlive && !m_deadRequest)
 	{
+		K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] Is Dead", __FILE__, __FUNCTION__, __LINE__);
 		m_deadRequest = true;
 		m_deadTime = std::chrono::steady_clock::now();
 		m_isAlive = false;
-		m_state = E_Dead;
+		m_state = E_Die;
 	}
 
 	return 0;
@@ -247,25 +261,41 @@ int Monster::Dead()
 
 bool Monster::CheckRespawnTime(std::chrono::steady_clock::time_point now)
 {
-	//test
-	return true;
+	if (m_isAlive)
+		return false;
 
-	K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d] isAlive: %d, now - m_deadTime: %d, m_respawnDelay: %d", __FILE__, __FUNCTION__, __LINE__, m_isAlive, now.time_since_epoch().count() - m_deadTime.time_since_epoch().count(), m_respawnDelay.count());
+	if (!m_deadRequest)
+	{
+		K_slog_trace(K_SLOG_DEBUG,
+			"[RespawnCheck] id=%d deadRequest=false",
+			m_instanceId);
+		return false;
+	}
 
-	if (now - m_deadTime >= m_respawnDelay)
-		return true;
+	auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_deadTime).count();
+	auto delay = std::chrono::duration_cast<std::chrono::milliseconds>(m_respawnDelay).count();
 
-	return false;
+	K_slog_trace(K_SLOG_DEBUG,
+		"[RespawnCheck] id=%d elapsed=%lld delay=%lld hp=%d alive=%d deadRequest=%d",
+		m_instanceId,
+		elapsed,
+		delay,
+		m_hp,
+		m_isAlive,
+		m_deadRequest);
+
+	return now - m_deadTime >= m_respawnDelay;
 }
 
 int Monster::Reset()
 {
+	K_slog_trace(K_SLOG_DEBUG, "[%s: %s : %d] monsterReset [%d]", __FILE__, __FUNCTION__, __LINE__,m_instanceId);
 	m_Pos.xPos = m_spawnPos.xPos;
 	m_Pos.yPos = m_spawnPos.yPos;
 	m_hp = m_maxhp;
 	m_isAlive = true;
 	m_deadRequest = false;
-	m_state = E_Patrol;
+	m_state = E_Idle;
 	m_lastAttackTime = 0.0f;
 	m_lastAttacker = nullptr;
 	m_lastAttackerId = 0;
@@ -297,7 +327,7 @@ bool Monster::OnDamaged(Player *Attacker, int damage)
 	K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] 몬스터 상태[%d]", __FILE__, __FUNCTION__, __LINE__, m_state);
 
 	m_hp -= damage;
-
+	K_slog_trace(K_SLOG_TRACE, "[%s: %s : %d] m_hp [%d]", __FILE__, __FUNCTION__, __LINE__, m_hp);
 	if (m_hp <= 0)
 	{
 		m_hp = 0;

@@ -25,7 +25,6 @@ SkillManager *SkillManager::GetInstance()
 
 bool SkillManager::Init()
 {
-    K_slog_trace(K_SLOG_TRACE, "[%s][%d] Init Error", __FUNCTION__, __LINE__);
     if(!PreLoadAll()) return false;
     return true;
 }
@@ -117,11 +116,11 @@ bool SkillManager::LoadJsonFile(const std::string& path, SkillDef& skillDef)
 
 void SkillManager::LoadSkill(nlohmann::json& j, SkillDef& skillDef)
 {
-    K_slog_trace(K_SLOG_TRACE, "[%s][%d] LoadSkill Start", __FUNCTION__, __LINE__);
     skillDef.skill_id = j.at("skill_id").get<int>();
 	skillDef.key = j.at("key").get<std::string>();
 
-    skillDef.type = Skill::SetSkillType(j.at("type").get<std::string>());
+    skillDef.category = Skill::SetSkillCategory(j.at("category").get<std::string>());
+    skillDef.cast_type = Skill::SetSkillCastType(j.at("cast_type").get<std::string>());
   
     skillDef.cooldown_ms = j.at("cooldown_ms").get<int>();
     skillDef.mp_cost = j.at("mp_cost").get<int>();
@@ -168,10 +167,6 @@ void SkillManager::LoadSkill(nlohmann::json& j, SkillDef& skillDef)
 
         skillDef.effects.push_back(effect);
     }
-
-
-    K_slog_trace(K_SLOG_TRACE, "[%s][%d] SkillLoad Success Skill_id [%d]", __FUNCTION__, __LINE__, skillDef.skill_id);
-
 }
 
 

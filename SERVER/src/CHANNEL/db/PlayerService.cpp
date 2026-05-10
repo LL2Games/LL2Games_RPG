@@ -1,10 +1,15 @@
-#include "CHANNEL/db/PlayerService.h"
-#include "CHANNEL/db/RedisUtility.h"
+#include "PlayerService.h"
+#include "RedisUtility.h"
+#include "CharacterStat.h"
+#include "InventroyManager.h"
+#include "QuickSlotManager.h"
+
+
 #include "K_slog.h"
 #include <cstdio>
 #include <sstream>
 #include <string>
-#include "CharacterStat.h"
+
 
 MySqlConnectionPool *PlayerService::m_mySql = MySqlConnectionPool::GetInstance();
 RedisClient *PlayerService::m_redis = nullptr;
@@ -24,6 +29,8 @@ std::unique_ptr<Player> PlayerService::LoadPlayer(int characterId)
     PlayerInitData playerInit{};
     std::map<std::string, std::string> redis_map;
     int result = 0;
+
+    K_slog_trace(K_SLOG_DEBUG, "LJH TEST 1");
     if(m_redis != nullptr)
     {
         auto redis_value = m_redis->HGetAll("characterID:" + std::to_string(characterId));
@@ -168,4 +175,200 @@ std::unique_ptr<Player> PlayerService::LoadPlayer(int characterId)
     mysql_free_result(res);
     m_mySql->ReleaseConnection(conn);
     return player;
+}
+
+bool PlayerService::LoadInventoryMeta(Player* player)
+{
+    int result = 0;
+    MYSQL_RES *res = nullptr;
+    MYSQL_ROW row;
+    MYSQL* conn = m_mySql->GetConnection(); 
+
+    auto InventoryManager = player->GetInventoryManager();
+    if(!conn) return false;
+    std::string query = "SELECT inventory_type, max_slot, current_slot_count FROM character_inventory_meta WHERE char_id = " + std::to_string(player->GetId());
+    result = mysql_query(conn, query.c_str());
+    if(result != 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "LoadInventoryMeta ERROR [%s]", mysql_error(conn));
+        K_slog_trace(K_SLOG_ERROR, "SQL [%s]", query.c_str());
+        m_mySql->ReleaseConnection(conn);
+        return false;
+    }
+
+    res = mysql_store_result(conn);
+    if(!res)
+    {
+        K_slog_trace(K_SLOG_ERROR, "LoadInventoryMeta ERROR [%s]", mysql_error(conn));
+        m_mySql->ReleaseConnection(conn);
+        return false;
+    }
+
+    while((row = mysql_fetch_row(res)) != nullptr)
+    {
+        InventoryMetaInfo inventoryMetaInfo;
+        inventoryMetaInfo.inventoryType = std::atoi(row[0]);
+        inventoryMetaInfo.max_slots = std::atoi(row[1]);
+        inventoryMetaInfo.currnet_slots_size = std::atoi(row[2]);
+        
+        InventoryManager->CreateInventory(inventoryMetaInfo);
+    }
+
+     K_slog_trace(K_SLOG_TRACE, "LoadInventoryMeta Success");
+
+    return true;
+
+}
+
+
+bool PlayerService::LoadInventory(Player* player)
+{
+    int result = 0;
+    MYSQL_RES *res = nullptr;
+    MYSQL_ROW row;
+    MYSQL* conn = m_mySql->GetConnection(); 
+    if(!conn) return false;
+
+    
+    std::string query = "SELECT inventory_type, slot_pos, item_Id, item_count FROM character_inventory WHERE char_id = " + std::to_string(player->GetId());
+    result = mysql_query(conn, query.c_str());
+    if(result != 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "LoadInventory ERROR [%s]", mysql_error(conn));
+        K_slog_trace(K_SLOG_ERROR, "SQL [%s]", query.c_str());
+        m_mySql->ReleaseConnection(conn);
+        return false;
+    }
+
+    res = mysql_store_result(conn);
+    if(!res)
+    {
+        K_slog_trace(K_SLOG_ERROR, "LoadInventory ERROR [%s]", mysql_error(conn));
+        m_mySql->ReleaseConnection(conn);
+        return false;
+    }
+
+    auto inventoryManager = player->GetInventoryManager();
+
+    // 캐릭터 인벤토리 아이템 저장
+    while((row = mysql_fetch_row(res)) != nullptr)
+    {
+        int inventoryType = std::atoi(row[0]);
+        int slotpos = std::atoi(row[1]);
+        int itemId = std::atoi(row[2]);
+        int itemCount = std::atoi(row[3]);
+        
+        auto inventory =inventoryManager->GetInventory(inventoryType);
+        if(inventory == nullptr)
+        {
+            K_slog_trace(K_SLOG_ERROR, "inventory is nullptr");
+            break;
+        }
+        inventory->SetSlotItem(slotpos, itemId, itemCount);
+    }
+
+    mysql_free_result(res);
+    m_mySql->ReleaseConnection(conn);
+    return true;
+}
+
+bool PlayerService::LoadLearnedSkill(Player* player)
+{
+    int result = 0;
+    MYSQL_RES *res = nullptr;
+    MYSQL_ROW row;
+    MYSQL* conn = m_mySql->GetConnection(); 
+    if(!conn) return false;
+
+    
+    std::string query = "SELECT skill_id, skill_level FROM character_skill WHERE char_id = " + std::to_string(player->GetId());
+    result = mysql_query(conn, query.c_str());
+    if(result != 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "LoadSkill ERROR [%s]", mysql_error(conn));
+        K_slog_trace(K_SLOG_ERROR, "SQL [%s]", query.c_str());
+        m_mySql->ReleaseConnection(conn);
+        return false;
+    }
+
+    res = mysql_store_result(conn);
+    if(!res)
+    {
+        K_slog_trace(K_SLOG_ERROR, "LoadSkill ERROR [%s]", mysql_error(conn));
+        m_mySql->ReleaseConnection(conn);
+        return false;
+    }
+
+
+    // 캐릭터 인벤토리 아이템 저장
+    while((row = mysql_fetch_row(res)) != nullptr)
+    {
+        LearnedSkill learnedSkill;
+        learnedSkill.skill_id = std::atoi(row[0]);
+        learnedSkill.skill_level = std::atoi(row[1]);
+
+        player->SetLearnedSkill(learnedSkill);
+    }
+
+    mysql_free_result(res);
+    m_mySql->ReleaseConnection(conn);
+    return true;
+}
+
+bool PlayerService::LoadSlotSetting(Player* player)
+{
+    int result = 0;
+    MYSQL_RES *res = nullptr;
+    MYSQL_ROW row;
+    MYSQL* conn = m_mySql->GetConnection(); 
+    if(!conn) return false;
+
+    /*
+     int slot_index;
+    QuickSlotType type;
+    int ref_id;   // skill_id 또는 item_id 등
+    int inventory_type;
+    int inventory_slotPos;
+    */
+    std::string query = "SELECT slot_index, slot_type, ref_id, inventory_type, inventory_slotPos FROM character_skill_slot WHERE char_id = " + std::to_string(player->GetId());
+    result = mysql_query(conn, query.c_str());
+    if(result != 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "LoadSlotSetting ERROR [%s]", mysql_error(conn));
+        K_slog_trace(K_SLOG_ERROR, "SQL [%s]", query.c_str());
+        m_mySql->ReleaseConnection(conn);
+        return false;
+    }
+
+    res = mysql_store_result(conn);
+    if(!res)
+    {
+        K_slog_trace(K_SLOG_ERROR, "LoadSlotSetting ERROR [%s]", mysql_error(conn));
+        m_mySql->ReleaseConnection(conn);
+        return false;
+    }
+
+    auto quickSlotManager = player->GetQuickSlotManager();
+
+    if(!quickSlotManager)
+    {
+        K_slog_trace(K_SLOG_ERROR, "quickSlotManager is nullptr [%s]", mysql_error(conn));
+        m_mySql->ReleaseConnection(conn);
+        return false;
+    }
+    // 퀵슬롯 정보 저장
+    while((row = mysql_fetch_row(res)) != nullptr)
+    {
+        QuickSlotData quickSlot;
+        quickSlot.slot_index = std::atoi(row[0]);
+        quickSlot.type = QuickSlot::SetSlotType(std::atoi(row[1]));
+        quickSlot.ref_id = std::atoi(row[2]);
+        quickSlot.inventory_type = std::stoi(row[3]);
+        quickSlot.inventory_slotPos = std::stoi(row[4]);
+        quickSlotManager->SetSlot(quickSlot.slot_index, quickSlot);
+    }
+
+    mysql_free_result(res);
+    m_mySql->ReleaseConnection(conn);
+    return true;
 }

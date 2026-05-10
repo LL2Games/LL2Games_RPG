@@ -7,21 +7,27 @@
 class Player;
 class MapInstance;
 
+
+
+enum MonsterState {
+	E_Idle,
+	E_Patrol,
+	E_Chase,
+	E_Move,
+	E_Die,
+	E_Hit,
+	E_RangeAttack,
+	E_Dead,
+  E_NONE,
+};
+
 struct MonsterHitResult {
     int monster_instance_id;
     int damage;
     int cur_hp;
     int max_hp;
-    bool dead;
+    bool dead;	
 };
-
-enum MonsterState {
-	E_Patrol,
-	E_Chase,
-	E_RangeAttack,
-	E_Dead,
-};
-
 
 class Monster
 {
@@ -48,14 +54,13 @@ public:
 	// 죽고난 후 시간 확인 
 	bool CheckRespawnTime(std::chrono::steady_clock::time_point now);
 	
-	
-	
 public:
 	// 몬스터 위치 설정
     void SetPos(Vec2 Pos){this->m_Pos.xPos = Pos.xPos; this->m_Pos.yPos = Pos.yPos;}
 	Vec2 GetPos() const {return m_Pos;}
 
 	int GetLevel() const {return m_level;}
+	bool IsAlive() {return m_isAlive;}
 
 	bool IsAlive() const {return m_isAlive;}
 
@@ -65,12 +70,21 @@ public:
 	float GetExp(){return m_exp;}
 
 	int GetItemGroup(){return m_itemGroup;}
+
+	std::string GetCommonItemGroupID(){return m_common_drop_Item_GroupId;}
+	std::string GetUniqueItemGroupID(){return m_unique_drop_Item_GroupId;}
+	
 	int GetInstanceId() const {return m_instanceId;}
+	int GetId() const {return m_monsterId;}
 
 	int GetCurrentHP() const {return m_hp;}
 	int GetMaxHP() const {return m_maxhp;}
 	int GetCurrentHP() {return m_hp;}
 	int GetMaxHP() {return m_maxhp;}
+	int GetDir() {return m_dir;}
+	int GetMoveSpeed() {return m_moveSpeed;}
+	MonsterState GetState(){return m_state;}
+	void SetState(MonsterState state){m_state =state;}
 
 	int GetDamage(){return m_attackDamage;}
 	Collider2D GetCollider() {return m_collider;}
@@ -110,6 +124,7 @@ private:
 
 	// 같은 몬스터라도 구별할 수 있는 고유 값이 필요하기 때문에 추가
 	int m_instanceId;
+	int m_monsterId;
 	
 	// 죽었을 때 찍히는 시간
 	std::chrono::steady_clock::time_point m_deadTime;
@@ -118,6 +133,8 @@ private:
 
 	// 몬스터 아이템 드롭 그룹
 	int m_itemGroup;
+	std::string m_common_drop_Item_GroupId;
+	std::string m_unique_drop_Item_GroupId;
 	
 	int m_lastAttackerId;
 	Player *m_lastAttacker;

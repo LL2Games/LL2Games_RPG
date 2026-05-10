@@ -1,11 +1,11 @@
 {
-    "monster_id" : 100101,
-    "name" : "Green_Snail",
-    "hp" : 100,
-    "attackDamage" : 2,
-    "level" : 10,
-    "exp" : 5,
-    "moveSpeed" : 10,
+    "monster_id"    : 100101,
+    "name"          : "Bule_Snail",
+    "hp"            : 100,
+    "attackDamage"  : 2,
+    "level"         : 10,
+    "exp"           : 5,
+    "moveSpeed"     : 10,
 
     "common_drop_group_id": "FIELD_COMMON_LV1_20",
     "unique_drop_group_id": "UNIQUE_GREEN_SLIME",

@@ -13,6 +13,13 @@ int MySqlConnectionPool::Init(const int pool_size)
         MYSQL* conn = nullptr;
         MYSQL* result;
         conn = mysql_init(nullptr);
+        K_slog_trace(K_SLOG_TRACE, "[%s][%d] TEST", __FUNCTION__, __LINE__);
+        if (!conn)
+        {
+            K_slog_trace(K_SLOG_ERROR, "[%s][%d] mysql_init ERROR", __FUNCTION__, __LINE__);
+            continue;
+        }
+   
 
         mysql_options(conn, MYSQL_READ_DEFAULT_FILE, "/home/ljh/.my.cnf");
         mysql_options(conn, MYSQL_READ_DEFAULT_GROUP, "CHANNEL");
@@ -29,6 +36,7 @@ int MySqlConnectionPool::Init(const int pool_size)
         //result = mysql_real_connect(conn, nullptr, nullptr, nullptr, nullptr, 0, nullptr,0);
         //("127.0.0.1", "root", "1234", "testdb", 3306);
         result = mysql_real_connect(conn, "100.114.42.54", "dyddlswogh","dyddlswogh","game", 3306, nullptr, 0);
+        
 #endif
         if(result == nullptr)
         {

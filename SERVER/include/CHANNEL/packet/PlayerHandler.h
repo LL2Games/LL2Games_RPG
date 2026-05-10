@@ -5,10 +5,6 @@
 #include "Player.h"
 #include "MySqlConnectionPool.h"
 
-void MovePacket(PacketContext * ctx);
-void AttackPacket(PacketContext * ctx);
-void OnDamagedPacket(PacketContext * ctx);
-void UseItemPacket(PacketContext * ctx);
 
 class PlayerHandler : public IPacketHandler
 {
@@ -20,6 +16,12 @@ public:
     void HandleStatView(PacketContext* ctx);
     void HandleStatUp(PacketContext* ctx);
 
+    void MovePacket(PacketContext* ctx);
+    void AttackPacket(PacketContext* ctx);
+    void BasicAttackPacket(PacketContext* ctx);
+    void OnDamagedPacket(PacketContext* ctx);
+    void UseItemPacket(PacketContext* ctx);
+  
     //trade
     void HandleTradeRequest(PacketContext* ctx);
     void HandleTradeAccept(PacketContext* ctx);

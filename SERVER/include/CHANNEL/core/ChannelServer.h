@@ -14,6 +14,7 @@
 #include "ItemManager.h"
 #include "SkillManager.h"
 #include "ItemService.h"
+#include "DropManager.h"
 
 #include "ThreadPool.h"
 #include "CommandReceiver.h"
@@ -65,6 +66,7 @@ private:
     ItemManager* m_item_manager;
     MonsterManager* m_monster_manager;
     SkillManager* m_skill_manager;
+    DropManager* m_drop_manager;
     //MySqlConnectionPool m_db;
     RedisClient m_redis;
     

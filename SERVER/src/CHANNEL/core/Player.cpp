@@ -3,7 +3,11 @@
 #include "ItemManager.h"
 
 
-Player::Player() : m_char_id(0), m_name(""), m_current_map(nullptr), m_session(nullptr)
+Player::Player() : m_char_id(0), 
+                   m_name(""), 
+                   m_current_map(nullptr), 
+                   m_session(nullptr), 
+                   m_skillManager(SkillManager::GetInstance())
 {
     m_collider.type = ColliderType::Rect2D;
     // 일단 콜라이더 offset과 halfW, halfH 고정으로 설정 나중에 리소스 크기에 따라서 변경 해야함
@@ -43,16 +47,6 @@ void Player::SetInitData(const PlayerInitData playerInitData)
 
 void Player::SetInitData(const PlayerInitData playerInitData, const CharacterStat &stat)
 {
-    /*    
-        int char_id;
-        std::string account_id;
-        std::string name;
-        int level;
-        int job;
-        int map_id;
-        float xPos;
-        float yPos; 
-        */
     this->m_char_id = playerInitData.char_id;
     this->m_account_id = playerInitData.account_id;
     this->m_name = playerInitData.name;
@@ -67,13 +61,13 @@ void Player::SetInitData(const PlayerInitData playerInitData, const CharacterSta
 
 #if 1 //테스트용
     /*ITEM 사용 테스트를 위한 Inven 채우기 */
-    m_inven[2000000] = 100;
+    //m_inven[2000000] = 100;
 
     //HP물약회복 테스트를 위한 HP 임시세팅
-    m_stat.GetCurHp() = 10;
+    //m_stat.GetCurHp() = 10;
 
     //스킬테스트를 위한 임시데이터 삽입
-    m_learnedSkills[20001] = 1; //스킬ID 20001을 레벨 1로 배웠다고 가정
+    m_learnedSkills[20001].skill_level = 1; //스킬ID 20001을 레벨 1로 배웠다고 가정
 #endif  
 
 #if 0 /*gunoo22 260219 테스트로그*/
@@ -93,57 +87,56 @@ void Player::SetInitData(const PlayerInitData playerInitData, const CharacterSta
 
 bool Player::CanAttack(SkillDef* skillDef)
 {
-    // 먼저 플레이어가 공격 가능한 상태인지 확인한다.
-    if(m_CurrentState == PlayerState::STUNNED) 
-    {   
+    if (skillDef == nullptr)
+    {
+        K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] skillDef is null\n", __FILE__, __FUNCTION__, __LINE__);
+        return false;
+    }
+
+    // 먼저 플레이어가 공격 가능한 상태인지 확인
+    if (m_CurrentState == PlayerState::STUNNED)
+    {
         K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] 플레이어가 공격 가능한 상태가 아닙니다.\n", __FILE__, __FUNCTION__, __LINE__);
         return false;
     }
-   
-    // 스킬의 키 값을 통해서 해당 플레이어의 직업과 연관있는지 확인한다.
 
-    // 플레이어의 출신과 스킬 사용 가능 출신이 동일한지 확인
-    if(m_root_job != skillDef->Requirements.root_job)
+    const bool isBasicAttack = (skillDef->category == SkillCategory::BASIC_ATTACK);
+
+    // 기본 공격이 아닌 경우에만 직업/습득 여부 검사
+    if (!isBasicAttack)
     {
-         K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] 플레이어가 사용 가능한 스킬이 아닙니다.\n", __FILE__, __FUNCTION__, __LINE__);
-        return false;
+        if (m_root_job != skillDef->Requirements.root_job)
+        {
+            K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] 플레이어가 사용 가능한 스킬이 아닙니다.\n", __FILE__, __FUNCTION__, __LINE__);
+            return false;
+        }
+
+        auto skillit = m_learnedSkills.find(skillDef->skill_id);
+        if (skillit == m_learnedSkills.end())
+        {
+            K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] 플레이어가 배우지 않은 스킬입니다.\n", __FILE__, __FUNCTION__, __LINE__);
+            return false;
+        }
     }
 
-    // 플레이어가 해당 스킬을 배웠는지 확인한다.
-    auto skillit = m_learnedSkills.find(skillDef->skill_id);
-    
-    if(skillit == m_learnedSkills.end())
-    {
-        K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] 플레이어가 배우지 않은 스킬입니다.\n", __FILE__, __FUNCTION__, __LINE__);
-        return false;
-    }
-
-    // 플레이어의 마나가 충분한지 확인한다.
-    if(m_stat.GetCurMp() < skillDef->mp_cost)
+    // 마나 검사
+    if (m_stat.GetCurMp() < skillDef->mp_cost)
     {
         K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] 마나가 부족합니다.\n", __FILE__, __FUNCTION__, __LINE__);
         return false;
     }
 
-    // 쿨타임 여부를 확인한다.
+    // 쿨타임 검사
+    const int64_t now = NowMs();
+
     auto coolit = skillCooldownEndMs.find(skillDef->skill_id);
-
-    if(coolit == skillCooldownEndMs.end())
-        return true;
-
-
-    // 임시로 500으로 설정 나중에 변경 필요
-    int64_t now = NowMs();
-    if(now <= coolit->second)
+    if (coolit != skillCooldownEndMs.end() && now <= coolit->second)
     {
         K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] 아직 쿨타임입니다.\n", __FILE__, __FUNCTION__, __LINE__);
         return false;
     }
 
-    
-
     return true;
-
 
 }
 
@@ -162,10 +155,16 @@ void Player::UseSkill(SkillDef* skillDef)
 }
 
 
-bool Player::CanUseItem(int item_id, int useCount)
+bool Player::CanUseItem(int inventoryType, int slotPos, int item_id, int useCount)
 {
+    //인벤토리에서 해당 아이템이 있는지 확인
+
+    //개수 체크
+
+    // 아이템 타입 확인
+    K_slog_trace(K_SLOG_DEBUG, "[%s : %s][%d] 아이템 사용 개수 [%d]", __FILE__, __FUNCTION__, __LINE__, useCount);
     if (useCount <= 0) {
-        K_slog_trace(K_SLOG_ERROR, "[%s:%d] invalid useCount=%d\n", __FUNCTION__, __LINE__, useCount);
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] invalid useCount=%d\n", __FILE__, __FUNCTION__, __LINE__, useCount);
         return false;
     }
 
@@ -173,45 +172,41 @@ bool Player::CanUseItem(int item_id, int useCount)
     const ItemInitData* def = ItemManager::GetInstance()->Find(item_id);
 
     if (!def) {
-        K_slog_trace(K_SLOG_ERROR, "[%s:%d] unknown item_id=%d\n", __FUNCTION__, __LINE__, item_id);
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] unknown item_id=%d\n", __FILE__, __FUNCTION__, __LINE__, item_id);
         return false;
     }
     if (def->type != "consumable") {
-        K_slog_trace(K_SLOG_ERROR, "[%s:%d] not consumable item_id=%d type=%s\n",
-            __FUNCTION__, __LINE__, item_id, def->type.c_str());
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] not consumable item_id=%d type=%s\n",  __FILE__, __FUNCTION__, __LINE__, item_id, def->type.c_str());
         return false;
     }
 
-    auto it = m_inven.find(item_id);
-    if (it == m_inven.end()) {
-        K_slog_trace(K_SLOG_ERROR, "[%s:%d] item not owned item_id=%d\n", __FUNCTION__, __LINE__, item_id);
-        return false;
-    }
+    auto inventory = m_inventoryManager.GetInventory(inventoryType);
 
-    if (it->second < useCount) {
-        K_slog_trace(K_SLOG_ERROR, "[%s:%d] not enough item_id=%d have=%d need=%d\n",
-            __FUNCTION__, __LINE__, item_id, it->second, useCount);
+    if(!inventory->HasItemBySlot(slotPos, item_id, useCount))
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] 아이템을 사용할 수 없습니다. item_id=%d type=%s\n", __FILE__, __FUNCTION__, __LINE__, item_id, def->type.c_str());
         return false;
     }
 
     return true;
 }
 
-bool Player::UseItem(int itemId, int useCount)
+bool Player::UseItem(int inventoryType, int slotPos, int itemId, int useCount)
 {
    // 방어(실수 방지)
     if (useCount <= 0) return false;
 
+    K_slog_trace(K_SLOG_DEBUG, "[%s : %s : %d]  useCount = %d\n", __FILE__, __FUNCTION__, __LINE__, useCount);
+
     const ItemInitData* def = ItemManager::GetInstance()->Find(itemId);
     if (!def) return false;
 
-    auto it = m_inven.find(itemId);
-    if (it == m_inven.end()) return false;
+    auto inventory = m_inventoryManager.GetInventory(inventoryType);
 
-    // 수량 차감
-    it->second -= useCount;
-    if (it->second <= 0) {
-        m_inven.erase(it);
+    if(!inventory->RemoveItemBySlot(slotPos, itemId, useCount))
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s:%d] 아이템을 사용할 수 없습니다. item_id=%d\n", __FUNCTION__, __LINE__, itemId);
+        return false;
     }
 
     // 효과 적용
@@ -233,10 +228,16 @@ bool Player::UseItem(int itemId, int useCount)
 
 }
 
-int Player::GetItemCount(int itemId) const
+int Player::GetItemCount(int inventoryType, int slotPos, int itemId) const
 {
-    auto it = m_inven.find(itemId);
-    return (it == m_inven.end()) ? 0 : it->second;
+    
+    auto inventory = m_inventoryManager.GetInventory(inventoryType);
+    if(!inventory->HasItemBySlot(slotPos, itemId))
+    {
+        K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] 플레이어가 소유하지 않은 아이템입니다.\n", __FILE__, __FUNCTION__, __LINE__);
+        return 0;
+    }
+    return inventory->GetItemCount(slotPos, itemId);
 }
 
 int Player::GetSkillLevel(int skill_id) const
@@ -249,7 +250,21 @@ int Player::GetSkillLevel(int skill_id) const
         return 0;
     }
 
-    return it->second;
+    return it->second.skill_level;
+}
+
+std::vector<LearnedSkill> Player::GetPlayerSkillList() const
+{
+    std::vector<LearnedSkill> learnedSkills;
+
+    learnedSkills.reserve(m_learnedSkills.size());
+
+    for(auto [id, skill] : m_learnedSkills)
+    {
+        learnedSkills.push_back(skill);
+    }
+
+    return learnedSkills;
 }
 
 

@@ -15,7 +15,7 @@ public:
 public:
     const ItemInitData* Find(int itemID);
 
-    int HandleUseItem(Player* player, int itemId, int useCount, UseItemResult& result);
+    int HandleUseItem(Player* player, UseItem itemData, UseItemResult& result);
 private:
    
 

@@ -28,9 +28,9 @@ bool PlayerManager::AddPlayer(std::unique_ptr<Player> player)
 
 
 
-Player* PlayerManager::GetPlayer(int playerID)
+Player* PlayerManager::GetPlayer(int playerId)
 {
-    auto it = m_players.find(playerID);
+    auto it = m_players.find(playerId);
 
     if(it == m_players.end()) return nullptr;
 

@@ -1,6 +1,6 @@
 {
     "monster_id"    : 100100,
-    "name"          : "Slime",
+    "name"          : "Green Slime",
     "hp"            : 100,
     "attackDamage"  : 20,
     "level"         : 10,
@@ -8,7 +8,7 @@
     "moveSpeed"     : 10,
 
     "common_drop_group_id": "FIELD_COMMON_LV1_20",
-    "unique_drop_group_id": "UNIQUE_SLIME",
+    "unique_drop_group_id": "UNIQUE_GREEN_SLIME",
 
     "collider" :[{
         "type"      :   "Rect2D",

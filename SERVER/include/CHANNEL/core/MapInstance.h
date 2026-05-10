@@ -9,7 +9,10 @@
 #include "Player.h"
 #include "ChannelSession.h"
 #include "CombatService.h"
+#include "DropManager.h"
 #include "Skill_Info.h"
+#include "Inventory.h"
+#include "DropInfos.h"
 #include "ProjectileManager.h"
 
 #include <nlohmann/json.hpp>
@@ -44,20 +47,19 @@ public:
 	// 플레이어 나갔을 때 처리 함수
 	void OnLeave(int PlayerID);
 
-    // 몬스터 죽었을 떄 관리
-    void HandleMonsterDead(Monster& monster);
-
     void GiveExp(int platerID, float exp);
-    void GiveItem(int ItemGroup);
     void HandleMove(Player* sender, Vec2 pos, float speed);
     void ResolveSkillHit(Player* Attacker, SkillDef& skillDef, std::vector<std::pair<Monster*, int>> hits);
     void SetPlayerHitResult(Player* player, int monster_instacneId, PlayerHitResult& result);
+    bool SpawnDropItem(Monster* monster, std::vector<DropResult> dropItems);
+    void CheckDropItem();
     
 private:
-    void BroadcastMoveExcept(Player* sender, Vec2 pos, float speed);
-    void BroadcastMonsterHit(Player* Attacker, int SkillID, std::vector<MonsterHitResult> result);
-    void BroadcastPlayerHit(Player* Defender, PlayerHitResult result);
-    void BroadcastMapInfo();
+    void BroadcastDropSpawn(std::vector<DropSpawnInfo> spawnedInfos);
+    void BroadcastRemoveItem(std::vector<int> removeItems);
+    void SendMapInfo();
+    void SendMonsterSnapshot(Player* Enter_player);  
+    void SendMonsterMove(Player* player);
 
     // 몬스터와 플레이어의 접촉 시 
     void ProcessContactDamage(int64_t nowMs);
@@ -87,6 +89,7 @@ private:
     uint16_t m_mapID;
 
     std::unordered_map<int, Player*> m_playerList;
+    std::unordered_map<int, DropItems> m_dropItems;
    
     std::vector<MonsterSpawnData> m_monsterSpawnList;
     std::vector<MonsterSpawnData>::iterator m_monsterSpawnListIter;
@@ -95,6 +98,7 @@ private:
     std::vector<Monster>::iterator m_monsterListIter;
 
     std::vector<Item> m_itemList;
+    std::vector<DropSpawnInfo> m_spawnInfos;
 	// Map에 플레이어가 없을 때 딱 시간 찍는 변수
 	std::chrono::steady_clock::time_point m_emptyTime;
     // Map 사라지는 제한 시간
@@ -110,5 +114,5 @@ private:
 private:
     MonsterManager* m_monsterManager;
     CombatService* m_combatService;
-
+    DropManager* m_dropManager;
 };
