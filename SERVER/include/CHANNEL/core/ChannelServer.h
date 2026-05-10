@@ -19,6 +19,7 @@
 #include "ThreadPool.h"
 #include "CommandReceiver.h"
 #include "CombatService.h"
+#include "TradeService.h"
 
 
 
@@ -40,6 +41,7 @@ public:
     StatService* GetStatService() {return &m_stat_service;}
     ItemService* GetItemService() {return &m_item_service;}
     CombatService* GetCombatService() {return &m_combat_service;}
+    TradeService* GetTradeService() {return &m_trade_service;}
     ThreadPool* GetThreadPool() {return &m_pool;}
 private:
     bool InitListenSocket(int port);
@@ -75,4 +77,6 @@ private:
 
     ThreadPool m_pool;
     CommandReceiver m_cmd_receiver;
+
+    TradeService m_trade_service;
 };

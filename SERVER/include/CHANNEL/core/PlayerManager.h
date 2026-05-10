@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <memory>
 #include "Player.h"
-
+#include "MySqlConnectionPool.h"
 class PlayerManager
 {   
 public:
@@ -14,15 +14,16 @@ public:
     bool Init();
     bool AddPlayer(std::unique_ptr<Player> player);
 
-    bool MovePlayer(int playerId, Vec2 pos, float speed);
+    bool MovePlayer(int playerID, Vec2 pos, float speed);
     bool RemovePlayer(int playerId);
 public:
     Player* GetPlayer(int playerId);
+    Player* GetPlayer(const std::string& playerName);
 
 
 private:
     std::unordered_map<int, std::unique_ptr<Player>> m_players;
-     
+    MySqlConnectionPool* m_mySql;
     
 
 };

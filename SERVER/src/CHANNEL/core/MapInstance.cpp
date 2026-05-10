@@ -2,6 +2,7 @@
 #include "MapInstance.h"
 #include "Monster.h"
 #include "CommonEnum.h"
+#include "IProjectile.h"
 #include "timeUtility.h"
 #include <nlohmann/json.hpp>
 #include <fstream>
@@ -46,6 +47,7 @@ int MapInstance::Init(const MapInitData& data)
 
 int MapInstance::Update()
 {
+	K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d] MapInstance Pointer[%p]", __FILE__, __FUNCTION__, __LINE__, this);
 	if(!m_has_player)
 	{
 		RemoveMap();
@@ -55,6 +57,9 @@ int MapInstance::Update()
 		SpawnMonster();
 		UpdateMonster();
 		SendMapInfo();
+		m_projectileManager.Update(); //투사체 업데이트
+		ProcessRangedDamage(NowMs()); //원거리 공격 판정 및 데미지 처리
+		//ProcessContactDamage(NowMs()); //플레이어-몬스터 접촉 판정 및 데미지 처리
 		ProcessContactDamage(NowMs());
 	}
 
@@ -97,6 +102,7 @@ int MapInstance::InitSpawnMonster()
 		if(monsterTemplate.has_value())
 		{
 			(*monsterTemplate).mapId = m_mapID;
+			(*monsterTemplate).mapInstance = this;
 			monster.Init(*monsterTemplate, *m_monsterSpawnListIter);
 		}else {
 			K_slog_trace(K_SLOG_ERROR, "[%s][%d] MonsterTemplate Get Failed Monster_Id[%d] FILE", __FUNCTION__, __LINE__, m_monsterSpawnListIter->monsterId);
@@ -145,9 +151,12 @@ int MapInstance::SpawnMonster()
 
 void MapInstance::OnEnter(int PlayerID, Player* player)
 {
-	auto it = m_playerList.find(PlayerID);
+	{
+		std::lock_guard<std::mutex> lock(m_playerMutex);
+		auto it = m_playerList.find(PlayerID);
 
-	if(it != m_playerList.end()) return;
+		if(it != m_playerList.end()) return;
+	}
 
 	m_playerList[PlayerID] = player;
 
@@ -165,12 +174,14 @@ void MapInstance::OnEnter(int PlayerID, Player* player)
 
 void MapInstance::OnLeave(int PlayerID)
 {
+	std::lock_guard<std::mutex> lock(m_playerMutex);
+		
 	auto it = m_playerList.find(PlayerID);
 
 	if(it == m_playerList.end()) return;
-
+	
 	m_playerList.erase(it);
-
+	
 	m_playerCount--;
 	if(m_playerCount == 0)
 	{
@@ -197,12 +208,15 @@ void MapInstance::HandleMove(Player* sender, Vec2 pos, float speed)
 
 	//K_slog_trace(K_SLOG_TRACE, "[%s][%d] 플레이어 ID [%d]", __FUNCTION__, __LINE__, sender->GetId());
 	
-	auto it = m_playerList.find(sender->GetId());
-
-	if(it == m_playerList.end())
 	{
-		K_slog_trace(K_SLOG_ERROR, "[%s][%d] [%d]해당 맵에 존재하지 않은 플레이어 입니다.", __FUNCTION__, __LINE__, m_mapID);
-		return;
+		std::lock_guard<std::mutex> lock(m_playerMutex);
+		auto it = m_playerList.find(sender->GetId());
+
+		if(it == m_playerList.end())
+		{
+			K_slog_trace(K_SLOG_ERROR, "[%s][%d] [%d]해당 맵에 존재하지 않은 플레이어 입니다.", __FUNCTION__, __LINE__, m_mapID);
+			return;
+		}
 	}
 
 	sender->SetPos(pos);
@@ -275,6 +289,8 @@ void MapInstance::ResolveSkillHit(Player* Attacker, SkillDef& skillDef, std::vec
 	//skillDef는 상태이상 적용 시 필요한 정보 : 현재는 필요 없지만 후에 필요할지 몰라서 일단 매개변수로 추가해놓음
 
 	K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] 공격 성공 ! 데이터 전송 준비 중.\n", __FILE__, __FUNCTION__, __LINE__);
+	K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d] MapInstance Pointer[%p]", __FILE__, __FUNCTION__, __LINE__, this);
+
 	std::vector<MonsterHitResult> results;
     results.reserve(hits.size());
 
@@ -302,22 +318,24 @@ void MapInstance::ResolveSkillHit(Player* Attacker, SkillDef& skillDef, std::vec
 void MapInstance::ProcessContactDamage(int64_t nowMs)
 {
 
-   for(auto p : m_playerList)
-   {
-		Player* player = p.second;
+	{
+		std::lock_guard<std::mutex> lock(m_playerMutex);
+	   for(auto p : m_playerList)
+	   {
+			Player* player = p.second;
 
-		// 플레이어가 죽었다면 스킵
-		if(!player || !player->IsAlive()) continue;
+			// 플레이어가 죽었다면 스킵
+			if(!player || !player->IsAlive()) continue;
 
-		// 플레이어가 이미 피격 당했고 무적 상태라면 스킵
-		if(!player->CanTakeAnyContactDamage(nowMs)) continue;
+			// 플레이어가 이미 피격 당했고 무적 상태라면 스킵
+			if(!player->CanTakeAnyContactDamage(nowMs)) continue;
 
-		const Vec2 player_pos = player->GetPos();
+			const Vec2 player_pos = player->GetPos();
 
-		for(Monster& monster : m_monsterList)
-		{
-			// 몬스터가 죽은 상태라면 스킵
-			if(!monster.IsAlive()) continue;
+			for(Monster& monster : m_monsterList)
+			{
+				// 몬스터가 죽은 상태라면 스킵
+				if(!monster.IsAlive()) continue;
 
 			const Vec2 monster_pos = monster.GetPos();
 			// 플레이어와 몬스터의 거리가 일정 이상이라면 스킵
@@ -337,8 +355,7 @@ void MapInstance::ProcessContactDamage(int64_t nowMs)
 
 			PlayerPacketSender::SendPlayerOnDamaged(player, result, m_playerList);
 		}
-   }
-
+	}
 }
 
 void MapInstance::SetPlayerHitResult(Player* player, int monster_instanceId, PlayerHitResult& result)

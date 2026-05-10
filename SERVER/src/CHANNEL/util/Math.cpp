@@ -29,3 +29,8 @@ bool IsHitFrontBox2D(
 
     return true;
 }
+
+float Length(const Vec2& v)
+{
+    return std::sqrt(v.xPos * v.xPos + v.yPos * v.yPos);
+}

@@ -14,6 +14,20 @@
         "type"      :   "Rect2D",
         "offset"    :   {"x" : 0, "y" : 12},
         "half"      :   {"w" :14, "h": 10}
+    }],
+
+    "isRanged" : true,
+    "projectile" :[{
+        "id" : 2,
+        "damage" : 3,
+        "speed" : 1,
+        "range" : 100,
+        "coolDown" : 2000,
+        "collider" : [{
+            "type" : "Circle2D",
+            "offset" : {"x" : 0, "y" : 0},
+            "radius": 2
+        }]
     }]
 }
 

@@ -23,6 +23,7 @@ class StatService;
 class ItemManager;
 class ItemService;
 class CombatService;
+class TradeService;
 
 class CommandDispatcher;
 
@@ -74,6 +75,14 @@ enum PACKET_TYPE : uint16_t {
     PKT_INVENTORY_META_INFO = 0x0080,
     PKT_INVENTORY_ITEM_INFO = 0x0081,
 
+    // 0x0100 ~ 0x010F : 교환
+    PKT_TRADE_REQUEST        = 0x0100,  // 교환 신청
+    PKT_TRADE_ACCEPT         = 0x0101,  // 교환 수락
+    PKT_TRADE_START          = 0x0102,  // 교환 실행
+    PKT_TRADE_READY          = 0x0103,  // 교환 준비(교환하기 버튼 누름)
+    PKT_TRADE_CONFIRM        = 0x0104,  // 교환 성사
+    PKT_TRADE_CANCEL         = 0x0105,  // 교환 취소
+
     // 0x1000 ~ : 테스트 / UI / 특수
     PKT_STAT_VIEW           = 0x1000,
     PKT_STAT_UP             = 0x1001,
@@ -113,6 +122,7 @@ struct PacketContext
     ItemManager* item_manager =nullptr;
     ItemService* item_service = nullptr;
     CombatService* combat_service = nullptr;
+    TradeService* trade_service = nullptr;
 };
 
 typedef struct packet

@@ -5,6 +5,8 @@
 #include <optional>
 #include "Collider.h"
 
+class MapInstance;
+
 #pragma once
 enum class MapRegion{
     HENESYS,
@@ -31,6 +33,16 @@ struct MonsterSpawnData {
     int ItemId;
 };
 
+struct MonsterProjectileData {
+    int id;
+    float damage;
+    float speed;
+    float range;
+    int64_t coolDown;
+    
+    Collider2D collider;
+};
+
 // 몬스터 Json 파일에서 읽어온 값을 저장하는 구조체
 struct MonsterTemplate {
     int monsterId;
@@ -52,6 +64,11 @@ struct MonsterTemplate {
     float broadCutSq = 0.f;
 
     uint16_t mapId;
+    MapInstance* mapInstance;
+
+    //투사체 정보
+    bool isRanged;
+    MonsterProjectileData projectileData;
 };
 
 
