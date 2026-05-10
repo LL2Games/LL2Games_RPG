@@ -25,7 +25,7 @@ enum class MonsterType {
 struct MonsterSpawnData {
     MonsterType type;
     Vec2 spawnPos;
-    int respawnDelay;
+     int respawnDelay;
     int monsterId;
     int instanceId;
     int ItemId;
@@ -58,6 +58,7 @@ struct MonsterTemplate {
 typedef struct MapInitData{
     uint32_t mapID;
 	std::string name;
+   
     std::vector<MonsterSpawnData> MonstersData;
 
 }mapData;

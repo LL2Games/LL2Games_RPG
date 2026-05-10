@@ -163,7 +163,6 @@ bool MapManager::LoadJsonFile(int mapId, MapInitData &mapData)
 
     mapData.name = j.at("name").get<std::string>();
     mapData.mapID = j.at("mapId").get<u_int32_t>();
-
     // Json 파일에서 몬스터 데이터 읽어오기
     LoadMonster(j, mapData.MonstersData);
     return true;
@@ -171,14 +170,7 @@ bool MapManager::LoadJsonFile(int mapId, MapInitData &mapData)
 
 void MapManager::LoadMonster(nlohmann::json &j, std::vector<MonsterSpawnData>& MonstersData)
 {
-    /*
-    struct MonsterSpawnData {
-    MonsterType type;
-    bool isAlive;
-    float timer;
-    float respawnDelay;
-};
-    */
+
 
     const auto& arr = j.at("monsters");
     MonstersData.clear();
@@ -188,6 +180,7 @@ void MapManager::LoadMonster(nlohmann::json &j, std::vector<MonsterSpawnData>& M
     {
         MonsterSpawnData data;
         data.monsterId = m.at("monsterId").get<int>();   // 키 맞춰라
+        data.respawnDelay = j.at("respawnDelay").get<u_int32_t>();;
         data.spawnPos.xPos = m.at("xPos").get<float>();     
         data.spawnPos.yPos = m.at("yPos").get<float>();
         data.ItemId = m.at("group").get<int>(); 

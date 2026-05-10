@@ -29,16 +29,8 @@ std::optional<ParsedPacket> PacketParser::Parse(std::vector<char>& buf)
 
     parsedPacket.type = type;
     parsedPacket.payload = std::string(payload, payloadLen);
-
-#if 1 /* payload 확인 로그*/
-    K_slog_trace(K_SLOG_TRACE, "[%s][%d] payloadLen[%d]", __FUNCTION__, __LINE__, payloadLen);
-    K_slog_trace(K_SLOG_TRACE, " [%s][%d] LJH TEST", __FUNCTION__ , __LINE__);
-    K_slog_trace(K_SLOG_TRACE, "[%s][%d] type=%x", __FUNCTION__, __LINE__, type);
-#endif
-
     buf.erase(buf.begin(), buf.begin() + pktLen);
 
-    K_slog_trace(K_SLOG_TRACE, " [%s][%d] LJH TEST", __FUNCTION__ , __LINE__);
     return parsedPacket;
 }
 

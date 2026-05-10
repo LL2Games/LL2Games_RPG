@@ -39,19 +39,7 @@ void PlayerHandler::HandleStatView(PacketContext* ctx)
         errMsg = "[" + std::to_string(rc) + "]player is nullptr";
         goto err;
     }
-  
-    //input 필요없을듯.
-    // if (!PacketParser::ParseLengthPrefixedString(
-    //         ctx->payload,
-    //         ctx->payload_len,
-    //         offset,
-    //         channel_id,
-    //         errMsg))
-    // {
-    //     rc = EXIT_FAILURE;
-    //     K_slog_trace(K_SLOG_ERROR, "[%s][%d] ParseLengthPrefixedString fail", __FUNCTION__, __LINE__);
-    //     goto err;
-    // }
+
 
 err:
     if (rc != EXIT_SUCCESS)

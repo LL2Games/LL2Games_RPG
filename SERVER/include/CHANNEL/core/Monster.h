@@ -6,20 +6,25 @@
 
 class Player;
 
+
+
+enum MonsterState {
+	E_Idle,
+	E_Patrol,
+	E_Chase,
+	E_Move,
+	E_Die,
+	E_Hit,
+	E_NONE,
+};
+
 struct MonsterHitResult {
     int monster_instance_id;
     int damage;
     int cur_hp;
     int max_hp;
-    bool dead;
+    bool dead;	
 };
-
-enum MonsterState {
-	E_Patrol,
-	E_Chase,
-	E_Dead,
-};
-
 
 class Monster
 {
@@ -71,6 +76,7 @@ public:
 	int GetDir() {return m_dir;}
 	int GetMoveSpeed() {return m_moveSpeed;}
 	MonsterState GetState(){return m_state;}
+	void SetState(MonsterState state){m_state =state;}
 
 	int GetDamage(){return m_attackDamage;}
 	Collider2D GetCollider() {return m_collider;}
