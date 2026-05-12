@@ -1,7 +1,7 @@
 #include "RedisClient.h"
 #include "K_slog.h"
 
-#define REDIS_HOST "100.124.14.8"
+#define REDIS_HOST "100.114.42.54"
 #define REDIS_PORT 6379
 
 
