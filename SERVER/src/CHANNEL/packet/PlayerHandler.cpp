@@ -59,6 +59,7 @@ void PlayerHandler::Execute(PacketContext * ctx)
                break;
           case PKT_TRADE_CANCEL:
                HandleTradeCancel(ctx);
+               break;
           default :
                K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] default START\n", __FILE__, __FUNCTION__, __LINE__);
                break;

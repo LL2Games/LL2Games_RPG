@@ -1,5 +1,5 @@
 #include "TradeService.h"
-#include "TradeRequestTask.h"
+//#include "TradeRequestTask.h"
 #include "MapInstance.h"
 #include "MySqlConnectionPool.h"
 //#include "RedisClient.h"
