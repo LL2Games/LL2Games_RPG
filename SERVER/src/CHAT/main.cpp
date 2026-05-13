@@ -4,7 +4,7 @@
 
 #define DAEMON_NAME "CHAT_SERVER"
 #define LOG_PATH "../logs/chat"
-#define PORT 5200
+#define PORT 9101
 
 int main(int ac, char **av)
 {
