@@ -119,9 +119,10 @@ int Monster::Update(float dt)
 		K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d] state=[Dead]", __FILE__, __FUNCTION__, __LINE__);
 		break;
 
-		case E_Move:
-		case E_Hit:
-		case E_NONE:
+	case E_Move:
+	case E_Hit:
+	case E_NONE:
+	default:
 			break;
 	}
 	return 0;

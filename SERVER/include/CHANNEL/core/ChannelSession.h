@@ -16,8 +16,7 @@ public:
     int OnPacket(Packet packet);
     bool OnBytes(const uint8_t* data, size_t len);
 
-    int Send(int type ,std::string data);
-    int Send(int type, const std::vector<std::string>& payload);
+    int Send(int type, std::vector<std::string> payload={});
     int SendOk(int type, std::vector<std::string> payload={});
     int SendNok(int type, const std::string &errMsg);
 

@@ -135,7 +135,7 @@ std::vector<Monster*> CombatService::ComputeHitMonsters(Player* attacker, std::v
     canHitMonsters.reserve(monsters.size());
 
     //gunoo22 260226 몬스터 체력 안다는 이슈 -> 레퍼런스로 안받음
-    for (const Monster& m : monsters) 
+    for (Monster& m : monsters) 
     {
         Vec2 mp = m.GetPos();
 
