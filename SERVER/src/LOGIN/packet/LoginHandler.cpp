@@ -67,11 +67,7 @@ err:
     }
     else
     {
-        std::string nick = MySQLManager::Instance().GetNick(id);
-        K_slog_trace(K_SLOG_TRACE, "[%s][%d] Login SUCCESS ID=%s, NICK=%s\n", __FUNCTION__, __LINE__,id.c_str(), nick.c_str());
-        std::vector<std::string> login_info;
-        login_info.push_back("id=" + id);
-        login_info.push_back("nick=" + nick);
-        client->SendOk(PKT_LOGIN, login_info);
+        K_slog_trace(K_SLOG_TRACE, "[%s][%d] Login SUCCESS ID=%s", __FUNCTION__, __LINE__,id.c_str());
+        client->SendOk(PKT_LOGIN);
     }
 }

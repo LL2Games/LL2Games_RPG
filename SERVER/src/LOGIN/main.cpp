@@ -13,7 +13,7 @@ int main()
     //log
     K_slog_init(LOG_PATH, DAEMON_NAME);
     K_slog_trace(K_SLOG_TRACE, "[%s]==============START==============", DAEMON_NAME);
-    MySQLManager::Instance().Connect("127.0.0.1", "root", "1234", "testdb", 3306);
+    MySQLManager::Instance().Connect("127.0.0.1", "root", "1234", "game", 3306);
 
     Server server;
     if (!server.Init(PORT))

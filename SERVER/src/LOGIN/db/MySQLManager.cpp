@@ -28,7 +28,7 @@ bool MySQLManager::Login(const std::string &id, const std::string& pw)
     MYSQL_ROW row = nullptr;
     char query[256] = {0};
 
-    snprintf(query, sizeof(query), "SELECT pw FROM users WHERE id = '%s'", id.c_str());
+    snprintf(query, sizeof(query), "SELECT passwd FROM users WHERE account_id = '%s'", id.c_str());
 
     if (mysql_query(m_conn, query))
         goto err;
@@ -45,29 +45,4 @@ bool MySQLManager::Login(const std::string &id, const std::string& pw)
 err:
     if(res) mysql_free_result(res);
     return rc;
-}
-
-std::string MySQLManager::GetNick(const std::string &id)
-{
-    std::string rs;
-    char query[256] = {0};
-    MYSQL_RES* res = nullptr;
-    MYSQL_ROW row = nullptr;
-
-    snprintf(query, sizeof(query), "SELECT nick from users WHERE id='%s'", id.c_str());
-
-    if (mysql_query(m_conn, query))
-        goto err;
-    
-    res = mysql_store_result(m_conn);
-    if (!res) goto err;
-
-    row = mysql_fetch_row(res);
-    if (!row) goto err;
-
-    rs = row[0];
-
-err:
-    if (res) mysql_free_result(res);
-    return rs;
 }
