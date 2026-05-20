@@ -16,6 +16,13 @@ struct UseItem
     int useCount = 0;
 };
 
+struct MoveItem
+{
+    int inventorytype = 0;
+    int fromSlotPos = 0;
+    int toSlotPos = 0;
+};
+
 struct InventorySlot
 {
     int inventoryType = 0;
@@ -23,6 +30,20 @@ struct InventorySlot
     int itemId = 0;
     int itemCount = 0;
     bool isEnable = true;
+};
+
+struct InventorySlotUpdate
+{
+    int slotPos = 0;
+    int itemId= 0;
+    int itemCount = 0;
+};
+
+struct MoveItemResult
+{
+    bool result = false;
+    int inventoryType = 0;
+    std::vector<InventorySlotUpdate> updateSlots;
 };
 
 struct InventoryMetaInfo

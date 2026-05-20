@@ -1,16 +1,16 @@
 #include "QuickSlotManager.h"
 
 
-bool QuickSlotManager::SetSlot(int slotIndex, const QuickSlotData& data)
+bool QuickSlotManager::SetSlot(const QuickSlotData& data)
 {
-    auto slot = m_quickSlots.find(slotIndex);
+    auto slot = m_quickSlots.find(data.slot_index);
 
     if(slot != m_quickSlots.end())
     {
         return false;
     }
 
-    m_quickSlots[slotIndex] = data;
+    m_quickSlots[data.slot_index] = data;
     return true;
 }
     

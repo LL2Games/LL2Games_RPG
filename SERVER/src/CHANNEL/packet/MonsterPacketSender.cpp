@@ -76,7 +76,7 @@ void MonsterPacketSender::SendMonsterMove(Player* player, const std::vector<Mons
         //K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] Monster yPos [%f]", __FILE__, __FUNCTION__, __LINE__, monster->GetPos().yPos);
         //K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] Monster Dir [%d]", __FILE__, __FUNCTION__, __LINE__, monster->GetDir());
         //K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] Monster CurrentHp [%d]", __FILE__, __FUNCTION__, __LINE__, monster->GetCurrentHP());
-        K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] Monster State [%d]", __FILE__, __FUNCTION__, __LINE__, static_cast<int>(monster->GetState()));
+        //K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] Monster State [%d]", __FILE__, __FUNCTION__, __LINE__, static_cast<int>(monster->GetState()));
     }
 
     //K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] Monster Move Data Send", __FILE__, __FUNCTION__, __LINE__);

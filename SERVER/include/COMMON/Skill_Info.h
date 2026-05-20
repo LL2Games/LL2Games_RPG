@@ -27,7 +27,9 @@ enum class SkillCastType
 enum class HitShape  
 {
     NONE,
-    ARC, 
+    ARC,
+    BOX,
+    CIRCLE,
     ENUMEND
 };
 
@@ -56,7 +58,10 @@ struct SkillDef
     {
         HitShape shape;
         float range;
+        // Arc 전용
         float angle_deg;
+        // BOX 전용
+        float half_height = 0.0f;
         int max_targets;
         int hit_count;
     } hit;
@@ -114,7 +119,16 @@ namespace Skill
 
     inline HitShape SetHitShape(std::string hitType)
     {
-        if(hitType == "ARC") return HitShape::ARC;
+        if(hitType == "MELEE_ARC") 
+        {
+            K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] ARC 공격 모양 설정.\n", __FILE__, __FUNCTION__, __LINE__);
+            return HitShape::ARC;
+        }
+        else
+        {
+            K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] NONE 공격 모양 설정.\n", __FILE__, __FUNCTION__, __LINE__);
+            return HitShape::NONE;
+        }
         return HitShape::NONE;
     };
 

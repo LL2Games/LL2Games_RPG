@@ -5,8 +5,7 @@
 class QuickSlotManager
 {
 public:
-    bool SetSlot(int slotIndex, const QuickSlotData& data);
-    
+    bool SetSlot(const QuickSlotData& data);  
     void RemoveSlot(int slotIndex);
 
 public:

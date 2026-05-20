@@ -81,7 +81,7 @@ bool ChannelSession::OnBytes(const uint8_t* data, size_t len)
 //[L][V] [L][V] [L][V]
 
 //클라입력 $  [L][V]
-int ChannelSession::Send(int type, std::vector<std::string> payload)
+int ChannelSession::Send(int type, const std::vector<std::string>& payload)
 {
     std::string body = PacketParser::MakeBody(payload);
     std::string packet = PacketParser::MakePacket(type, body);

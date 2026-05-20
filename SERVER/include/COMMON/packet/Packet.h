@@ -74,6 +74,7 @@ enum PACKET_TYPE : uint16_t {
     // 0x0080 ~ 0x009F : 인벤토리
     PKT_INVENTORY_META_INFO = 0x0080,
     PKT_INVENTORY_ITEM_INFO = 0x0081,
+    PKT_INVENTORY_ITEM_MOVE = 0x0082,
 
     // 0x0100 ~ 0x010F : 교환
     PKT_TRADE_REQUEST        = 0x0100,  // 교환 신청

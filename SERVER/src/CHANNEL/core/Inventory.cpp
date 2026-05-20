@@ -181,3 +181,41 @@ std::vector<InventoryItemInfo> Inventory::MakeItemInfos() const
     }
     return inventoryItemInfos;
 }
+
+bool Inventory::MoveItemSlot(const MoveItem& moveItem, std::vector<InventorySlotUpdate>& updatedSlots, std::string errMsg)
+{
+ if (moveItem.fromSlotPos == moveItem.toSlotPos)
+    {
+        errMsg = "same slot";
+        return false;
+    }
+
+    InventorySlot* fromSlot = FindSlot(moveItem.fromSlotPos);
+    InventorySlot* toSlot = FindSlot(moveItem.toSlotPos);
+
+    if (fromSlot == nullptr)
+    {
+        errMsg = "from slot not found";
+        return false;
+    }
+
+    if (toSlot == nullptr)
+    {
+        errMsg = "to slot not found";
+        return false;
+    }
+
+    if (fromSlot->itemId == 0)
+    {
+        errMsg = "from slot is empty";
+        return false;
+    }
+
+    std::swap(fromSlot->itemId, toSlot->itemId);
+    std::swap(fromSlot->itemCount, toSlot->itemCount);
+
+    updatedSlots.push_back({moveItem.fromSlotPos,fromSlot->itemId,fromSlot->itemCount});
+    updatedSlots.push_back({moveItem.toSlotPos,toSlot->itemId,toSlot->itemCount});
+
+    return true;
+}

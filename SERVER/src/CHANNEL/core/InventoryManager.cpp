@@ -25,6 +25,20 @@ void InventoryManager::EnsureInventory(InventoryMetaInfo& inventoryMetaInfo)
     }
 }
 
+bool InventoryManager::MoveItemSlots(const MoveItem& moveData,std::vector<InventorySlotUpdate>& updatedSlots,std::string& errMsg)
+{
+    auto inventory = m_inventories.find(moveData.inventorytype);
+    if (inventory == m_inventories.end())
+    {
+        errMsg = "inventory is not exist";
+        K_slog_trace(K_SLOG_ERROR,"[%s : %s : %d] Inventory is not exist. inventoryType[%d]",__FILE__, __FUNCTION__, __LINE__,moveData.inventorytype);
+        return false;
+    }
+
+    return inventory->second.MoveItemSlot(moveData,updatedSlots,errMsg);
+}
+
+
 Inventory* InventoryManager::GetInventory(int inventoryType) 
 {
     auto it = m_inventories.find(inventoryType);

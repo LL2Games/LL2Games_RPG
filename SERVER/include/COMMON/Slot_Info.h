@@ -18,6 +18,7 @@ struct QuickSlotData
     int inventory_slotPos;
 };
 
+
 namespace QuickSlot
 {
     inline QuickSlotType SetSlotType(int type)
@@ -36,4 +37,5 @@ namespace QuickSlot
                 return QuickSlotType::None;
         }
     }
+
 }

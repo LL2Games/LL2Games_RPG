@@ -73,7 +73,7 @@ public:
 
 	std::string GetCommonItemGroupID(){return m_common_drop_Item_GroupId;}
 	std::string GetUniqueItemGroupID(){return m_unique_drop_Item_GroupId;}
-	
+	std::string GetName(){return m_name;}
 	int GetInstanceId() const {return m_instanceId;}
 	int GetId() const {return m_monsterId;}
 
@@ -81,7 +81,7 @@ public:
 	int GetMaxHP() const {return m_maxhp;}
 	int GetCurrentHP() {return m_hp;}
 	int GetMaxHP() {return m_maxhp;}
-	int GetDir() {return m_dir;}
+	int GetDir() {return m_dir.xPos;}
 	int GetMoveSpeed() {return m_moveSpeed;}
 	MonsterState GetState(){return m_state;}
 	void SetState(MonsterState state){m_state =state;}
@@ -106,7 +106,7 @@ private:
 
 	float m_rightBound;
 	float m_leftBound;
-	Vec2 m_dir;
+	Vec2   m_dir;
 
     bool m_isAlive;
 	bool m_deadRequest; 

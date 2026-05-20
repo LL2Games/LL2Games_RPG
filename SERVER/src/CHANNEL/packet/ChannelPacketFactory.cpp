@@ -3,6 +3,7 @@
 #include "ChannelInitHandler.h"
 #include "MapHandler.h"
 #include "PlayerHandler.h"
+#include "InventoryPacketHandler.h"
 #include "K_slog.h"
 std::unique_ptr<IPacketHandler> ChannelPacketFactory::Create(uint16_t type)
 {
@@ -28,6 +29,9 @@ std::unique_ptr<IPacketHandler> ChannelPacketFactory::Create(uint16_t type)
         case PKT_TRADE_READY:
         case PKT_TRADE_CANCEL:
             return std::make_unique<PlayerHandler>(type);
+        case PKT_INVENTORY_ITEM_MOVE:
+            return std::make_unique<InventoryPacketHandler>();
+            break;
         default:
             break;
     }
