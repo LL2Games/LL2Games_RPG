@@ -16,6 +16,7 @@ struct QuickSlotData
     int ref_id;   // skill_id 또는 item_id 등
     int inventory_type;
     int inventory_slotPos;
+    int count;
 };
 
 

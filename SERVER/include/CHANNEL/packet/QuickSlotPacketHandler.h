@@ -1,3 +1,4 @@
+#pragma once
 #include "common.h"
 #include "Packet.h"
 #include "IPacketHandler.h"
@@ -5,7 +6,7 @@
 #include "MySqlConnectionPool.h"
 
 
-class QuickSlotPacketHander : public IPacketHandler
+class QuickSlotPacketHandler : public IPacketHandler
 {
 public:
     void Execute(PacketContext * ctx) override;

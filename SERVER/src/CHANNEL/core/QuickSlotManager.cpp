@@ -9,7 +9,7 @@ bool QuickSlotManager::SetSlot(const QuickSlotData& data)
     {
         return false;
     }
-
+    K_slog_trace(K_SLOG_DEBUG, "[%s : %s][%d] SetSlot is complete\n", __FILE__, __FUNCTION__, __LINE__);
     m_quickSlots[data.slot_index] = data;
     return true;
 }

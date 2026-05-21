@@ -4,7 +4,9 @@
 #include "MapHandler.h"
 #include "PlayerHandler.h"
 #include "InventoryPacketHandler.h"
+#include "QuickSlotPacketHandler.h"
 #include "K_slog.h"
+
 std::unique_ptr<IPacketHandler> ChannelPacketFactory::Create(uint16_t type)
 {
     
@@ -31,6 +33,9 @@ std::unique_ptr<IPacketHandler> ChannelPacketFactory::Create(uint16_t type)
             return std::make_unique<PlayerHandler>(type);
         case PKT_INVENTORY_ITEM_MOVE:
             return std::make_unique<InventoryPacketHandler>();
+            break;
+        case PKT_QUICKSLOT_SET:
+            return std::make_unique<QuickSlotPacketHandler>();
             break;
         default:
             break;
