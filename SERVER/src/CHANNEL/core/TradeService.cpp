@@ -36,7 +36,8 @@ int TradeService::Request(Player *requester, Player *target_player, std::string 
     }
 
     // 3. target_player에게 거래 요청 패킷 보내기
-    target_player->GetSession()->Send(PKT_TRADE_REQUEST, {std::to_string(requester->GetId())});
+    target_player->GetSession()->Send(PKT_TRADE_REQUEST, {std::to_string(requester->GetId()), requester->GetName()});
+    K_slog_trace(K_SLOG_DEBUG, "[%s][%d] Trade requester player id: [%d], name: [%s]", __FUNCTION__, __LINE__, requester->GetId(), requester->GetName().c_str());
 
     return 0;
 }
@@ -79,8 +80,11 @@ int TradeService::Start(Player *requester, Player *accepter, std::string &errMsg
     CreateTradeSession(requester, accepter);
 
     // 5. player들에게 교환 실행 패킷 보내기
-    requester->GetSession()->Send(PKT_TRADE_START, {std::to_string(accepter->GetId())});
-    accepter->GetSession()->Send(PKT_TRADE_START, {std::to_string(requester->GetId())});
+    requester->GetSession()->Send(PKT_TRADE_START, {std::to_string(accepter->GetId()), accepter->GetName()});
+    accepter->GetSession()->Send(PKT_TRADE_START, {std::to_string(requester->GetId()), requester->GetName()});
+    K_slog_trace(K_SLOG_DEBUG, "[%s][%d]gunoo22_TEST PKT_TRADE_START->[name:%s]", __FUNCTION__, __LINE__, accepter->GetName().c_str());
+    K_slog_trace(K_SLOG_DEBUG, "[%s][%d]gunoo22_TEST PKT_TRADE_START->[name:%s]", __FUNCTION__, __LINE__, requester->GetName().c_str());
+
 
     return 0;
 }
