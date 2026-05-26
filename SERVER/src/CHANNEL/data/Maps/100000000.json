@@ -4,7 +4,8 @@
   "respawnDelay" : 10, 
   "monsters": [
     { "monsterId": 100100, "xPos":  -300.0, "yPos": -85.0, "group": 1 },
-    { "monsterId": 100101, "xPos":   250.0, "yPos": -60.0, "group": 2 }
+    { "monsterId": 100101, "xPos":   250.0, "yPos": -60.0, "group": 1 },
+    { "monsterId": 100102, "xPos":   100.0, "yPos": 100.0, "group": 1 }
   ]
 }
 

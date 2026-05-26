@@ -5,6 +5,7 @@
 #include "MapInstance.h"
 #include "Player.h"
 #include "Monster.h"
+#include "Collider.h"
 
 
 class CombatService
@@ -23,7 +24,7 @@ public:
     int CalculateFinalDamage(int baseDmg, const Player* Attacker, const SkillDef& skillDef, const Monster& m) const;
     int CalculateFinalDamage(Player* player, Monster& m) const;
 
-
+    
     std::vector<Monster*> ComputeHitMonsters(Player* attacker, std::vector<Monster>& monsters, const SkillDef& skillDef, int attack_dir);
 private:
     static constexpr int kLevelRateMinPct = 30;

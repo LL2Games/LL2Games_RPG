@@ -3,6 +3,7 @@
 #include <cmath>
 #include <algorithm>
 #include <cstdint>
+#include "Skill_Info.h"
 
 
 enum class ColliderType : uint8_t
@@ -35,6 +36,64 @@ struct Collider2D
 
 namespace Collision
 {
+     inline Vec2 GetColliderCenter(const Vec2& pos, const Collider2D& collider)
+    {
+        Vec2 center = pos;
+
+        if(collider.type == ColliderType::Rect2D)
+        {
+            center.xPos += collider.rect.offset.xPos;
+            center.yPos += collider.rect.offset.yPos;
+        }
+        else if(collider.type == ColliderType::Circle2D)
+        {
+            center.xPos += collider.circle.offset.xPos;
+            center.yPos += collider.circle.offset.yPos;
+        }
+
+        return center;
+    }
+
+    inline float GetColliderBoundingRadius(const Collider2D& collider)
+    {
+        if(collider.type == ColliderType::Rect2D)
+        {
+            return std::sqrt(
+                collider.rect.halfW * collider.rect.halfW +
+                collider.rect.halfH * collider.rect.halfH
+            );
+        }
+
+        if(collider.type == ColliderType::Circle2D)
+        {
+            return collider.circle.radius;
+        }
+
+        return 0.0f;
+    }
+
+    inline Collider2D MakeBoxAttackCollider(const SkillDef& skillDef, int attack_dir)
+    {
+         Collider2D collider{};
+
+        if (skillDef.hit.shape == HitShape::BOX)
+        {
+            collider.type = ColliderType::Rect2D;
+
+            const float range = skillDef.hit.range;
+            const float halfHeight = skillDef.hit.half_height;
+
+            collider.rect.halfW = range * 0.5f;
+            collider.rect.halfH = halfHeight;
+
+            collider.rect.offset.xPos = attack_dir * (range * 0.5f);
+            collider.rect.offset.yPos = 0.0f;
+
+            return collider;
+        }
+
+        return collider;
+    }
     // Rect 끼리 충돌 하는 경우
     inline bool IntersectsRect2D(const Vec2& posA, const Rect2D& a,
                                  const Vec2& posB, const Rect2D& b)
@@ -64,8 +123,6 @@ namespace Collision
         return (dx*dx + dy*dy) <= (r*r);
     }
 
-
-    
     // Rect와 Circle이 충돌하는 경우 
     inline bool IntersectsRect2DCircle2D(const Vec2& posRect, const Rect2D& rect,
                                          const Vec2& posCircle, const Circle2D& circle)
@@ -108,10 +165,56 @@ namespace Collision
 
         if (a.type == ColliderType::Circle2D && b.type == ColliderType::Rect2D)
             return Collision::IntersectsRect2DCircle2D(posB, b.rect, posA, a.circle);
-
+        
+        
         return false;
     }
 
+    inline bool IntersectArc2D(const Vec2& attackerPos, int attackDir, float range, float angleDeg,
+                              const Vec2& targetPos, const Collider2D& targetCollider)
+    {
+        if(attackDir != -1 && attackDir !=1)
+        {
+            return false;
+        }
+
+        if(targetCollider.type == ColliderType::None)
+            return false;
+
+        Vec2 targetCenter = GetColliderCenter(targetPos, targetCollider);
+        float targetRadius = GetColliderBoundingRadius(targetCollider);
+
+        float dx = targetCenter.xPos - attackerPos.xPos;
+        float dy = targetCenter.yPos - attackerPos.yPos;
+
+        float distSq = dx * dx + dy * dy;
+
+        float maxRange = range + targetRadius;
+
+        if(distSq > maxRange * maxRange)
+            return false;
+
+        if(distSq <= 0.0001f)
+            return true;
+
+        float dist = std::sqrt(distSq);
+
+        float dirX = dx / dist;
+        float dirY = dy / dist;
+
+        float forwardX = static_cast<float>(attackDir);
+        float forwardY = 0.0f;
+
+        float dot = forwardX * dirX + forwardY * dirY;
+
+        constexpr float PI = 3.1415926535f;
+        float halfAngleRad = (angleDeg * 0.5f) * PI / 180.0f;
+        float cosHalfAngle = std::cos(halfAngleRad);
+
+        return dot >= cosHalfAngle;
+    }
+
+    
     inline ColliderType SetCollisionType(std::string type)
     {
         if(type == "Rect2D") return ColliderType::Rect2D;

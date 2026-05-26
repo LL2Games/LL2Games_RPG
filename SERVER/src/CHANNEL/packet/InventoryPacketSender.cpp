@@ -55,7 +55,29 @@ void InventoryPacketSender::SendInventoryItems(Player* player)
         payload.push_back(std::to_string(itemInfos.slotPos));
     }
 
-    
-
     session->Send(PKT_INVENTORY_ITEM_INFO, payload);
 }
+
+void InventoryPacketSender::SendInventoryMoveItem(ChannelSession* session, bool result, int inventoryType, const std::vector<InventorySlotUpdate>& updatedSlots, const std::string& errMsg)
+{
+    if (session == nullptr)
+        return;
+
+    std::vector<std::string> payload;
+
+    payload.push_back(result ? "1" : "0");
+    payload.push_back(std::to_string(inventoryType));
+    payload.push_back(std::to_string(updatedSlots.size()));
+
+    for (const auto& slot : updatedSlots)
+    {
+        payload.push_back(std::to_string(slot.slotPos));
+        payload.push_back(std::to_string(slot.itemId));
+        payload.push_back(std::to_string(slot.itemCount));
+    }
+
+    payload.push_back(errMsg);
+
+    session->Send(PKT_INVENTORY_ITEM_MOVE, payload);
+}
+

@@ -47,7 +47,7 @@ int MapInstance::Init(const MapInitData& data)
 
 int MapInstance::Update()
 {
-	K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d] MapInstance Pointer[%p]", __FILE__, __FUNCTION__, __LINE__, this);
+	//K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d] MapInstance Pointer[%p]", __FILE__, __FUNCTION__, __LINE__, this);
 	if(!m_has_player)
 	{
 		RemoveMap();
@@ -58,7 +58,7 @@ int MapInstance::Update()
 		UpdateMonster();
 		SendMapInfo();
 		m_projectileManager.Update(); //투사체 업데이트
-		ProcessRangedDamage(NowMs()); //원거리 공격 판정 및 데미지 처리
+		//ProcessRangedDamage(NowMs()); //원거리 공격 판정 및 데미지 처리
 		//ProcessContactDamage(NowMs()); //플레이어-몬스터 접촉 판정 및 데미지 처리
 		ProcessContactDamage(NowMs());
 	}
@@ -289,7 +289,7 @@ void MapInstance::ResolveSkillHit(Player* Attacker, SkillDef& skillDef, std::vec
 	//skillDef는 상태이상 적용 시 필요한 정보 : 현재는 필요 없지만 후에 필요할지 몰라서 일단 매개변수로 추가해놓음
 
 	K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] 공격 성공 ! 데이터 전송 준비 중.\n", __FILE__, __FUNCTION__, __LINE__);
-	K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d] MapInstance Pointer[%p]", __FILE__, __FUNCTION__, __LINE__, this);
+	//K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d] MapInstance Pointer[%p]", __FILE__, __FUNCTION__, __LINE__, this);
 
 	std::vector<MonsterHitResult> results;
     results.reserve(hits.size());
@@ -317,48 +317,35 @@ void MapInstance::ResolveSkillHit(Player* Attacker, SkillDef& skillDef, std::vec
 
 void MapInstance::ProcessContactDamage(int64_t nowMs)
 {
-
+	std::lock_guard<std::mutex> lock(m_playerMutex);
+	for(auto p : m_playerList)
 	{
-		std::lock_guard<std::mutex> lock(m_playerMutex);
-	   for(auto p : m_playerList)
-	   {
-			Player* player = p.second;
-
-			// 플레이어가 죽었다면 스킵
-			if(!player || !player->IsAlive()) continue;
-
-			// 플레이어가 이미 피격 당했고 무적 상태라면 스킵
-			if(!player->CanTakeAnyContactDamage(nowMs)) continue;
-
-			const Vec2 player_pos = player->GetPos();
-
-			for(Monster& monster : m_monsterList)
-			{
-				// 몬스터가 죽은 상태라면 스킵
-				if(!monster.IsAlive()) continue;
-
+		Player* player = p.second;
+		// 플레이어가 죽었다면 스킵
+		if(!player || !player->IsAlive()) continue;
+		// 플레이어가 이미 피격 당했고 무적 상태라면 스킵
+		if(!player->CanTakeAnyContactDamage(nowMs)) continue;
+		const Vec2 player_pos = player->GetPos();
+		for(Monster& monster : m_monsterList)
+		{
+			// 몬스터가 죽은 상태라면 스킵
+			if(!monster.IsAlive()) continue;
 			const Vec2 monster_pos = monster.GetPos();
-			// 플레이어와 몬스터의 거리가 일정 이상이라면 스킵
+		// 플레이어와 몬스터의 거리가 일정 이상이라면 스킵
 			if(Distancesquare(player_pos, monster_pos) > m_contactCheckRadiusSq) continue;
-			
-			 // 정밀 충돌(AABB/원형)
-            if (!Collision::Intersects(player_pos, player->GetCollider(), monster_pos, monster.GetCollider())) continue;
-
+		
+		 // 정밀 충돌(AABB/원형)
+         	if (!Collision::Intersects(player_pos, player->GetCollider(), monster_pos, monster.GetCollider())) continue;
 			int dmg = m_combatService->ApplyContactDamage(player, monster);
-			
+		
 			player->OnDamaged(dmg,nowMs);
-
 			PlayerHitResult result;
-
 			result.damage = dmg;
 			SetPlayerHitResult(player, monster.GetInstanceId(), result);
-
 			PlayerPacketSender::SendPlayerOnDamaged(player, result, m_playerList);
-			}
 		}
 	}
 }
-
 
 /*gunoo22 260223 원거리 공격 처리*/
 void MapInstance::ProcessRangedDamage(int64_t nowMs)

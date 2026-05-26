@@ -15,7 +15,7 @@ public:
     bool RemoveItemBySlot(int slotPos, int itemId,int count);
     bool HasItemBySlot(int slotPos, int itemId, int count) const;
     bool HasItemBySlot(int slotPos, int itemId) const;
-
+    bool MoveItemSlot(const MoveItem& moveItem, std::vector<InventorySlotUpdate>& updatedSlots, std::string errMsg);
     InventorySlot* FindSlot(int slotPos);
 
     bool AddItem(int itemId, int count);    
@@ -33,7 +33,7 @@ public:
     std::vector<InventoryItemInfo> MakeItemInfos() const;
 
 private:
-    // key : 인벤토리 타입, 슬롯 위치, value : 인벤토리 타입, 슬롯 위치, 아이템 아이디, 개수
+    // key : 슬롯 위치, value : 인벤토리 타입, 슬롯 위치, 아이템 아이디, 개수
     std::unordered_map<int, InventorySlot> m_slots;
     int m_inventoryType;
     int m_maxSlot;

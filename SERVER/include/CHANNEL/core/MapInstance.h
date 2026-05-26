@@ -50,7 +50,7 @@ public:
     void GiveExp(int platerID, float exp);
     void HandleMove(Player* sender, Vec2 pos, float speed);
     void ResolveSkillHit(Player* Attacker, SkillDef& skillDef, std::vector<std::pair<Monster*, int>> hits);
-    void SetPlayerHitResult(Player* player, int monster_instacneId, PlayerHitResult& result);
+    void SetPlayerHitResult(Player* player, int monster_instanceId, PlayerHitResult& result);
     bool SpawnDropItem(Monster* monster, std::vector<DropResult> dropItems);
     void CheckDropItem();
     
