@@ -8,7 +8,7 @@
 #endif
 
 #define DAEMON_NAME "CHANNEL_SERVER"
-#define PORT 1234
+#define PORT 9001
 #define LOG_PATH "../logs/channel"
 
 

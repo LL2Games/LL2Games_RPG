@@ -12,7 +12,7 @@ public:
     bool Connect(const char *host, const char *user, const char *pass, const char *db, const int port);
 
     bool Login(const std::string &id, const std::string &pw);
-    std::string GetNick(const std::string &id);
+    //std::string GetNick(const std::string &id);
 
 private:
     MySQLManager() = default;

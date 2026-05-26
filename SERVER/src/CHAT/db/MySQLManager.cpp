@@ -54,7 +54,7 @@ std::string MySQLManager::GetNick(const std::string &id)
     MYSQL_RES* res = nullptr;
     MYSQL_ROW row = nullptr;
 
-    snprintf(query, sizeof(query), "SELECT nick from users WHERE id='%s'", id.c_str());
+    snprintf(query, sizeof(query), "SELECT name from `character` WHERE char_id='%s'", id.c_str());
 
     if (mysql_query(m_conn, query))
         goto err;

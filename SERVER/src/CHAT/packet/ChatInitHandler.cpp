@@ -49,8 +49,7 @@ err:
         client->SetId(id);
         client->SetNick(nick);
         std::vector<std::string> client_info;
-        client_info.push_back("id=" + id);
-        client_info.push_back("nick=" + nick);
+        client_info.push_back(nick);
         client->SendOk(PKT_CHAT_INIT, client_info);
     }
 }

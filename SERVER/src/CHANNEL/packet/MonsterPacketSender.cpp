@@ -25,7 +25,8 @@ void MonsterPacketSender::SendMonsterSnapShot(Player* player, const std::vector<
         payload.push_back(std::to_string(monster->GetInstanceId()));  // monsterObjectId
         payload.push_back(std::to_string(monster->GetPos().xPos));
         payload.push_back(std::to_string(monster->GetPos().yPos));
-        payload.push_back(std::to_string(monster->GetDir()));
+        payload.push_back(std::to_string(monster->GetDir().xPos));
+        payload.push_back(std::to_string(monster->GetDir().yPos));
         payload.push_back(std::to_string(monster->GetMoveSpeed()));
         payload.push_back(std::to_string(monster->GetCurrentHP()));
         payload.push_back(std::to_string(monster->GetMaxHP()));
@@ -65,7 +66,8 @@ void MonsterPacketSender::SendMonsterMove(Player* player, const std::vector<Mons
 
         payload.push_back(std::to_string(monster->GetInstanceId()));          // monster instanceid
         payload.push_back(std::to_string(static_cast<int>(monster->GetState())));
-        payload.push_back(std::to_string(monster->GetDir()));
+        payload.push_back(std::to_string(monster->GetDir().xPos));
+        payload.push_back(std::to_string(monster->GetDir().yPos));
         payload.push_back(std::to_string(monster->GetPos().xPos));
         payload.push_back(std::to_string(monster->GetPos().yPos));
         payload.push_back(std::to_string(monster->GetCurrentHP()));

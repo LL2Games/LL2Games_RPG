@@ -81,7 +81,7 @@ public:
 	int GetMaxHP() const {return m_maxhp;}
 	int GetCurrentHP() {return m_hp;}
 	int GetMaxHP() {return m_maxhp;}
-	int GetDir() {return m_dir.xPos;}
+	Vec2 GetDir() {return m_dir;}
 	int GetMoveSpeed() {return m_moveSpeed;}
 	MonsterState GetState(){return m_state;}
 	void SetState(MonsterState state){m_state =state;}
