@@ -17,6 +17,14 @@ struct QuickSlotData
     int inventory_type;
     int inventory_slotPos;
     int count;
+
+    bool operator==(const QuickSlotData& other) const
+    {
+        return type == other.type
+            && ref_id == other.ref_id
+            && inventory_type == other.inventory_type
+            && inventory_slotPos == other.inventory_slotPos;
+    }
 };
 
 

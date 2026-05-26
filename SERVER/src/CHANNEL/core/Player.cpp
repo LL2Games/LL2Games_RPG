@@ -14,7 +14,7 @@ Player::Player() : m_char_id(0),
     m_collider.rect.offset = {0.f, 2.0f};
     m_collider.rect.halfW = 12.f;
     m_collider.rect.halfH = 14.f;
-
+    m_quickSlotManager.Init();
 }
 
 Player::~Player()
@@ -23,16 +23,6 @@ Player::~Player()
 
 void Player::SetInitData(const PlayerInitData playerInitData)
 {
-    /*    
-        int char_id;
-        std::string account_id;
-        std::string name;
-        int level;
-        int job;
-        int map_id;
-        float xPos;
-        float yPos; 
-        */
     this->m_char_id = playerInitData.char_id;
     this->m_account_id = playerInitData.account_id;
     this->m_name = playerInitData.name;

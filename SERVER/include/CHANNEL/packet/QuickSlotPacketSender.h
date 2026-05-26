@@ -6,6 +6,6 @@ class QuickSlotPacketSender
 {
 public:
     static void SendQuickSlotList(Player* player);
-    static void SendQuickSlotSet(Player* player, QuickSlotData& data);
+    static void SendQuickSlotSet(Player* player, std::vector<QuickSlotData>& datas);
 private:
 };

@@ -19,11 +19,12 @@ void QuickSlotPacketHandler::HandleSetQuickSlot(PacketContext* ctx)
     QuickSlotManager* quickSlotManager = nullptr;
     size_t offset = 0;
 
+   
     int type =0;
     int rc = EXIT_SUCCESS;
 
     std::string errMsg;
-  
+    std::vector<QuickSlotData> result;
     QuickSlotData quickSlotData{};
     
      
@@ -105,23 +106,23 @@ void QuickSlotPacketHandler::HandleSetQuickSlot(PacketContext* ctx)
         goto err;
     }
   
-  
     quickSlotData.type = QuickSlot::SetSlotType(type);
 
-    K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] quickSlotData.type [%d] ", __FILE__, __FUNCTION__, __LINE__,type);
+    K_slog_trace(K_SLOG_DEBUG, "[%s : %s : %d] quickSlotData.type [%d] ", __FILE__, __FUNCTION__, __LINE__,type);
     
-    if(!quickSlotManager->SetSlot(quickSlotData))
+    result = quickSlotManager->SetSlot(quickSlotData);
+
+    if (result.empty())
     {
         rc = EXIT_FAILURE;
-        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] SetSlot fail", __FILE__, __FUNCTION__, __LINE__);
+        errMsg = "SetSlot failed";
         goto err;
     }
-
 err:
     if (rc != EXIT_SUCCESS) {
-        session->SendNok(PKT_PLAYER_USE_ITEM, errMsg);
+        session->SendNok(PKT_QUICKSLOT_SET, errMsg);
     } else {
-        QuickSlotPacketSender::SendQuickSlotSet(player, quickSlotData);
+        QuickSlotPacketSender::SendQuickSlotSet(player, result);
         K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] QuickSlotSet END", __FILE__, __FUNCTION__, __LINE__);
     
     }

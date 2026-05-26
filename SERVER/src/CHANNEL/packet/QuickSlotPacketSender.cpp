@@ -32,7 +32,7 @@ void QuickSlotPacketSender::SendQuickSlotList(Player* player)
     K_slog_trace(K_SLOG_TRACE, "[%s][%d] SendQuickSlotList Send Success.", __FUNCTION__, __LINE__);
 }
 
-void QuickSlotPacketSender::SendQuickSlotSet(Player* player, QuickSlotData& data)
+void QuickSlotPacketSender::SendQuickSlotSet(Player* player, std::vector<QuickSlotData>& result)
 {
     auto session = player->GetSession();
 
@@ -43,13 +43,18 @@ void QuickSlotPacketSender::SendQuickSlotSet(Player* player, QuickSlotData& data
     }
 
     std::vector<std::string> payload;
-  
-    payload.push_back(std::to_string(data.slot_index));
-    payload.push_back(std::to_string(static_cast<int>(data.type)));
-    payload.push_back(std::to_string(data.ref_id));
-    payload.push_back(std::to_string(static_cast<int>(data.inventory_type)));
-    payload.push_back(std::to_string(data.inventory_slotPos));
-    payload.push_back(std::to_string(data.count));
+    payload.push_back(std::to_string(result.size()));
+
+    for(const auto& slot : result)
+    {
+        payload.push_back(std::to_string(slot.slot_index));
+        payload.push_back(std::to_string(static_cast<int>(slot.type)));
+        payload.push_back(std::to_string(slot.ref_id));
+        payload.push_back(std::to_string(static_cast<int>(slot.inventory_type)));
+        payload.push_back(std::to_string(slot.inventory_slotPos));
+        payload.push_back(std::to_string(slot.count));
+    }
+   
 
     session->Send(PKT_QUICKSLOT_SET, payload);
 
