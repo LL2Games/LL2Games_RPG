@@ -354,9 +354,40 @@ err:
         //TODO
         //UpdateInventory로 변경
 
+        const std::vector<TradeItem>& myItems = trade_service->GetMyItems(player);
+        std::vector<std::string> myItemPacket;
+        for (const auto& item : myItems)
+        {
+            myItemPacket.push_back(item.id);
+            myItemPacket.push_back(std::to_string(item.amount));
+            myItemPacket.push_back(std::to_string(item.slot_index));
+        }
+
+        const std::vector<TradeItem>& targetItems = trade_service->GetTargetItems(player);
+        std::vector<std::string> targetItemPacket;
+        for (const auto& item : targetItems)
+        {
+            targetItemPacket.push_back(item.id);
+            targetItemPacket.push_back(std::to_string(item.amount));
+            targetItemPacket.push_back(std::to_string(item.slot_index));
+        }
+
         //상대 player에게 교환 성사 패킷 전송
-        target_player->GetSession()->SendOk(PKT_TRADE_CONFIRM);
-        session->SendOk(PKT_TRADE_CONFIRM);
+        std::vector<std::string> payload;
+        payload.insert(payload.end(), targetItemPacket.begin(), targetItemPacket.end());
+        payload.push_back("$");
+        payload.insert(payload.end(), myItemPacket.begin(), myItemPacket.end());
+        //상대는 (상대아이템, 내아이템) 순으로 전송
+        target_player->GetSession()->SendOk(PKT_TRADE_CONFIRM, payload);
+
+        payload.clear();
+        payload.insert(payload.end(), myItemPacket.begin(), myItemPacket.end());
+        payload.push_back("$");
+        payload.insert(payload.end(), targetItemPacket.begin(), targetItemPacket.end());
+        //나는 (상대아이템, 내아이템) 순으로 전송
+        session->SendOk(PKT_TRADE_CONFIRM, payload);
+
+        trade_service->DeleteTradeSession(trade_service->GetTradeSession(player));
         
     }
     else if (rc == 2) //상대 교환준비 대기
@@ -477,6 +508,7 @@ void PlayerHandler::HandleTradeAddItem(PacketContext* ctx)
     TradeService* trade_service = nullptr;
     TradeItem trade_item;
     std::string errMsg;
+    std::string item_trade_slot_index;
 
     if (ctx == nullptr)
     {
@@ -533,7 +565,7 @@ void PlayerHandler::HandleTradeAddItem(PacketContext* ctx)
 
     //Item추출
     {
-        std::string item_id, item_amount, item_slot_index;
+        std::string item_id, item_amount, item_inven_slot_index;
 
         //item_id
         if (!PacketParser::ParseLengthPrefixedString(
@@ -561,12 +593,25 @@ void PlayerHandler::HandleTradeAddItem(PacketContext* ctx)
             goto err;
         }
 
-        //item_slot_index
+        //item_trade_slot_index
         if (!PacketParser::ParseLengthPrefixedString(
             ctx->payload,
             ctx->payload_len,
             offset,
-            item_slot_index,
+            item_trade_slot_index,
+            errMsg))
+        {
+            rc = EXIT_FAILURE;
+            K_slog_trace(K_SLOG_ERROR, "[%s][%d] ParseLengthPrefixedString fail", __FUNCTION__, __LINE__);
+            goto err;
+        }
+
+        //item_inven_slot_index
+        if (!PacketParser::ParseLengthPrefixedString(
+            ctx->payload,
+            ctx->payload_len,
+            offset,
+            item_inven_slot_index,
             errMsg))
         {
             rc = EXIT_FAILURE;
@@ -575,9 +620,13 @@ void PlayerHandler::HandleTradeAddItem(PacketContext* ctx)
         }
 
         trade_item.id = item_id;
-        trade_item.type = item_id.substr(0, 1); //id의 첫글자로 타입 구분 ex) 2000000 -> type 2 
+        {
+            std::string tmpS = item_id.substr(0, 1); //id의 첫글자로 타입 구분 ex) 2000000 -> type 2 
+            int tmpI = std::stoi(tmpS) - 1;
+            trade_item.type = std::to_string(tmpI);
+        }
         trade_item.amount = std::stoi(item_amount);
-        trade_item.slot_index = std::stoi(item_slot_index);
+        trade_item.slot_index = std::stoi(item_inven_slot_index);
 
         K_slog_trace(K_SLOG_DEBUG, "[%s][%d] player[%s] uploads item", __FUNCTION__, __LINE__, player->GetName().c_str());
         K_slog_trace(K_SLOG_DEBUG, "[%s][%d] trade_item.id: %s", __FUNCTION__, __LINE__, trade_item.id.c_str());
@@ -595,7 +644,7 @@ err:
         std::vector<std::string> payload = {
             trade_item.id,
             std::to_string(trade_item.amount),
-            std::to_string(trade_item.slot_index)
+            item_trade_slot_index
         };
 
         target_player->GetSession()->Send(PKT_TRADE_ADD_ITEM, payload);

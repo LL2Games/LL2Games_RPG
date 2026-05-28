@@ -30,15 +30,18 @@ class TradeService
 private:
     static std::unordered_map<int, TradeSession*> m_sessions; //<player_id, session*>
     void CreateTradeSession(Player *, Player *);
-    void DeleteTradeSession(TradeSession*);
+
 public:
     TradeSession* GetTradeSession(Player *);
     Player* GetTargetPlayer(Player *);
+    void DeleteTradeSession(TradeSession*);
+    const std::vector<TradeItem>& GetMyItems(Player *);
+    const std::vector<TradeItem>& GetTargetItems(Player *);
 
 private:
     int Execute(TradeSession *);
     int DecreaseItem(MYSQL *conn, const std::string &char_id, const TradeItem &item);
-    int IncreaseItem(MYSQL *conn, const std::string &char_id, const TradeItem &item);
+    int IncreaseItem(MYSQL *conn, const std::string &char_id, TradeItem &item);
 
 public:
     TradeService();

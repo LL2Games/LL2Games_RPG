@@ -196,7 +196,7 @@ int TradeService::Execute(TradeSession *session)
     //A player DB에 A items 삭제 및 B items 추가
     //B player DB에 B items 삭제 및 A items 추가
 
-    for (const auto& item : session->a_items)
+    for (auto& item : session->a_items)
     {
         //3-1 A인벤에 A의 아이템 삭제
         if (DecreaseItem(conn, std::to_string(session->a_id), item) != 0)
@@ -215,7 +215,7 @@ int TradeService::Execute(TradeSession *session)
         }
     }
 
-    for (const auto& item : session->b_items)
+    for (auto& item : session->b_items)
     {
         //3-3 B인벤에 B의 아이템 삭제
         if (DecreaseItem(conn, std::to_string(session->b_id), item) != 0)
@@ -246,9 +246,9 @@ err:
     {
         mysql_query(conn, "COMMIT");
 
-        //4. 교환세션 삭제
-        K_slog_trace(K_SLOG_DEBUG, "[%s][%d] COMMIT", __FUNCTION__, __LINE__);
-        DeleteTradeSession(session); 
+        // //4. 교환세션 삭제
+        // K_slog_trace(K_SLOG_DEBUG, "[%s][%d] COMMIT", __FUNCTION__, __LINE__);
+        // DeleteTradeSession(session); 
     }
 
     return 0;
@@ -358,6 +358,52 @@ Player* TradeService::GetTargetPlayer(Player *player)
     return target_player;
 }
 
+const std::vector<TradeItem>& TradeService::GetMyItems(Player *player)
+{
+    static const std::vector<TradeItem> nullVector;
+    if (player == nullptr)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] player is nullptr", __FUNCTION__, __LINE__);
+        return nullVector;
+    }
+
+    auto it = m_sessions.find(player->GetId());
+    if (it == m_sessions.end())
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] player_id(%d) TradeSession not found", __FUNCTION__, __LINE__, player->GetId());
+        return nullVector;
+    }
+
+    TradeSession* session = it->second;
+    if (player == session->a_player)
+        return session->a_items;
+    else
+        return session->b_items;
+}
+
+const std::vector<TradeItem>& TradeService::GetTargetItems(Player *player)
+{
+    static const std::vector<TradeItem> nullVector;
+    if (player == nullptr)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] player is nullptr", __FUNCTION__, __LINE__);
+        return nullVector;
+    }
+
+    auto it = m_sessions.find(player->GetId());
+    if (it == m_sessions.end())
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] player_id(%d) TradeSession not found", __FUNCTION__, __LINE__, player->GetId());
+        return nullVector;
+    }
+
+    TradeSession* session = it->second;
+    if (player == session->a_player)
+        return session->b_items;
+    else
+        return session->a_items;
+}
+
 int TradeService::DecreaseItem(MYSQL *conn, const std::string &char_id, const TradeItem &item)
 {
     std::string query;
@@ -387,13 +433,80 @@ int TradeService::DecreaseItem(MYSQL *conn, const std::string &char_id, const Tr
     return 0;
 }
 
-int TradeService::IncreaseItem(MYSQL *conn, const std::string &char_id, const TradeItem &item)
+int TradeService::IncreaseItem(MYSQL *conn, const std::string &char_id, TradeItem &item)
 {
     std::string query;
     int result = 0;
+    MYSQL_RES *res = nullptr;
+    MYSQL_ROW row;
+    bool hasItem = false;
+    int slotPos = 0;
 
-    //INSERT (아이템이 없을 경우) 있으면 UPDATE
-    query = "INSERT INTO character_inventory (char_id, inventory_type, slot_pos, item_id, item_count) VALUES (" + char_id + "," +  item.type + ", 9," + item.id + ", " + std::to_string(item.amount) + ") ON DUPLICATE KEY UPDATE item_count = item_count + " + std::to_string(item.amount);
+    // 아이템 보유 여부 확인
+    query = "SELECT slot_pos FROM character_inventory WHERE char_id = " + char_id + " AND item_id = " + item.id + " LIMIT 1";
+
+    K_slog_trace(K_SLOG_DEBUG, "[%s][%d] query: %s", __FUNCTION__, __LINE__, query.c_str());
+    result = mysql_query(conn, query.c_str());
+    if (result != 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] SELECT FAIL: %s", __FUNCTION__, __LINE__, mysql_error(conn));
+        return -1;
+    }
+
+    res = mysql_store_result(conn);
+    if (res == nullptr)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] SELECT RESULT FAIL: %s", __FUNCTION__, __LINE__, mysql_error(conn));
+        return -1;
+    }
+
+    hasItem = (mysql_fetch_row(res) != nullptr);
+    mysql_free_result(res);
+    res = nullptr;
+
+    if (hasItem)
+    {
+        // UPDATE (이미 있으면 수량 증가)
+        query = "UPDATE character_inventory SET item_count = item_count + " + std::to_string(item.amount) + " WHERE char_id = " + char_id + " AND item_id = " + item.id;
+
+        K_slog_trace(K_SLOG_DEBUG, "[%s][%d] query: %s", __FUNCTION__, __LINE__, query.c_str());
+        result = mysql_query(conn, query.c_str());
+        if (result != 0)
+        {
+            K_slog_trace(K_SLOG_ERROR, "[%s][%d] UPDATE FAIL: %s", __FUNCTION__, __LINE__, mysql_error(conn));
+            return -1;
+        }
+
+        return 0;
+    }
+
+    // INSERT (없으면 다음 슬롯에 추가)
+    // slotPos 구하기 비어있는 가장 빠른 slot_pos
+    query = "SELECT COALESCE(MAX(slot_pos) + 1, 0) FROM character_inventory WHERE char_id = " + char_id + " AND inventory_type = " + item.type;
+
+    K_slog_trace(K_SLOG_DEBUG, "[%s][%d] query: %s", __FUNCTION__, __LINE__, query.c_str());
+    result = mysql_query(conn, query.c_str());
+    if (result != 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] SELECT SLOT FAIL: %s", __FUNCTION__, __LINE__, mysql_error(conn));
+        return -1;
+    }
+
+    res = mysql_store_result(conn);
+    if (res == nullptr)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] SELECT SLOT RESULT FAIL: %s", __FUNCTION__, __LINE__, mysql_error(conn));
+        return -1;
+    }
+
+    row = mysql_fetch_row(res);
+    if (row != nullptr && row[0] != nullptr)
+        slotPos = std::atoi(row[0]);
+
+    mysql_free_result(res);
+    res = nullptr;
+
+    query = "INSERT INTO character_inventory (char_id, inventory_type, slot_pos, item_id, item_count) VALUES (" + char_id + ", " +  item.type + ", " + std::to_string(slotPos) + ", " + item.id + ", " + std::to_string(item.amount) + ")";
 
     K_slog_trace(K_SLOG_DEBUG, "[%s][%d] query: %s", __FUNCTION__, __LINE__, query.c_str());
     result = mysql_query(conn, query.c_str());
@@ -402,6 +515,9 @@ int TradeService::IncreaseItem(MYSQL *conn, const std::string &char_id, const Tr
         K_slog_trace(K_SLOG_ERROR, "[%s][%d] INSERT FAIL: %s", __FUNCTION__, __LINE__, mysql_error(conn));
         return -1;
     }
+
+    //내 슬롯 index 업데이트
+    item.slot_index = slotPos;
 
     return 0;
 }
