@@ -60,6 +60,9 @@ void PlayerHandler::Execute(PacketContext * ctx)
           case PKT_TRADE_CANCEL:
                HandleTradeCancel(ctx);
                break;
+          case PKT_TRADE_ADD_ITEM:
+               HandleTradeAddItem(ctx);
+               break;
           default :
                K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] default START\n", __FILE__, __FUNCTION__, __LINE__);
                break;

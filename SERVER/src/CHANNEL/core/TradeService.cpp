@@ -44,6 +44,7 @@ int TradeService::Request(Player *requester, Player *target_player, std::string 
 
 int TradeService::Start(Player *requester, Player *accepter, std::string &errMsg)
 {
+    K_slog_trace(K_SLOG_DEBUG, "[%s][%d]gunoo22_TEST", __FUNCTION__, __LINE__);
 
     // 1. 예외처리: target_player와 requester 객체가 유효한지
     if (requester == nullptr || accepter == nullptr)
@@ -52,6 +53,8 @@ int TradeService::Start(Player *requester, Player *accepter, std::string &errMsg
         errMsg = "Invalid player or target player";
         return -1;
     }
+        K_slog_trace(K_SLOG_DEBUG, "[%s][%d]gunoo22_TEST", __FUNCTION__, __LINE__);
+
 
     // 2-1. 예외처리: accepter와 requester가 맵 안에 있는지
     if (!(requester->GetCurrentMap() && accepter->GetCurrentMap()))
@@ -60,6 +63,7 @@ int TradeService::Start(Player *requester, Player *accepter, std::string &errMsg
         errMsg = "players mapInstance Invalid";
         return -1;
     }
+
     // 2-2. 예외처리: accepter와 requester 같은 맵에 있는지
     if (requester->GetCurrentMap()->GetMapId() != accepter->GetCurrentMap()->GetMapId())
     {
@@ -78,6 +82,7 @@ int TradeService::Start(Player *requester, Player *accepter, std::string &errMsg
 
     // 4. TradeSession 생성
     CreateTradeSession(requester, accepter);
+    K_slog_trace(K_SLOG_DEBUG, "[%s][%d]gunoo22_TEST CreateTradeSession", __FUNCTION__, __LINE__);
 
     // 5. player들에게 교환 실행 패킷 보내기
     requester->GetSession()->Send(PKT_TRADE_START, {std::to_string(accepter->GetId()), accepter->GetName()});
@@ -89,7 +94,7 @@ int TradeService::Start(Player *requester, Player *accepter, std::string &errMsg
     return 0;
 }
 
-int TradeService::Ready(Player* player, const std::vector<TradeItem>& items, std::string &errMsg)
+int TradeService::UploadItem(Player* player, const TradeItem& item, std::string &errMsg)
 {
     TradeSession *session = nullptr;
     // 1. 예외처리: player 객체가 유효한지
@@ -109,17 +114,40 @@ int TradeService::Ready(Player* player, const std::vector<TradeItem>& items, std
         return -1;
     }
 
-    // 3. Ready 처리 및 Item 등록
-    if (session->a_id == player->GetId())
-    {
-        session->a_ready = true;
-        session->a_items = items;
-    }
+    // 3. Item 등록
+    if (session->a_player == player)
+        session->a_items.push_back(item);
     else
+        session->b_items.push_back(item);
+
+    return 0;
+}
+
+int TradeService::Ready(Player* player, const std::vector<TradeItem>& , std::string &errMsg)
+{
+    TradeSession *session = nullptr;
+    // 1. 예외처리: player 객체가 유효한지
+    if (player == nullptr )
     {
-        session->b_ready = true;
-        session->b_items = items;
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] Invalid player", __FUNCTION__, __LINE__);
+        errMsg = "Invalid player";
+        return -1;
     }
+
+    session = m_sessions[player->GetId()];
+    // 2. 예외처리: player의 TradeSession 유효하지않음
+    if (session == nullptr)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] player trade session Not Found", __FUNCTION__, __LINE__);
+        errMsg = "player trade session Not Found";
+        return -1;
+    }
+
+    // 3. Ready 처리 및 Item 등록 --> UploadItem에서 아이템등록으로 변경
+    if (session->a_player == player)
+        session->a_ready = true;
+    else
+        session->b_ready = true;
 
     // 4. 상대방 Ready 확인 후 교환 수행
     if ((session->a_id == player->GetId() && session->b_ready == true)
@@ -150,6 +178,7 @@ int TradeService::Execute(TradeSession *session)
     }
 
     mysql_query(conn, "START TRANSACTION");
+    K_slog_trace(K_SLOG_DEBUG, "[%s][%d] TRANSACTION", __FUNCTION__, __LINE__);
 
     //0. 아이템 검증(예외처리)
     //A player DB에서 A items 존재 및 수량 확인
@@ -173,6 +202,7 @@ int TradeService::Execute(TradeSession *session)
         if (DecreaseItem(conn, std::to_string(session->a_id), item) != 0)
         {
             K_slog_trace(K_SLOG_ERROR, "[%s][%d] DecreaseItem failed", __FUNCTION__, __LINE__);
+            result = -1;
             goto err;
         }
 
@@ -180,6 +210,7 @@ int TradeService::Execute(TradeSession *session)
         if (IncreaseItem(conn, std::to_string(session->b_id), item) != 0)
         {
             K_slog_trace(K_SLOG_ERROR, "[%s][%d] IncreaseItem failed", __FUNCTION__, __LINE__);
+            result = -1;
             goto err;
         }
     }
@@ -190,6 +221,7 @@ int TradeService::Execute(TradeSession *session)
         if (DecreaseItem(conn, std::to_string(session->b_id), item) != 0)
         {
             K_slog_trace(K_SLOG_ERROR, "[%s][%d] DecreaseItem failed", __FUNCTION__, __LINE__);
+            result = -1;
             goto err;
         } 
     
@@ -197,6 +229,7 @@ int TradeService::Execute(TradeSession *session)
         if (IncreaseItem(conn, std::to_string(session->a_id), item) != 0)
         {
             K_slog_trace(K_SLOG_ERROR, "[%s][%d] IncreaseItem failed", __FUNCTION__, __LINE__);
+            result = -1;
             goto err;
         }
 
@@ -206,6 +239,7 @@ err:
     if (result != 0)
     {
         mysql_query(conn, "ROLLBACK");
+        K_slog_trace(K_SLOG_DEBUG, "[%s][%d] ROLLBACK", __FUNCTION__, __LINE__);
         return -1;
     }
     else
@@ -213,6 +247,7 @@ err:
         mysql_query(conn, "COMMIT");
 
         //4. 교환세션 삭제
+        K_slog_trace(K_SLOG_DEBUG, "[%s][%d] COMMIT", __FUNCTION__, __LINE__);
         DeleteTradeSession(session); 
     }
 
@@ -257,6 +292,8 @@ void TradeService::CreateTradeSession(Player *a_player, Player *b_player)
 
     TradeSession *session = new TradeSession();
 
+    session->a_player = a_player;
+    session->b_player = b_player;
     session->a_id = a_player->GetId();
     session->b_id = b_player->GetId();
     m_sessions[a_player->GetId()] = session;
@@ -293,6 +330,32 @@ TradeSession *TradeService::GetTradeSession(Player *player)
     }
 
     return it->second;
+}
+
+Player* TradeService::GetTargetPlayer(Player *player)
+{
+    Player* target_player = nullptr;
+
+    if (player == nullptr)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] player is nullptr", __FUNCTION__, __LINE__);
+        return nullptr;
+    }
+
+    auto it = m_sessions.find(player->GetId());
+    if (it == m_sessions.end())
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] player_id(%d) TradeSession not found", __FUNCTION__, __LINE__, player->GetId());
+        return nullptr;
+    }
+
+    TradeSession* session = it->second;
+    if (session->a_player == player)
+        target_player = session->b_player;
+    else
+        target_player = session->a_player;
+
+    return target_player;
 }
 
 int TradeService::DecreaseItem(MYSQL *conn, const std::string &char_id, const TradeItem &item)

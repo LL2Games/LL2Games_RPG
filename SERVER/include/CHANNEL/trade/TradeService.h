@@ -9,9 +9,13 @@ struct TradeItem
     std::string id;
     std::string type;
     size_t amount;
+    size_t slot_index;
 };
 struct TradeSession
 {
+    Player* a_player;
+    Player* b_player;
+
     int a_id;
     int b_id;
 
@@ -29,6 +33,7 @@ private:
     void DeleteTradeSession(TradeSession*);
 public:
     TradeSession* GetTradeSession(Player *);
+    Player* GetTargetPlayer(Player *);
 
 private:
     int Execute(TradeSession *);
@@ -41,6 +46,7 @@ public:
 
     int Request(Player* requester, Player* target_player, std::string &errMsg);
     int Start(Player* requester, Player* accepter, std::string &errMsg);
+    int UploadItem(Player*, const TradeItem&, std::string &errMsg);
     int Ready(Player*, const std::vector<TradeItem>&, std::string &errMsg);
     int Cancel(Player* requester, std::string &errMsg);
 
