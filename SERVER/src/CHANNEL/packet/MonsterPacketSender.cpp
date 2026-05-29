@@ -25,8 +25,8 @@ void MonsterPacketSender::SendMonsterSnapShot(Player* player, const std::vector<
         payload.push_back(std::to_string(monster->GetInstanceId()));  // monsterObjectId
         payload.push_back(std::to_string(monster->GetPos().xPos));
         payload.push_back(std::to_string(monster->GetPos().yPos));
-        payload.push_back(std::to_string(monster->GetDir().xPos));
-        payload.push_back(std::to_string(monster->GetDir().yPos));
+        payload.push_back(std::to_string((int)monster->GetDir().xPos));
+        //payload.push_back(std::to_string(monster->GetDir().yPos));
         payload.push_back(std::to_string(monster->GetMoveSpeed()));
         payload.push_back(std::to_string(monster->GetCurrentHP()));
         payload.push_back(std::to_string(monster->GetMaxHP()));
@@ -36,7 +36,7 @@ void MonsterPacketSender::SendMonsterSnapShot(Player* player, const std::vector<
         //K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] Monster InstanceId [%d]", __FILE__, __FUNCTION__, __LINE__, monster->GetInstanceId());
         //K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] Monster xPos [%f]", __FILE__, __FUNCTION__, __LINE__, monster->GetPos().xPos);
         //K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] Monster yPos [%f]", __FILE__, __FUNCTION__, __LINE__, monster->GetPos().yPos);
-        //K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] Monster Dir [%d]", __FILE__, __FUNCTION__, __LINE__, monster->GetDir());
+        //K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] Monster Dir [%d]", __FILE__, __FUNCTION__, __LINE__, (int)monster->GetDir().xPos);
         //K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] Monster CurrentHp", __FILE__, __FUNCTION__, __LINE__, monster->GetCurrentHP());
         //K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] Monster State", __FILE__, __FUNCTION__, __LINE__, static_cast<int>(monster->GetState()));
     }
@@ -66,19 +66,20 @@ void MonsterPacketSender::SendMonsterMove(Player* player, const std::vector<Mons
 
         payload.push_back(std::to_string(monster->GetInstanceId()));          // monster instanceid
         payload.push_back(std::to_string(static_cast<int>(monster->GetState())));
-        payload.push_back(std::to_string(monster->GetDir().xPos));
-        payload.push_back(std::to_string(monster->GetDir().yPos));
+        payload.push_back(std::to_string((int)monster->GetDir().xPos));
+        //payload.push_back(std::to_string(monster->GetDir().yPos));
         payload.push_back(std::to_string(monster->GetPos().xPos));
         payload.push_back(std::to_string(monster->GetPos().yPos));
         payload.push_back(std::to_string(monster->GetCurrentHP()));
         payload.push_back(std::to_string(monster->GetMaxHP()));
 // 테스트용 로그
         //K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] Monster InstanceId [%d]", __FILE__, __FUNCTION__, __LINE__, monster->GetInstanceId());
+        //K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] Monster State [%d]", __FILE__, __FUNCTION__, __LINE__, static_cast<int>(monster->GetState()));
+        //K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] Monster Dir [%d]", __FILE__, __FUNCTION__, __LINE__, (int)monster->GetDir().xPos);
         //K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] Monster xPos [%f]", __FILE__, __FUNCTION__, __LINE__, monster->GetPos().xPos);
         //K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] Monster yPos [%f]", __FILE__, __FUNCTION__, __LINE__, monster->GetPos().yPos);
-        //K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] Monster Dir [%d]", __FILE__, __FUNCTION__, __LINE__, monster->GetDir());
-        //K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] Monster CurrentHp [%d]", __FILE__, __FUNCTION__, __LINE__, monster->GetCurrentHP());
-        K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] Monster State [%d]", __FILE__, __FUNCTION__, __LINE__, static_cast<int>(monster->GetState()));
+        //K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] Monster GetCurrentHP [%d]", __FILE__, __FUNCTION__, __LINE__, monster->GetCurrentHP());
+        //K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] Monster GetMaxHP [%d]", __FILE__, __FUNCTION__, __LINE__, monster->GetMaxHP());
     }
 
     //K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] Monster Move Data Send", __FILE__, __FUNCTION__, __LINE__);

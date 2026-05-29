@@ -7,7 +7,9 @@ Player::Player() : m_char_id(0),
                    m_name(""), 
                    m_current_map(nullptr), 
                    m_session(nullptr), 
-                   m_skillManager(SkillManager::GetInstance())
+                   m_skillManager(SkillManager::GetInstance()),
+                   m_nextContactDamageAllowedMs(-1),
+                   m_contactDamageCooldownMs(1000) //무적 쿨타임
 {
     m_collider.type = ColliderType::Rect2D;
     // 일단 콜라이더 offset과 halfW, halfH 고정으로 설정 나중에 리소스 크기에 따라서 변경 해야함
@@ -287,11 +289,11 @@ void Player::AddMP(int MP)
 
 bool Player::CanTakeAnyContactDamage(int64_t nowMs)
 {
-    return nowMs >= m_nextContactDamageAllowedMs;
+    return m_nextContactDamageAllowedMs == -1 || nowMs >= m_nextContactDamageAllowedMs;
 }
 
 
-void Player::OnDamaged(int dmg,int64_t )
+void Player::OnDamaged(int dmg,int64_t nowMs)
 {
     int cur_hp = 0;   
     cur_hp = m_stat.GetCurHp();
@@ -306,7 +308,7 @@ void Player::OnDamaged(int dmg,int64_t )
     m_stat.SetCurHp(cur_hp);
 
     // 다음 피격 가능 시간 설정
-    //m_nextContactDamageAllowedMs = nowMs + m_contactDamageCooldownMs;
+    m_nextContactDamageAllowedMs = nowMs + m_contactDamageCooldownMs;
 }
 
 void Player::Dead()

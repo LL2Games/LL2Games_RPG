@@ -77,12 +77,14 @@ int Monster::Init(const MonsterTemplate &monsterTemplate, const MonsterSpawnData
 
 	if(monsterTemplate.collisionType == ColliderType::Rect2D)
 	{
+		m_collider.type = ColliderType::Rect2D;
 		m_collider.rect.offset = monsterTemplate.offset;
 		m_collider.rect.halfW = monsterTemplate.half.xPos;
 		m_collider.rect.halfH = monsterTemplate.half.yPos;
 	}
 	else if(monsterTemplate.collisionType == ColliderType::Circle2D)
 	{
+		m_collider.type = ColliderType::Circle2D;
 		m_collider.circle.offset = monsterTemplate.offset;
 		m_collider.circle.radius = monsterTemplate.radius;
 	}
