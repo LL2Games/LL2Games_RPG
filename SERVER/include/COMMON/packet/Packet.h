@@ -86,6 +86,7 @@ enum PACKET_TYPE : uint16_t {
     PKT_TRADE_READY          = 0x0103,  // 교환 준비(교환하기 버튼 누름)
     PKT_TRADE_CONFIRM        = 0x0104,  // 교환 성사
     PKT_TRADE_CANCEL         = 0x0105,  // 교환 취소
+    PKT_TRADE_ADD_ITEM       = 0x0106,  // 아이템 추가
 
     // 0x1000 ~ : 테스트 / UI / 특수
     PKT_STAT_VIEW           = 0x1000,

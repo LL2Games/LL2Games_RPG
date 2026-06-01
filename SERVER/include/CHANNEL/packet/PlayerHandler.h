@@ -28,6 +28,8 @@ public:
     void HandleTradeAccept(PacketContext* ctx);
     void HandleTradeReady(PacketContext* ctx);
     void HandleTradeCancel(PacketContext* ctx);
+    void HandleTradeAddItem(PacketContext *ctx);
+
 
 private:
     uint16_t m_type;

@@ -130,6 +130,14 @@ err:
     if (rc != EXIT_SUCCESS) {
         ctx->channel_session->SendNok(PKT_CHANNEL_AUTH, errMsg);
     } else {
-        ctx->channel_session->SendOk(PKT_CHANNEL_AUTH);
+        std::string name = "default";
+        Player* playerPtr = ctx->channel_session->GetPlayer();
+        if(playerPtr)
+        {
+            name = playerPtr->GetName();
+        }
+
+         K_slog_trace(K_SLOG_TRACE, "[%s][%d] PKT_CHANNEL_AUTH name[%s]", __FUNCTION__, __LINE__, name.c_str());
+        ctx->channel_session->SendOk(PKT_CHANNEL_AUTH, {name});
     }
 }

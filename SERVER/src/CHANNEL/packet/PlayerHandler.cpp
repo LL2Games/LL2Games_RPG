@@ -60,6 +60,9 @@ void PlayerHandler::Execute(PacketContext * ctx)
           case PKT_TRADE_CANCEL:
                HandleTradeCancel(ctx);
                break;
+          case PKT_TRADE_ADD_ITEM:
+               HandleTradeAddItem(ctx);
+               break;
           case PKT_PLAYER_PICKUP_ITEM:
                PickUpItemPacket(ctx);
                break;

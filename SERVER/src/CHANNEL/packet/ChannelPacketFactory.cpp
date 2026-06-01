@@ -30,6 +30,7 @@ std::unique_ptr<IPacketHandler> ChannelPacketFactory::Create(uint16_t type)
         case PKT_TRADE_ACCEPT:
         case PKT_TRADE_READY:
         case PKT_TRADE_CANCEL:
+        case PKT_TRADE_ADD_ITEM:
         case PKT_PLAYER_PICKUP_ITEM:
             return std::make_unique<PlayerHandler>(type);
         case PKT_INVENTORY_ITEM_MOVE:
