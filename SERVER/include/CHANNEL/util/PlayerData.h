@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
-#include "Monster.h"
+
+class Monster;
 
 enum class RootJob : int
 {
@@ -41,9 +42,6 @@ struct PlayerInitData{
     float xPos;
     float yPos;
 };
-
-
-
 
 
 // 임시로 여기에 구현 /*2026.02.07 LJH */

@@ -80,6 +80,7 @@ SRCS := \
 	core/Projectile.cpp \
 	core/ProjectileManager.cpp \
 	core/TradeService.cpp\
+	core/LevelManager.cpp\
     \
 	packet/ChannelPacketFactory.cpp \
 	packet/ChannelInitHandler.cpp \
@@ -94,9 +95,12 @@ SRCS := \
 	packet/PlayerPacketSender.cpp\
 	packet/InventoryPacketSender.cpp\
 	packet/QuickSlotPacketSender.cpp\
+	packet/QuickSlotPacketHandler.cpp\
 	packet/MonsterPacketSender.cpp\
 	packet/ItemPacketSender.cpp\
 	packet/HandleTrade.cpp \
+	packet/InventoryPacketHandler.cpp\
+	packet/InventoryPacketSender.cpp\
     \
     db/MySqlConnectionPool.cpp \
 	db/PlayerService.cpp \

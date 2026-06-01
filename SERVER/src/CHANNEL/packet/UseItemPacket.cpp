@@ -8,6 +8,8 @@
 #include "PacketDTO.h"
 #include "Inventory_Info.h"
 #include "utility.h"
+#include "ItemPacketSender.h"
+
 
 
 bool TransferData(Str_UseItem& str_itemData, UseItem& itemData);
@@ -156,6 +158,77 @@ err:
 
 
 }
+
+void PlayerHandler::PickUpItemPacket(PacketContext *ctx)
+{
+    ChannelSession *session = nullptr;
+    Player* player = nullptr;
+    MapInstance* mapInstance = nullptr;
+    size_t offset = 0;
+    int dropItemId = 0;
+    std::string errMsg;
+    std::vector<AddItemResult> addItemResults;
+    int rc = EXIT_SUCCESS;
+    K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] PickUpItemPacket Start \n", __FILE__, __FUNCTION__, __LINE__);
+    if(ctx == nullptr)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] ctx is nullptr\n", __FILE__, __FUNCTION__, __LINE__);
+        rc = EXIT_FAILURE;
+        errMsg = "[" + std::to_string(rc) + "]ctx is nullptr";
+        goto err;
+    }
+
+    session = ctx->channel_session;
+    if(session == nullptr)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] session is nullptr\n", __FILE__, __FUNCTION__, __LINE__);
+        rc = EXIT_FAILURE;
+        errMsg = "[" + std::to_string(rc) + "]session is nullptr";
+        goto err;
+    }
+
+    player = session->GetPlayer();
+    if(player == nullptr)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] player is nullptr\n", __FILE__, __FUNCTION__, __LINE__);
+        rc = EXIT_FAILURE;
+        errMsg = "[" + std::to_string(rc) + "] player is nullptr";
+        goto err;
+    }
+
+    mapInstance = player->GetCurrentMap();
+    if(mapInstance == nullptr)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] mapInstance is nullptr\n", __FILE__, __FUNCTION__, __LINE__);
+        rc = EXIT_FAILURE;
+        errMsg = "[" + std::to_string(rc) + "] mapInstance is nullptr";
+        goto err;
+    }
+
+    if(!PacketParser::ParseNextIntField(ctx->payload, ctx->payload_len, offset, dropItemId, errMsg))
+    {
+        rc = EXIT_FAILURE;
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] ParseNextIntField fail", __FILE__, __FUNCTION__, __LINE__);
+        goto err;
+    }
+
+    if(!mapInstance->PickupDropItem(player, dropItemId ,addItemResults))
+    {
+        rc = EXIT_FAILURE;
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] PickupDropItem fail", __FILE__, __FUNCTION__, __LINE__);
+        goto err;
+    }
+    
+
+  err:
+    if (rc != EXIT_SUCCESS) {
+        session->SendNok(PKT_PLAYER_PICKUP_ITEM, errMsg);
+    } else {
+        ItemPacketSender::SendAddItem(player, addItemResults);
+         K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] PickUpItemPacket END", __FILE__, __FUNCTION__, __LINE__);
+    }
+}
+
 
 
 bool TransferData(Str_UseItem& str_itemData, UseItem& itemData)

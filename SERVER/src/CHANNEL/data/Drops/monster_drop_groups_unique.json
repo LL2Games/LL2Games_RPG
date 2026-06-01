@@ -7,7 +7,7 @@
       "allow_duplicate": false,
       "entries": [
         {
-          "item_id": 4001001,
+          "item_id": 4000019,
           "drop_weight": 1000,
           "min_count": 1,
           "max_count": 1,
@@ -22,7 +22,7 @@
       "allow_duplicate": false,
       "entries": [
         {
-          "item_id": 4001002,
+          "item_id": 4000000,
           "drop_weight": 1000,
           "min_count": 1,
           "max_count": 1,
@@ -36,7 +36,7 @@
       "allow_duplicate": false,
       "entries": [
         {
-          "item_id": 4001003,
+          "item_id": 4000016,
           "drop_weight": 1000,
           "min_count": 1,
           "max_count": 1,
@@ -44,24 +44,17 @@
         }
       ]
     },
-    "UNIQUE_SLIME": {
+    "UNIQUE_ORANGE_MUSHROOM": {
       "min_drop": 0,
       "max_drop": 1,
       "allow_duplicate": false,
       "entries": [
         {
-          "item_id": 4001004,
+          "item_id": 4000001,
           "drop_weight": 900,
           "min_count": 1,
           "max_count": 1,
-          "tag": "slime_gel"
-        },
-        {
-          "item_id": 4010105,
-          "drop_weight": 100,
-          "min_count": 1,
-          "max_count": 1,
-          "tag": "rare_piece"
+          "tag": "mushroom_gel"
         }
       ] 
     }

@@ -1,5 +1,53 @@
 #include "CharacterStat.h"
 #include "K_slog.h"
+#include "LevelManager.h"
+
+
+ExpResult CharacterStat::AddExp(int64_t exp)
+{
+    ExpResult result{};  
+    if (exp <= 0)
+        return result;
+
+    result.gainedExp = exp;
+    result.oldLevel = m_expStat.level;
+     
+    m_expStat.exp += exp;
+      
+    LevelManager* levelManager = LevelManager::GetInstance();
+
+    while (true)
+    {
+        int64_t needExp = levelManager->GetNeedExp(m_expStat.level);
+
+        if (needExp <= 0)
+            break;
+
+        if (m_expStat.exp < needExp)
+            break;
+
+        m_expStat.exp -= needExp;
+        m_expStat.level++;
+
+        m_remain_ap += 5;
+        m_cur_hp = m_derived.maxHp;
+        m_cur_mp = m_derived.maxMp;
+    }
+
+    result.newLevel = m_expStat.level;
+    result.curExp = m_expStat.exp;
+    result.needExp = levelManager->GetNeedExp(m_expStat.level);
+    result.remainAp = m_remain_ap;
+
+    result.curHp = m_cur_hp;
+    result.maxHp = m_derived.maxHp;
+    result.curMp = m_cur_mp;
+    result.maxMp = m_derived.maxMp;
+
+    result.levelUp = result.newLevel > result.oldLevel;
+
+    return result;
+}
 
 void CharacterStat::Up(const std::string &statType)
 {

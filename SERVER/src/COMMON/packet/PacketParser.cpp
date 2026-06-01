@@ -3,7 +3,7 @@
 #include <cstring>
 #include <type_traits>
 #include "K_slog.h"
-
+#include "utility.h"
 
 std::optional<ParsedPacket> PacketParser::Parse(std::vector<char>& buf)
 {
@@ -79,6 +79,53 @@ bool PacketParser::ParseLengthPrefixedString(
 
     return true;
 }
+
+bool PacketParser::ParseNextIntField(const char* data, size_t payloadSize, size_t& offset, int& outValue, std::string& errMsg)
+{
+    std::string temp;
+
+    if (!PacketParser::ParseLengthPrefixedString(
+        data,
+        payloadSize,
+        offset,
+        temp,
+        errMsg))
+    {
+        return false;
+    }
+
+    if (!utility::StringToInt(temp, outValue))
+    {
+        errMsg = "StringToInt failed: " + temp;
+        return false;
+    }
+
+    return true;
+}
+
+bool PacketParser::ParseNextFloatField(const char* data, size_t payloadSize, size_t& offset, float& outValue, std::string& errMsg)
+{
+    std::string temp;
+
+    if (!PacketParser::ParseLengthPrefixedString(
+        data,
+        payloadSize,
+        offset,
+        temp,
+        errMsg))
+    {
+        return false;
+    }
+
+    if (!utility::StringToFloat(temp, outValue))
+    {
+        errMsg = "StringToFloat failed: " + temp;
+        return false;
+    }
+
+    return true;
+}
+
 
 std::string PacketParser::MakeBody(const std::vector<std::string>& datas)
 {

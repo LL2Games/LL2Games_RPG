@@ -2,14 +2,17 @@
 #include "common.h"
 #include "Inventory.h"
 
+
 class InventoryManager
 {
 public:
     
 	bool CreateInventory(InventoryMetaInfo& inventoryMetaInfo);
 	void EnsureInventory(InventoryMetaInfo& inventoryMetaInfo);
+	bool MoveItemSlots(const MoveItem& moveData,std::vector<InventorySlotUpdate>& updatedSlots,std::string& errMsg);
 
-	
+	bool AddItem(int itemId, int count, std::vector<AddItemResult> addItemResults);
+public:
 	Inventory* GetInventory(int inventoryType);
 	const Inventory* GetInventory(int inventoryType) const;
 

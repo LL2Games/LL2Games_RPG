@@ -9,6 +9,7 @@
 #include "MonsterPacketSender.h"
 #include "PlayerPacketSender.h"
 #include "ItemPacketSender.h"
+#include "StatInfoPacket.h"
 
 
 #define MAPDELETELIMIT 5
@@ -65,7 +66,6 @@ int MapInstance::Update()
 
     return 1;
 }
-
 //맵내에 있는 모든사용자에게 Update시 보내주는 정보
 void MapInstance::SendMapInfo()
 {
@@ -134,16 +134,25 @@ int MapInstance::UpdateMonster()
 int MapInstance::SpawnMonster()
 {
 	auto now = std::chrono::steady_clock::now();
+
+	std::vector<Monster*> respawnList;
 	
 	//K_slog_trace(K_SLOG_TRACE, "[%s][%d] 몬스터 리스폰 시작", __FUNCTION__, __LINE__);
 	for(auto& monster : m_monsterList) 
 	{
 		if(monster.IsAlive()) continue;
 		
-		if(monster.CheckRespawnTime(now))
+		if(monster.CheckRespawnTime(now)) 
 		{
 			monster.Reset();
+			respawnList.push_back(&monster);
 		}
+	}
+
+
+	if(respawnList.size() > 0)
+	{
+		MonsterPacketSender::SendMonsterRespawn(m_playerList,respawnList);
 	}
 	
     return 1;
@@ -194,13 +203,11 @@ void MapInstance::OnLeave(int PlayerID)
 	K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d] m_playerCount(%d)", __FILE__, __FUNCTION__, __LINE__, m_playerCount);
 }
 
-
 void MapInstance::GiveExp(int playerID, float exp)
 {
 	(void)playerID;
 	(void)exp;
 }
-
 
 void MapInstance::HandleMove(Player* sender, Vec2 pos, float speed)
 {
@@ -223,8 +230,6 @@ void MapInstance::HandleMove(Player* sender, Vec2 pos, float speed)
 
 	PlayerPacketSender::SendPlayersMove(sender, pos, speed, m_playerList);
 }
-
-
 
 void MapInstance::SendMonsterSnapshot(Player* player)
 {
@@ -269,7 +274,6 @@ void MapInstance::SendMonsterSnapshot(Player* player)
 	MonsterPacketSender::SendMonsterMove(player, aliveMonsters);
  }
 
-
 // 맵이 사라지는 경우 호출
 void MapInstance::RemoveMap()
 {
@@ -289,7 +293,7 @@ void MapInstance::ResolveSkillHit(Player* Attacker, SkillDef& skillDef, std::vec
 	//skillDef는 상태이상 적용 시 필요한 정보 : 현재는 필요 없지만 후에 필요할지 몰라서 일단 매개변수로 추가해놓음
 
 	K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] 공격 성공 ! 데이터 전송 준비 중.\n", __FILE__, __FUNCTION__, __LINE__);
-	K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d] MapInstance Pointer[%p]", __FILE__, __FUNCTION__, __LINE__, this);
+	//K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d] MapInstance Pointer[%p]", __FILE__, __FUNCTION__, __LINE__, this);
 
 	std::vector<MonsterHitResult> results;
     results.reserve(hits.size());
@@ -302,6 +306,14 @@ void MapInstance::ResolveSkillHit(Player* Attacker, SkillDef& skillDef, std::vec
 		// 몬스터가 죽었을 때 아이템 드롭
 		if(isDead)
 		{
+
+			const ExpResult result = Attacker->AddExp(m->GetExp());
+			PlayerPacketSender::SendExpGain(Attacker, result);
+
+			if(result.levelUp)
+			{
+				PlayerPacketSender::SendPlayerStat(Attacker);
+			}
 			// dropItem 세팅
 			std::vector<DropResult> dropItems = m_dropManager->SetDropItem(m->GetCommonItemGroupID(), m->GetUniqueItemGroupID());
 			// 아이템 스폰
@@ -355,21 +367,16 @@ void MapInstance::ProcessContactDamage(int64_t nowMs)
 			
 			//K_slog_trace(K_SLOG_DEBUG, "[%s : %s : %d]OnDamaged", __FILE__, __FUNCTION__, __LINE__);
 			player->OnDamaged(dmg,nowMs);
-
 			PlayerHitResult result;
-
 			result.damage = dmg;
 			SetPlayerHitResult(player, monster.GetInstanceId(), result);
 
 			//K_slog_trace(K_SLOG_DEBUG, "[%s : %s : %d]SendPlayerOnDamaged", __FILE__, __FUNCTION__, __LINE__);
 			PlayerPacketSender::SendPlayerOnDamaged(player, result, m_playerList);
-			}
 		}
 	}
 	//K_slog_trace(K_SLOG_DEBUG, "[%s : %s : %d]END\n\n", __FILE__, __FUNCTION__, __LINE__);
 }
-
-
 /*gunoo22 260223 원거리 공격 처리*/
 void MapInstance::ProcessRangedDamage(int64_t nowMs)
 {
@@ -416,6 +423,67 @@ void MapInstance::SetPlayerHitResult(Player* player, int monster_instanceId, Pla
 	result.state = player->GetState();
 }
 
+bool MapInstance::PickupDropItem(Player *player, int dropItemId, std::vector<AddItemResult>& addItemResults)
+{
+	if (player == nullptr)
+	{
+		K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] player is nullptr.\n", __FILE__, __FUNCTION__, __LINE__);
+		return false;
+	}
+       
+
+    auto it = m_dropItems.find(dropItemId);
+    if (it == m_dropItems.end())
+	{
+		K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] dropItemId is nullptr.\n", __FILE__, __FUNCTION__, __LINE__);
+		return false;
+	}
+        
+
+    DropItems dropItem = it->second;
+
+    if (!CanPickupByDistance(player->GetPos(), dropItem.pos))
+	{
+		K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] CanPickupByDistance.\n", __FILE__, __FUNCTION__, __LINE__);
+		return false;
+	}
+        
+
+    if (dropItem.owner != nullptr &&
+        dropItem.owner->GetId() != player->GetId())
+		{
+			K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] 아이템 소유권이 없습니다.\n", __FILE__, __FUNCTION__, __LINE__);
+			return false;
+		}
+        
+
+    InventoryManager* inven = player->GetInventoryManager();
+    if (inven == nullptr)
+	{
+		K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] inven is nullptr.\n", __FILE__, __FUNCTION__, __LINE__);
+		return false;
+	}
+    K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] dropItem.itemId [%d].\n", __FILE__, __FUNCTION__, __LINE__, dropItem.itemId);
+	K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] dropItem.dropId [%d].\n", __FILE__, __FUNCTION__, __LINE__,dropItem.dropId);
+    if (!inven->AddItem(dropItem.itemId, dropItem.count, addItemResults))
+        return false;
+	
+    m_dropItems.erase(it);
+    ItemPacketSender::SendRemoveDropItem({dropItemId},m_playerList);
+    return true;
+}
+
+bool MapInstance::CanPickupByDistance(Vec2 playerPos, Vec2 ItemPos)
+{
+   constexpr float PICKUP_DISTANCE = 80.0f;
+
+    float dx = ItemPos.xPos - playerPos.xPos;
+    float dy = ItemPos.yPos - playerPos.yPos;
+
+    float distanceSq = dx * dx + dy * dy;
+
+    return distanceSq <= PICKUP_DISTANCE * PICKUP_DISTANCE;
+}
 
 bool MapInstance::SpawnDropItem(Monster* monster, std::vector<DropResult> dropItems)
 {
@@ -423,21 +491,22 @@ bool MapInstance::SpawnDropItem(Monster* monster, std::vector<DropResult> dropIt
 	{
 		DropItems Item;
 		Item.count = dropItems[i].count;
+		
 		Item.itemId = dropItems[i].itemId;
+		K_slog_trace(K_SLOG_DEBUG,"[%s][%d] Item.itemId [%d]", __FUNCTION__, __LINE__, Item.itemId);
 		Item.type = dropItems[i].type;
-		Item.dropId = m_dropItems.size() + 1;
+		Item.dropId = m_dropId++;
 		Item.pos = monster->GetPos();
 		Item.owner = monster->GetLastAttacker();
 		Item.ownerExpireTimeMs = NowMs() + 60000; // 1분
 		Item.expireTimeMs = NowMs() + 120000; // 2분
 
-		m_dropItems[Item.itemId] = Item;
+		m_dropItems[Item.dropId] = Item;
 
 		DropSpawnInfo info;
 		info.dropId = Item.dropId;
 		info.count = Item.count;
 		info.itemId = Item.itemId;
-		info.type = Item.type;
 		info.xPos = Item.pos.xPos;
 		info.yPos = Item.pos.yPos;
 
@@ -475,7 +544,7 @@ void MapInstance::CheckDropItem()
     	}
 	}
 	
-	ItemPacketSender::SendRemoveItem(removeItems, m_playerList);
+	ItemPacketSender::SendRemoveDropItem(removeItems, m_playerList);
 }
 
 

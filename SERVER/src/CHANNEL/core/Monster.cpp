@@ -75,6 +75,7 @@ int Monster::Init(const MonsterTemplate &monsterTemplate, const MonsterSpawnData
 	K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d] Projectile Data - ID: %d, Damage: %f, Speed: %f, Range: %f, Cooldown: %ld", __FILE__, __FUNCTION__, __LINE__, m_projectileId, m_projectileDamage, m_projectileSpeed, m_ragedAttackRange, m_attackCooldown);
 #endif
 
+	m_collider.type = monsterTemplate.collisionType;	
 	if(monsterTemplate.collisionType == ColliderType::Rect2D)
 	{
 		m_collider.type = ColliderType::Rect2D;
@@ -96,8 +97,8 @@ int Monster::Init(const MonsterTemplate &monsterTemplate, const MonsterSpawnData
 int Monster::Update(float dt)
 {
 
-	K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d] state=[%d]", __FILE__, __FUNCTION__, __LINE__, m_state);
-	K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d] Monster Pointer[%p]", __FILE__, __FUNCTION__, __LINE__, this);
+	//K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d] state=[%d]", __FILE__, __FUNCTION__, __LINE__, m_state);
+	//K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d] Monster Pointer[%p]", __FILE__, __FUNCTION__, __LINE__, this);
 
 	switch (m_state)
 	{
@@ -120,7 +121,7 @@ int Monster::Update(float dt)
 	case E_Dead:
 		K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d] state=[Dead]", __FILE__, __FUNCTION__, __LINE__);
 		break;
-
+  case E_Die:
 	case E_Move:
 	case E_Hit:
 	case E_NONE:

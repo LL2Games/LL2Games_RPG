@@ -8,12 +8,12 @@
     "moveSpeed"     : 10,
 
     "common_drop_group_id": "FIELD_COMMON_LV1_20",
-    "unique_drop_group_id": "UNIQUE_GREEN_SLIME",
+    "unique_drop_group_id": "UNIQUE_GREEN_SNAIL",
 
     "collider" :[{
         "type"      :   "Rect2D",
         "offset"    :   {"x" : 0, "y" : 12},
-        "half"      :   {"w" :14, "h": 10}
+        "half"      :   {"w" :18, "h": 12}
     }],
 
     "isRanged" : true,

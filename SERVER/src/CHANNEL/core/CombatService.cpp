@@ -3,6 +3,7 @@
 #include "Math.h"
 #include "PlayerData.h"
 #include "MapInstance.h"
+#include "Collider.h"
 
 CombatService::CombatService()
 {
@@ -82,7 +83,7 @@ int CombatService::HandleBasicAttack(Player* Attacker, int attack_dir)
     MapInstance* map = Attacker->GetCurrentMap();
 
     std::optional<SkillDef> skillDef = m_skillManager->GetSkill(static_cast<int>(Attacker->GetWeaponType()));
-    K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] 공격 시도 중.\n", __FILE__, __FUNCTION__, __LINE__);
+    K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] [%d] 기본공격 시도 중.\n", __FILE__, __FUNCTION__, __LINE__, static_cast<int>(Attacker->GetWeaponType()));
     if(!skillDef) 
     {
         
@@ -126,31 +127,69 @@ int CombatService::HandleBasicAttack(Player* Attacker, int attack_dir)
 
 std::vector<Monster*> CombatService::ComputeHitMonsters(Player* attacker, std::vector<Monster>& monsters, const SkillDef& skillDef, int attack_dir)
 {
-
-      Vec2 attackerPos = attacker->GetPos();
-
     std::vector<Cand> canHitMonsters;
     std::vector<Monster*> hitMonsters;
 
+    if (attacker == nullptr)
+        return hitMonsters;
+
+    if (attack_dir != -1 && attack_dir != 1)
+        return hitMonsters;
+
+    Vec2 attackerPos = attacker->GetPos();
+
     canHitMonsters.reserve(monsters.size());
+    K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] attackerPos X : [%f] , Y : [%f].\n", __FILE__, __FUNCTION__, __LINE__,attackerPos.xPos,attackerPos.yPos);
+    K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] attackDir [%d] \n", __FILE__, __FUNCTION__, __LINE__,attack_dir);
+    K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] monster count [%d] \n", __FILE__, __FUNCTION__, __LINE__,monsters.size());
 
     //gunoo22 260226 몬스터 체력 안다는 이슈 -> 레퍼런스로 안받음
     for (Monster& m : monsters) 
     {
-        Vec2 mp = m.GetPos();
-
         if(!m.IsAlive()) continue;
-        if (!IsHitFrontBox2D(
+        bool isHit = false;
+        const Collider2D& monsterCollider = m.GetCollider();
+        K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] monster Name [%ss] \n", __FILE__, __FUNCTION__, __LINE__,m.GetName());
+        K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] mosterInstance [%d] \n", __FILE__, __FUNCTION__, __LINE__,m.GetInstanceId());
+        K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] monsterPos X [%f], Y [%f] \n", __FILE__, __FUNCTION__, __LINE__,m.GetPos().xPos, m.GetPos().yPos);
+        
+
+        if (skillDef.hit.shape == HitShape::BOX)
+        {
+            Collider2D attackCollider = Collision::MakeBoxAttackCollider(skillDef, attack_dir);
+        
+            isHit = Collision::Intersects(
+                attackerPos,
+                attackCollider,
+                m.GetPos(),
+                monsterCollider
+            );
+        }
+        else if (skillDef.hit.shape == HitShape::ARC)
+        {
+            K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] ARC 공격 타입.\n", __FILE__, __FUNCTION__, __LINE__);
+            isHit = Collision::IntersectArc2D(
                 attackerPos,
                 attack_dir,
-                mp,
                 skillDef.hit.range,
-                skillDef.hit.angle_deg))
-        {
-            continue;
+                skillDef.hit.angle_deg,
+                m.GetPos(),
+                monsterCollider
+            );
         }
+        else
+        {
+            K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] 이상 공격 타입.\n", __FILE__, __FUNCTION__, __LINE__);
+        }
+        if (!isHit)
+            continue;
+    
+        Vec2 monsterCenter = Collision::GetColliderCenter(
+            m.GetPos(),
+            monsterCollider
+        );
 
-        float dx = mp.xPos - attackerPos.xPos;
+        float dx = monsterCenter.xPos - attackerPos.xPos;
         float front = dx * static_cast<float>(attack_dir);
 
         canHitMonsters.push_back({ &m, front });
@@ -226,7 +265,6 @@ int CombatService::CalculateFinalDamage(Player* player, Monster& m) const
     return dmg;
 }
 
-
 // 스킬로 공격 했을 때 데미지 계산
 int CombatService::CalculateFinalDamage(int baseDmg, const Player* Attacker, const SkillDef& skillDef, const Monster& m) const
 {
@@ -244,7 +282,6 @@ int CombatService::CalculateFinalDamage(int baseDmg, const Player* Attacker, con
     return dmg;
 }
 
-
 int CombatService::GetLevelDiffRate(int AttackerLevel, int DefenderLevel) const
 {
     int rate = 0;
@@ -259,3 +296,4 @@ int CombatService::GetLevelDiffRate(int AttackerLevel, int DefenderLevel) const
     else if(rate > kLevelRateMaxPct) rate = kLevelRateMaxPct;
     return rate;
 }
+

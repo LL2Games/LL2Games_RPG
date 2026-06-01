@@ -25,8 +25,7 @@ void MonsterPacketSender::SendMonsterSnapShot(Player* player, const std::vector<
         payload.push_back(std::to_string(monster->GetInstanceId()));  // monsterObjectId
         payload.push_back(std::to_string(monster->GetPos().xPos));
         payload.push_back(std::to_string(monster->GetPos().yPos));
-        payload.push_back(std::to_string((int)monster->GetDir().xPos));
-        //payload.push_back(std::to_string(monster->GetDir().yPos));
+        payload.push_back(std::to_string(static_cast<int>(monster->GetDir().xPos)));
         payload.push_back(std::to_string(monster->GetMoveSpeed()));
         payload.push_back(std::to_string(monster->GetCurrentHP()));
         payload.push_back(std::to_string(monster->GetMaxHP()));
@@ -66,8 +65,7 @@ void MonsterPacketSender::SendMonsterMove(Player* player, const std::vector<Mons
 
         payload.push_back(std::to_string(monster->GetInstanceId()));          // monster instanceid
         payload.push_back(std::to_string(static_cast<int>(monster->GetState())));
-        payload.push_back(std::to_string((int)monster->GetDir().xPos));
-        //payload.push_back(std::to_string(monster->GetDir().yPos));
+        payload.push_back(std::to_string(static_cast<int>(monster->GetDir().xPos)));
         payload.push_back(std::to_string(monster->GetPos().xPos));
         payload.push_back(std::to_string(monster->GetPos().yPos));
         payload.push_back(std::to_string(monster->GetCurrentHP()));
@@ -78,8 +76,8 @@ void MonsterPacketSender::SendMonsterMove(Player* player, const std::vector<Mons
         //K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] Monster Dir [%d]", __FILE__, __FUNCTION__, __LINE__, (int)monster->GetDir().xPos);
         //K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] Monster xPos [%f]", __FILE__, __FUNCTION__, __LINE__, monster->GetPos().xPos);
         //K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] Monster yPos [%f]", __FILE__, __FUNCTION__, __LINE__, monster->GetPos().yPos);
-        //K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] Monster GetCurrentHP [%d]", __FILE__, __FUNCTION__, __LINE__, monster->GetCurrentHP());
-        //K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] Monster GetMaxHP [%d]", __FILE__, __FUNCTION__, __LINE__, monster->GetMaxHP());
+        //K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] Monster CurrentHp [%d]", __FILE__, __FUNCTION__, __LINE__, monster->GetCurrentHP());
+        //K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] Monster State [%d]", __FILE__, __FUNCTION__, __LINE__, static_cast<int>(monster->GetState()));
     }
 
     //K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] Monster Move Data Send", __FILE__, __FUNCTION__, __LINE__);
@@ -122,4 +120,31 @@ void MonsterPacketSender::SendMonsterOnDamaged(Player* Attacker, int SkillID, st
 	}
 }
 
+void MonsterPacketSender::SendMonsterRespawn(std::unordered_map<int, Player *> &playerList, const std::vector<Monster*>& monsters)
+{
+    std::vector<std::string> payload;
+	
+    payload.push_back(std::to_string(monsters.size()));
 
+	for(const auto& monster : monsters)
+    {
+        payload.push_back(std::to_string(monster->GetInstanceId()));
+        payload.push_back(std::to_string(monster->GetId()));
+        payload.push_back(std::to_string(monster->GetPos().xPos));
+        payload.push_back(std::to_string(monster->GetPos().yPos));
+        payload.push_back(std::to_string((int)monster->GetDir().xPos));
+        payload.push_back(std::to_string(monster->GetCurrentHP()));
+        payload.push_back(std::to_string(monster->GetMaxHP()));
+        payload.push_back(std::to_string(static_cast<int>(monster->GetState())
+    ));
+    }
+    
+	for(auto it = playerList.begin(); it != playerList.end(); ++it)
+	{
+		auto session = it->second->GetSession();
+        if (session == nullptr)
+            continue;
+		
+		session->Send(PKT_MONSTER_RESPAWN, payload);
+	}
+}

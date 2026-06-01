@@ -12,6 +12,7 @@ ChannelServer::ChannelServer() : m_channel_id(0), m_listen_fd(0), m_epfd(0), m_r
     m_monster_manager = MonsterManager::GetInstance();
     m_skill_manager = SkillManager::GetInstance();
     m_drop_manager = DropManager::GetInstance();
+    m_level_manager = LevelManager::GetInstance();
 }
 
 ChannelServer::~ChannelServer()
@@ -39,6 +40,7 @@ bool ChannelServer::Init(const int port)
     if(!m_monster_manager->Init()) return false;
     if(!m_skill_manager->Init()) return false;
     if(!m_drop_manager->Init()) return false;
+    if(!m_level_manager->Init()) return false;
 
 
    if(!InitListenSocket(port))

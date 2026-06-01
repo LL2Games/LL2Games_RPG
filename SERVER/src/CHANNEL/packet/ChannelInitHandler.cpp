@@ -8,6 +8,7 @@
 #include "PlayerPacketSender.h"
 #include "InventoryPacketSender.h"
 #include "QuickSlotPacketSender.h"
+#include "LevelManager.h"
 #include "K_slog.h"
 #include "utility.h"
 #include <sstream>
@@ -84,6 +85,7 @@ void ChannelInitHandler::HandleChannelAuth(PacketContext *ctx)
     PlayerService::LoadInventory(player.get());
     PlayerService::LoadLearnedSkill(player.get());
     PlayerService::LoadSlotSetting(player.get());
+
 
     K_slog_trace(K_SLOG_TRACE, "HandleChannelAuth: 플레이어 인벤토리 로드 성공 [%d]", characterId);
 

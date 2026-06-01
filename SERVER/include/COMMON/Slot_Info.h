@@ -16,7 +16,17 @@ struct QuickSlotData
     int ref_id;   // skill_id 또는 item_id 등
     int inventory_type;
     int inventory_slotPos;
+    int count;
+
+    bool operator==(const QuickSlotData& other) const
+    {
+        return type == other.type
+            && ref_id == other.ref_id
+            && inventory_type == other.inventory_type
+            && inventory_slotPos == other.inventory_slotPos;
+    }
 };
+
 
 namespace QuickSlot
 {
@@ -36,4 +46,5 @@ namespace QuickSlot
                 return QuickSlotType::None;
         }
     }
+
 }
