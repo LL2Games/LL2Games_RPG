@@ -24,7 +24,7 @@ public:
 
     bool SelectDropItem(std::unordered_map<std::string, DropGroup>::iterator Groups, std::vector<DropResult>& dropItems);
 
-    std::vector<DropResult> SetDropItem(std::string commonGroup, std::string uniqueGroup);
+    std::vector<DropResult> SetDropItem(std::string& commonGroup, std::string& uniqueGroup);
 
 
 private:

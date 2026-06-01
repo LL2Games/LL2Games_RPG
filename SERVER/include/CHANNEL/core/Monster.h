@@ -67,12 +67,12 @@ public:
 	int GetLastAttackerID() {return m_lastAttackerId;}
 	Player* GetLastAttacker() {return m_lastAttacker;}
 
-	float GetExp(){return m_exp;}
+	int64_t GetExp(){return m_exp;}
 
 	int GetItemGroup(){return m_itemGroup;}
 
-	std::string GetCommonItemGroupID(){return m_common_drop_Item_GroupId;}
-	std::string GetUniqueItemGroupID(){return m_unique_drop_Item_GroupId;}
+	std::string& GetCommonItemGroupID(){return m_common_drop_Item_GroupId;}
+	std::string& GetUniqueItemGroupID(){return m_unique_drop_Item_GroupId;}
 	std::string GetName(){return m_name;}
 	int GetInstanceId() const {return m_instanceId;}
 	int GetId() const {return m_monsterId;}
@@ -106,7 +106,7 @@ private:
 
 	float m_rightBound;
 	float m_leftBound;
-	Vec2   m_dir;
+	Vec2  m_dir;
 
     bool m_isAlive;
 	bool m_deadRequest; 
@@ -117,7 +117,7 @@ private:
 
     //몬스터 상태 값 나중에 추가해야함
     MonsterState m_state;
-	float m_exp;
+	int64_t m_exp;
     int m_attackDamage;
     int m_level;
 	int m_moveSpeed;

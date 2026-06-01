@@ -20,6 +20,7 @@
 #include "CommandReceiver.h"
 #include "CombatService.h"
 #include "TradeService.h"
+#include "LevelManager.h"
 
 
 
@@ -79,4 +80,6 @@ private:
     CommandReceiver m_cmd_receiver;
 
     TradeService m_trade_service;
+
+    LevelManager* m_level_manager;
 };

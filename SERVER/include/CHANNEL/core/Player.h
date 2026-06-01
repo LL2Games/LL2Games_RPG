@@ -12,6 +12,7 @@
 #include "SkillManager.h"
 #include "QuickSlotManager.h"
 #include "Weapon_Info.h"
+#include "StatInfoPacket.h"
 
 class ChannelSession;
 class MapInstance;
@@ -106,6 +107,8 @@ public:
     void OnDamaged(int dmg,int64_t nowMs);
 
     void Dead();
+
+    ExpResult AddExp(int64_t  exp);
 
 private:
     int m_char_id;

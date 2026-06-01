@@ -1,0 +1,14 @@
+{
+  "item_id": 2010009,
+  "name": "Green Apple",
+  "type": "consumable",
+  "stackable": true,
+  "max_stack": 300,
+  "sell_price": 30,
+
+  "use_effect": [{
+    "hp_restore": 0,
+    "mp_restore": 30,
+    "cooldown_ms": 0
+  }]
+}

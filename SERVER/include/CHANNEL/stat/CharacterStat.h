@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 #include "PlayerData.h"
-
+#include "StatInfoPacket.h"
 enum e_BaseStat
 {
     E_STR = 0,
@@ -22,6 +22,13 @@ struct DerivedStat
 {
     int maxHp;
     int maxMp;
+};
+
+struct ExpStat
+{
+    int level;
+    int64_t exp;
+    int64_t need_exp;
 };
 
 struct MainSubStat
@@ -59,8 +66,8 @@ class CharacterStat {
 
 public:
     CharacterStat(){}
-    CharacterStat(const BaseStat& base, const DerivedStat& derived, int curHp, int curMp, int remainAp)
-    :m_base(base), m_derived(derived), m_cur_hp(curHp), m_cur_mp(curMp), m_remain_ap(remainAp)
+    CharacterStat(const BaseStat& base, const DerivedStat& derived, const ExpStat& expStat, int curHp, int curMp, int remainAp)
+    :m_base(base), m_derived(derived), m_expStat(expStat), m_cur_hp(curHp), m_cur_mp(curMp), m_remain_ap(remainAp)
     {}
 
     //조회용 인터페이스
@@ -75,19 +82,26 @@ public:
 
     int GetMaxHp() const {return m_derived.maxHp;}
     int GetMaxMp() const {return m_derived.maxMp;}
-
     int GetRemainAp() const {return m_remain_ap;}
 
     void SetCurMp(int cur_mp) {m_cur_mp = cur_mp;}
     void SetCurHp(int cur_hp) {m_cur_hp = cur_hp;}
-
+    
+    int GetLevel() const {return m_expStat.level;}
+    int64_t GetExp() const {return m_expStat.exp;}
+    int64_t GetNeedExp() const {return m_expStat.need_exp;}
+    
 public:
     void Up(const std::string & statType);
-
+    ExpResult AddExp(int64_t exp);
 private:
     BaseStat m_base;
     DerivedStat m_derived;
+    ExpStat m_expStat;
     int m_cur_hp;
     int m_cur_mp;
     int m_remain_ap;
+
+
+    
 };

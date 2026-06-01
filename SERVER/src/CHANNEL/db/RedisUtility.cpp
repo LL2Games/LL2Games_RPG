@@ -35,6 +35,19 @@ bool GetFloat(const Map& map, const std::string& key, float& value)
     return true;
 }
 
+bool GetInt64(const Map& map, const std::string& key, int64_t& value)
+{
+    auto it = map.find(key);
+    if(it == map.end()) return false;
+    try{
+        value = std::stof(it->second);
+    }catch(...){
+        return false;
+    }
+
+    return true;
+}
+
 std::map<std::string, std::string> PlayerInfoToRedisMap(const PlayerInitData playerData, const CharacterStat stat)
 {
     std::map<std::string, std::string> redisMap;
@@ -60,6 +73,9 @@ std::map<std::string, std::string> PlayerInfoToRedisMap(const PlayerInitData pla
     redisMap["curHp"] = std::to_string(stat.GetCurHp());
     redisMap["curMp"] = std::to_string(stat.GetCurMp());
     redisMap["remainAp"] = std::to_string(stat.GetRemainAp());
+    redisMap["level"] = std::to_string(stat.GetLevel());
+    redisMap["exp"] = std::to_string(stat.GetExp());
+    redisMap["need_exp"] = std::to_string(stat.GetNeedExp());
     
     return redisMap;
 }

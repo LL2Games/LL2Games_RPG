@@ -3,6 +3,7 @@
 #include "CharacterStat.h"
 #include "InventroyManager.h"
 #include "QuickSlotManager.h"
+#include "LevelManager.h"
 
 
 #include "K_slog.h"
@@ -46,11 +47,13 @@ std::unique_ptr<Player> PlayerService::LoadPlayer(int characterId)
             GetFloat(*redis_value, "xPos", playerInit.xPos);
             GetFloat(*redis_value, "yPos", playerInit.yPos);
 
-            BaseStat base;
-            DerivedStat derived;
+            BaseStat base{};
+            DerivedStat derived{};
+            ExpStat expStat{};
+            int remainAp;
             int curHp;
             int curMp;
-            int remainAp;
+            
 
             GetInt(*redis_value, "base_str", base.str);
             GetInt(*redis_value, "base_dex", base.dex);
@@ -61,8 +64,11 @@ std::unique_ptr<Player> PlayerService::LoadPlayer(int characterId)
             GetInt(*redis_value, "curHp", curHp);
             GetInt(*redis_value, "curMp", curMp);
             GetInt(*redis_value, "remainAp", remainAp);
+            GetInt(*redis_value, "level", expStat.level);
+            GetInt64(*redis_value, "exp", expStat.exp);
+            GetInt64(*redis_value, "need_exp", expStat.need_exp);
 
-            CharacterStat stat(base, derived, curHp, curMp, remainAp);
+            CharacterStat stat(base, derived, expStat, curHp, curMp, remainAp);
             player->SetInitData(playerInit, stat);
 
             K_slog_trace(K_SLOG_TRACE, "[Redis]LoadPlayer_stat SUCCESS [%d]", player->GetId());
@@ -153,11 +159,21 @@ std::unique_ptr<Player> PlayerService::LoadPlayer(int characterId)
     {
         K_slog_trace(K_SLOG_TRACE, "LoadPlayer_stat SUCCESS");
 
-        BaseStat base;
-        DerivedStat derived;
+        BaseStat base{};
+        DerivedStat derived{};
+        ExpStat expStat{};
         int curHp;
         int curMp;
         int remainAp;
+        
+
+        auto levelManager = LevelManager::GetInstance();
+
+        if(levelManager == nullptr)
+        {
+            K_slog_trace(K_SLOG_ERROR, "levelManager is nullptr");
+            return nullptr;
+        }
 
         base.str = std::atoi(row[1]);
         base.dex = std::atoi(row[2]);
@@ -170,8 +186,12 @@ std::unique_ptr<Player> PlayerService::LoadPlayer(int characterId)
         curHp = std::atoi(row[7]);
         curMp = std::atoi(row[8]);
         remainAp = std::atoi(row[9]);
+        expStat.exp = std::atol(row[11]);
+        K_slog_trace(K_SLOG_TRACE, "Player exp [%ld]", expStat.level);
+        expStat.level = std::atoi(row[12]);
+        expStat.need_exp = levelManager->GetNeedExp(expStat.level);
 
-        CharacterStat stat(base, derived, curHp, curMp, remainAp);
+        CharacterStat stat(base, derived, expStat, curHp, curMp, remainAp);
 
         player->SetInitData(playerInit, stat);
         redis_map = PlayerInfoToRedisMap(playerInit, stat);

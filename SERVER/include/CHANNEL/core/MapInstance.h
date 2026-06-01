@@ -51,6 +51,8 @@ public:
     void HandleMove(Player* sender, Vec2 pos, float speed);
     void ResolveSkillHit(Player* Attacker, SkillDef& skillDef, std::vector<std::pair<Monster*, int>> hits);
     void SetPlayerHitResult(Player* player, int monster_instanceId, PlayerHitResult& result);
+    bool PickupDropItem(Player* player, int dropItemId, std::vector<AddItemResult>& addItemResults);
+    bool CanPickupByDistance(Vec2 playerPos, Vec2 ItemPos);
     bool SpawnDropItem(Monster* monster, std::vector<DropResult> dropItems);
     void CheckDropItem();
     
@@ -87,6 +89,7 @@ private:
 	// 플레이어 수 
 	uint16_t m_playerCount;
     uint16_t m_mapID;
+    int m_dropId;
 
     std::unordered_map<int, Player*> m_playerList;
     std::unordered_map<int, DropItems> m_dropItems;
