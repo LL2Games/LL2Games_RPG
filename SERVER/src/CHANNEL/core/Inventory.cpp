@@ -42,11 +42,75 @@ bool Inventory::SetSlotItem(int slotPos, int itemId, int count)
     return true;
 }
 
-bool Inventory::AddItem(int itemId, int count)
+bool Inventory::AddItem(AddItemData& addItemData, std::vector<AddItemResult>& results)
 {
-    (void) itemId;
-    (void) count;
-    return true;
+    if (addItemData.count <= 0)
+        return false;
+
+    int remainCount = addItemData.count;
+
+    // 1. stackable 아이템이면 기존 슬롯부터 채운다
+    if (addItemData.stackable)
+    {
+        for (auto& [slotPos, slot] : m_slots)
+        {
+            if (!slot.isEnable)
+                continue;
+
+            if (slot.itemId != addItemData.itemId)
+                continue;
+
+            if (slot.itemCount >= addItemData.max_stack)
+                continue;
+
+            int canAdd = addItemData.max_stack - slot.itemCount;
+            int addCount = std::min(canAdd, remainCount);
+
+            slot.itemCount += addCount;
+            remainCount -= addCount;
+
+            AddItemResult result{};
+            result.slotPos = slotPos;
+            result.itemId = addItemData.itemId;
+            result.itemCount = slot.itemCount;
+            results.push_back(result);
+
+            if (remainCount <= 0)
+                return true;
+        }
+    }
+
+    // 2. 남은 수량은 빈 슬롯에 넣는다
+    for (auto& [slotPos, slot] : m_slots)
+    {
+        if (!slot.isEnable)
+            continue;
+
+        if (slot.itemId != 0)
+            continue;
+
+        int addCount = 0;
+
+        if (addItemData.stackable)
+            addCount = std::min(addItemData.max_stack, remainCount);
+        else
+            addCount = 1;
+
+        slot.itemId = addItemData.itemId;
+        slot.itemCount = addCount;
+        remainCount -= addCount;
+
+        AddItemResult result{};
+        result.slotPos = slotPos;
+        result.itemId = addItemData.itemId;
+        result.itemCount = slot.itemCount;
+        results.push_back(result);
+
+        if (remainCount <= 0)
+            return true;
+    }
+    K_slog_trace(K_SLOG_DEBUG, "AddItem Success");
+    return remainCount <= 0;
 }
 
 // 아이템 사용 시 아이템 개수 변경

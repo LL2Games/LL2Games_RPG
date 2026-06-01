@@ -21,6 +21,7 @@ public:
     void BasicAttackPacket(PacketContext* ctx);
     void OnDamagedPacket(PacketContext* ctx);
     void UseItemPacket(PacketContext* ctx);
+    void PickUpItemPacket(PacketContext* ctx);
   
     //trade
     void HandleTradeRequest(PacketContext* ctx);

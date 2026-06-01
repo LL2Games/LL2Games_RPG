@@ -49,7 +49,7 @@ struct MonsterTemplate {
     int level;
     int hp;
     int attackDamage;
-    float exp;
+    int64_t exp;
     float moveSpeed;
     std::string name;
     std::string common_drop_group_id;
@@ -81,21 +81,5 @@ typedef struct MapInitData{
 }mapData;
 
 
-struct UseEffect
-{
-    int hp_restore = 0;
-    int mp_restore = 0;
-    int cooldown_ms = 0;
-};
 
-struct ItemInitData
-{
-    int item_id = 0;
-    std::string name;
-    std::string type;  // "consumable" / "equipment" /
-    bool stackable = false;
-    int max_stack = 1;
-    int sell_price = 0;
 
-    std::optional<UseEffect> use_effect; // consumable에만 존재
-};

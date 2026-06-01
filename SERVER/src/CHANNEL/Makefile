@@ -80,6 +80,7 @@ SRCS := \
 	core/Projectile.cpp \
 	core/ProjectileManager.cpp \
 	core/TradeService.cpp\
+	core/LevelManager.cpp\
     \
 	packet/ChannelPacketFactory.cpp \
 	packet/ChannelInitHandler.cpp \

@@ -1,5 +1,7 @@
 #include "InventroyManager.h"
 #include "Inventory_Info.h"
+#include "ItemManager.h"
+
 
 bool InventoryManager::CreateInventory(InventoryMetaInfo& inventoryMetaInfo)
 {
@@ -38,6 +40,44 @@ bool InventoryManager::MoveItemSlots(const MoveItem& moveData,std::vector<Invent
     return inventory->second.MoveItemSlot(moveData,updatedSlots,errMsg);
 }
 
+bool InventoryManager::AddItem(int itemId, int count, std::vector<AddItemResult> addItemResults)
+{
+    auto itemManager = ItemManager::GetInstance();
+    if(itemManager == nullptr)
+    {
+        K_slog_trace(K_SLOG_ERROR,"[%s : %s : %d] itemManager is nullptr",__FILE__, __FUNCTION__,__LINE__);
+        return false;
+    }
+
+    auto ItemData = itemManager->Find(itemId);
+
+    if(ItemData == nullptr)
+    {
+        K_slog_trace(K_SLOG_ERROR,"[%s : %s : %d] ItemData is nullptr. itemId[%d]",__FILE__, __FUNCTION__, __LINE__,itemId);
+        return false;
+    }
+    int inventoryType = inven::ConvertItemTypeToInventoryType(ItemData->type);
+    auto iter = m_inventories.find(inventoryType);
+    if (iter == m_inventories.end())
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] inventory not found. inventoryType[%d]",__FILE__, __FUNCTION__, __LINE__, inventoryType);
+        return false;
+    }
+
+    AddItemData addItemData{};
+
+    addItemData.itemId = itemId;
+    addItemData.count = count;
+    addItemData.stackable = ItemData->stackable;
+    addItemData.max_stack = ItemData->max_stack;
+    if(!iter->second.AddItem(addItemData, addItemResults))
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] failed to add item. itemId[%d], count[%d], inventoryType[%d]", __FILE__, __FUNCTION__, __LINE__, itemId, count, inventoryType);
+        return false; 
+    }
+
+    return true;
+}
 
 Inventory* InventoryManager::GetInventory(int inventoryType) 
 {

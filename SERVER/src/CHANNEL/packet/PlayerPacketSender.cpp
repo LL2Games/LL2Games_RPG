@@ -54,12 +54,14 @@ void PlayerPacketSender::SendPlayerStat(Player* player)
     payload.push_back(std::to_string(playerStat.GetCurHp()));
     payload.push_back(std::to_string(playerStat.GetCurMp()));
     payload.push_back(std::to_string(playerStat.GetRemainAp()));
-
-
+    payload.push_back(std::to_string(playerStat.GetLevel()));
+    payload.push_back(std::to_string(playerStat.GetExp()));
+    payload.push_back(std::to_string(playerStat.GetNeedExp()));
     session->Send(PKT_PLAYER_STAT, payload);
 
     K_slog_trace(K_SLOG_TRACE, "[%s][%d] SendPlayerStat Send Success.", __FUNCTION__, __LINE__);
 }
+
 
 
 void PlayerPacketSender::SendPlayerSkillList(Player* player)
@@ -143,4 +145,20 @@ void PlayerPacketSender::SendPlayerOnDamaged(Player* Defender, PlayerHitResult r
 
         	session->Send(PKT_PLAYER_ONDAMAGED, payload);
     }	
+}
+
+void PlayerPacketSender::SendExpGain(Player *player, const ExpResult& expResult)
+{
+    std::vector<std::string> payload;
+	payload.reserve(5);
+   
+	payload.push_back(std::to_string(expResult.gainedExp));
+	payload.push_back(std::to_string(expResult.newLevel));
+	payload.push_back(std::to_string(expResult.curExp));
+	payload.push_back(std::to_string(expResult.needExp));
+    payload.push_back(std::to_string(static_cast<int>(expResult.levelUp)));
+
+	auto session = player->GetSession();	
+	session->Send(PKI_PLAYER_EXP_GAIN, payload);
+    
 }

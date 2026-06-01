@@ -18,7 +18,7 @@ public:
     bool MoveItemSlot(const MoveItem& moveItem, std::vector<InventorySlotUpdate>& updatedSlots, std::string errMsg);
     InventorySlot* FindSlot(int slotPos);
 
-    bool AddItem(int itemId, int count);    
+    bool AddItem(AddItemData& addItem, std::vector<AddItemResult>& results);    
 
     const std::map<int, InventorySlot>& GetAllItems() const;
 

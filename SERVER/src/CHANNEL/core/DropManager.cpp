@@ -107,16 +107,7 @@ bool DropManager::LoadCommonDropFile(const fs::path& path)
             DropEntry entry;
 
             std::string type = entryJson.value("type", "");
-            if(type == "gold")
-            {
-                entry.type = DropType::Gold;
-                entry.itemId = entryJson.value("item_id", 0);
-                entry.weight = entryJson.value("weight", 0);
-                entry.minCount = entryJson.value("min", 0);
-                entry.maxCount = entryJson.value("max", 0);
-                entry.tag = entryJson.value("tag", "");
-            }
-            else if(type == "item")
+            if(type == "item")
             {
                 entry.type = DropType::Item;
                 entry.itemId = entryJson.value("item_id", 0);
@@ -127,11 +118,12 @@ bool DropManager::LoadCommonDropFile(const fs::path& path)
             }
             else
             {
-               K_slog_trace(K_SLOG_ERROR, "[%s][%d] UNKNOWN entry type in group [%s]",__FUNCTION__, __LINE__, groupId.c_str());
+                K_slog_trace(K_SLOG_ERROR, "[%s][%d] UNKNOWN entry type in group [%s]",__FUNCTION__, __LINE__, groupId.c_str());
                 return false;
             }
             group.entries.push_back(entry);
         }
+        K_slog_trace(K_SLOG_TRACE, "[%s][%d] common groupId [%s]",__FUNCTION__, __LINE__, group.groupId.c_str());
         m_commonGroups[group.groupId] = group;
     }   
     return true;
@@ -199,18 +191,18 @@ bool DropManager::LoadUniqueDropFile(const fs::path& path)
            
             group.entries.push_back(entry);
         }
-           m_uniqueGroups[group.groupId] = group;
+        m_uniqueGroups[group.groupId] = group;
     }   
     return true;
 
 }
 
 
-std::vector<DropResult> DropManager::SetDropItem(std::string commonGroup, std::string uniqueGroup)
+std::vector<DropResult> DropManager::SetDropItem(std::string& commonGroup, std::string& uniqueGroup)
 {
    
-    std::vector<DropResult> dropItems;
-    std::vector<DropEntry> common_entries;
+    std::vector<DropResult> dropItems{};
+    std::vector<DropEntry> common_entries{};
 
     auto common_it = m_commonGroups.find(commonGroup);
     auto unique_it = m_uniqueGroups.find(uniqueGroup);
@@ -272,46 +264,112 @@ int DropManager::CalculateWeight(std::vector<DropEntry>& entries)
 
 bool DropManager::SelectDropItem(std::unordered_map<std::string, DropGroup>::iterator Groups, std::vector<DropResult>& dropItems)
 {
-    int sumWeight = 0;
-    // CommmonGroup에서 드롭할 개수를 랜덤으로 정한다
-    std::uniform_int_distribution<int> randDropCount(Groups->second.minDrop,Groups->second.maxDrop);
+    DropGroup& group = Groups->second;
 
+    if (group.minDrop < 0 || group.maxDrop < 0 || group.minDrop > group.maxDrop)
+    {
+        K_slog_trace(K_SLOG_ERROR,
+            "[%s][%d] invalid drop range. minDrop=%d, maxDrop=%d",
+            __FUNCTION__, __LINE__, group.minDrop, group.maxDrop);
+        return false;
+    }
+
+    if (group.entries.empty())
+    {
+        K_slog_trace(K_SLOG_ERROR,
+            "[%s][%d] drop entries is empty.",
+            __FUNCTION__, __LINE__);
+        return false;
+    }
+
+    std::uniform_int_distribution<int> randDropCount(group.minDrop, group.maxDrop);
     int dropCount = randDropCount(m_gen);
 
-    std::vector<DropEntry> entries = Groups->second.entries;
+    std::vector<DropEntry> entries = group.entries;
 
-    sumWeight = CalculateWeight(entries);
-
-    // 가중치를 전부 더한 다음 그 중에서 랜덤 값 추출
-    std::uniform_int_distribution<int> randWeight(1, sumWeight);
-
-    // 가중치를 통해서 드롭되는 아이템 결정
-    for(int i=0; i< dropCount; i++)
+    for (int i = 0; i < dropCount; ++i)
     {
-        int accWeight = 0;
+        if (entries.empty())
+        {
+            break;
+        }
+
+        int sumWeight = CalculateWeight(entries);
+
+        if (sumWeight <= 0)
+        {
+            K_slog_trace(K_SLOG_ERROR,
+                "[%s][%d] invalid sumWeight=%d",
+                __FUNCTION__, __LINE__, sumWeight);
+            break;
+        }
+
+        std::uniform_int_distribution<int> randWeight(1, sumWeight);
         int dropWeight = randWeight(m_gen);
 
-         for (size_t idx = 0; idx < entries.size(); ++idx)
+        int accWeight = 0;
+        bool selected = false;
+
+        for (size_t idx = 0; idx < entries.size(); ++idx)
+        {
+            if (entries[idx].weight <= 0)
             {
+                continue;
+            }
+
             accWeight += entries[idx].weight;
-            if(dropWeight <= accWeight)
+
+            if (dropWeight <= accWeight)
             {
-                const auto& selected_item = entries[idx];
+                const DropEntry& selected_item = entries[idx];
+
+                if (selected_item.minCount < 0 ||
+                    selected_item.maxCount < 0 ||
+                    selected_item.minCount > selected_item.maxCount)
+                {
+                    K_slog_trace(K_SLOG_ERROR,
+                        "[%s][%d] invalid item count range. itemId=%d, minCount=%d, maxCount=%d",
+                        __FUNCTION__, __LINE__,
+                        selected_item.itemId,
+                        selected_item.minCount,
+                        selected_item.maxCount);
+
+                    return false;
+                }
+
+                std::uniform_int_distribution<int> randCount(
+                    selected_item.minCount,
+                    selected_item.maxCount
+                );
+
                 DropResult result;
-                std::uniform_int_distribution<int> randCount(selected_item.minCount, selected_item.maxCount);
                 result.type = selected_item.type;
+                K_slog_trace(K_SLOG_DEBUG,"[%s][%d] selected_item.itemId [%d]", __FUNCTION__, __LINE__, selected_item.itemId);
                 result.itemId = selected_item.itemId;
                 result.count = randCount(m_gen);
+
                 dropItems.push_back(result);
 
-                if(!Groups->second.allowDuplicate)
+                if (!group.allowDuplicate)
                 {
                     entries.erase(entries.begin() + idx);
-                    sumWeight = CalculateWeight(entries);
                 }
+
+                selected = true;
                 break;
             }
         }
+
+        if (!selected)
+        {
+            K_slog_trace(K_SLOG_ERROR,
+                "[%s][%d] no drop item selected. dropWeight=%d, sumWeight=%d, entries=%zu",
+                __FUNCTION__, __LINE__,
+                dropWeight, sumWeight, entries.size());
+
+            break;
+        }
     }
+
     return true;
 }

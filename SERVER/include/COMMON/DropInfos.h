@@ -49,7 +49,6 @@ struct DropItems
 struct DropSpawnInfo
 {
     int64_t dropId = 0;
-    DropType type;
     int itemId = 0;
     int count = 0;
     float xPos = 0.0f;

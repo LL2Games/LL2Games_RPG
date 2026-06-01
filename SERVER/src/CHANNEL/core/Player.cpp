@@ -304,3 +304,9 @@ void Player::Dead()
     m_CurrentState = PlayerState::DEAD;
 
 }
+
+ExpResult Player::AddExp(int64_t exp)
+{
+   ExpResult result = m_stat.AddExp(exp);
+   return result;
+}

@@ -1,14 +1,14 @@
 {
-  "item_id": 2000001,
-  "name": "Orange Potion",
+  "item_id": 2000003,
+  "name": "Blue Potion",
   "type": "consumable",
   "stackable": true,
   "max_stack": 3000,
-  "sell_price": 24,
+  "sell_price": 10,
 
   "use_effect": [{
-    "hp_restore": 150,
-    "mp_restore": 0,
+    "hp_restore": 0,
+    "mp_restore": 100,
     "cooldown_ms": 0
   }]
 }

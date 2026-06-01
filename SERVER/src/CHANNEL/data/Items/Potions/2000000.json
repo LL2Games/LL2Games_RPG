@@ -1,10 +1,10 @@
 {
   "item_id": 2000000,
-  "name": "Small HP Potion",
+  "name": "Red Potion",
   "type": "consumable",
   "stackable": true,
-  "max_stack": 100,
-  "sell_price": 10,
+  "max_stack": 3000,
+  "sell_price": 3,
 
   "use_effect": [{
     "hp_restore": 50,
