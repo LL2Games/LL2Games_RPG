@@ -1,0 +1,10 @@
+{
+  "item_id": 4010000,
+  "name": "황동 구리",
+  "type": "etc",
+
+  "stackable": true,
+  "max_stack": 999,
+  "sell_price": 2
+
+}

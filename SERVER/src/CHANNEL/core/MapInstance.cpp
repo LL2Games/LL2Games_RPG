@@ -373,9 +373,10 @@ void MapInstance::ProcessContactDamage(int64_t nowMs)
 
 			//K_slog_trace(K_SLOG_DEBUG, "[%s : %s : %d]SendPlayerOnDamaged", __FILE__, __FUNCTION__, __LINE__);
 			PlayerPacketSender::SendPlayerOnDamaged(player, result, m_playerList);
+			}
 		}
-	}
 	//K_slog_trace(K_SLOG_DEBUG, "[%s : %s : %d]END\n\n", __FILE__, __FUNCTION__, __LINE__);
+	}
 }
 /*gunoo22 260223 원거리 공격 처리*/
 void MapInstance::ProcessRangedDamage(int64_t nowMs)
@@ -435,7 +436,7 @@ bool MapInstance::PickupDropItem(Player *player, int dropItemId, std::vector<Add
     auto it = m_dropItems.find(dropItemId);
     if (it == m_dropItems.end())
 	{
-		K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] dropItemId is nullptr.\n", __FILE__, __FUNCTION__, __LINE__);
+		K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] dropItemId [%d] is nullptr.\n", __FILE__, __FUNCTION__, __LINE__, dropItemId);
 		return false;
 	}
         
@@ -463,12 +464,14 @@ bool MapInstance::PickupDropItem(Player *player, int dropItemId, std::vector<Add
 		K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] inven is nullptr.\n", __FILE__, __FUNCTION__, __LINE__);
 		return false;
 	}
-    K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] dropItem.itemId [%d].\n", __FILE__, __FUNCTION__, __LINE__, dropItem.itemId);
-	K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] dropItem.dropId [%d].\n", __FILE__, __FUNCTION__, __LINE__,dropItem.dropId);
+    K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] dropItem.itemId [%d].\n", __FILE__, __FUNCTION__, __LINE__, dropItem.itemId);
+	K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] dropItem.dropId [%d].\n", __FILE__, __FUNCTION__, __LINE__,dropItem.dropId);
     if (!inven->AddItem(dropItem.itemId, dropItem.count, addItemResults))
         return false;
 	
     m_dropItems.erase(it);
+	K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] removeDropId [%d], requestDropItemId [%d]\n",  __FILE__, __FUNCTION__, __LINE__, dropItem.dropId, dropItemId);
+
     ItemPacketSender::SendRemoveDropItem({dropItemId},m_playerList);
     return true;
 }
@@ -487,6 +490,8 @@ bool MapInstance::CanPickupByDistance(Vec2 playerPos, Vec2 ItemPos)
 
 bool MapInstance::SpawnDropItem(Monster* monster, std::vector<DropResult> dropItems)
 {
+	std::vector<DropSpawnInfo> spawnInfos;
+
 	for(size_t i =0; i < dropItems.size(); i++)
 	{
 		DropItems Item;
@@ -510,10 +515,10 @@ bool MapInstance::SpawnDropItem(Monster* monster, std::vector<DropResult> dropIt
 		info.xPos = Item.pos.xPos;
 		info.yPos = Item.pos.yPos;
 
-		m_spawnInfos.push_back(info);
+		spawnInfos.push_back(info);
 	}
 
-	ItemPacketSender::SendSpawnItem(m_spawnInfos, m_playerList);
+	ItemPacketSender::SendSpawnItem(spawnInfos, m_playerList);
 
 	return true;
 }

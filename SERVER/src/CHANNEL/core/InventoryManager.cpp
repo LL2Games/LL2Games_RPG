@@ -40,7 +40,7 @@ bool InventoryManager::MoveItemSlots(const MoveItem& moveData,std::vector<Invent
     return inventory->second.MoveItemSlot(moveData,updatedSlots,errMsg);
 }
 
-bool InventoryManager::AddItem(int itemId, int count, std::vector<AddItemResult> addItemResults)
+bool InventoryManager::AddItem(int itemId, int count, std::vector<AddItemResult>& addItemResults)
 {
     auto itemManager = ItemManager::GetInstance();
     if(itemManager == nullptr)
@@ -57,6 +57,7 @@ bool InventoryManager::AddItem(int itemId, int count, std::vector<AddItemResult>
         return false;
     }
     int inventoryType = inven::ConvertItemTypeToInventoryType(ItemData->type);
+    K_slog_trace(K_SLOG_DEBUG, "[%s : %s : %d] inventoryType[%d]",__FILE__, __FUNCTION__, __LINE__, inventoryType);
     auto iter = m_inventories.find(inventoryType);
     if (iter == m_inventories.end())
     {

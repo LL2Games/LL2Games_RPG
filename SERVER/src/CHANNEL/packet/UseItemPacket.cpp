@@ -225,7 +225,7 @@ void PlayerHandler::PickUpItemPacket(PacketContext *ctx)
         session->SendNok(PKT_PLAYER_PICKUP_ITEM, errMsg);
     } else {
         ItemPacketSender::SendAddItem(player, addItemResults);
-         K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] PickUpItemPacket END", __FILE__, __FUNCTION__, __LINE__);
+        K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] PickUpItemPacket END", __FILE__, __FUNCTION__, __LINE__);
     }
 }
 
