@@ -34,26 +34,38 @@ bool ChannelSession::OnBytes(const uint8_t* data, size_t len)
 {
     m_recvBuf.insert(m_recvBuf.end(), data, data+len);
 
-    //std::vector<char> buf(m_recvBuf.begin(), m_recvBuf.end());
-    auto pkt = PacketParser::Parse(m_recvBuf);
-    if (!pkt.has_value())
+    while (true)
     {
-        K_slog_trace(K_SLOG_ERROR, "[%s][%d] Packet Parse failed", __FUNCTION__, __LINE__);
-        return false;
+        ParseResult result = PacketParser::TryParse(m_recvBuf);
+
+        if (result.status == ParseStatus::NeedMoreData)
+        {
+            return true;
+        }
+
+        if (result.status == ParseStatus::InvalidPacket)
+        {
+            K_slog_trace(K_SLOG_ERROR, "[%s][%d] Invalid packet", __FUNCTION__, __LINE__);
+            return false;
+        }
+
+        Dispatch(result.packet);
     }
-    
+    return true;
+}
 
-
-    auto handler = m_factory.Create(pkt->type);
+void ChannelSession::Dispatch(const ParsedPacket &pkt)
+{
+    auto handler = m_factory.Create(pkt.type);
     if(handler)
     {
         PacketContext ctx;
-        ctx.type = pkt->type;
+        ctx.type = pkt.type;
         ctx.channel_session = this;
         ctx.fd = m_fd;
-        ctx.type = pkt->type;
-        ctx.payload = const_cast<char*>(pkt->payload.c_str());
-        ctx.payload_len = pkt->payload.size();
+        ctx.type = pkt.type;
+        ctx.payload = const_cast<char*>(pkt.payload.c_str());
+        ctx.payload_len = pkt.payload.size();
         
         // PlayerManager 설정
         if (m_server) {
@@ -69,12 +81,7 @@ bool ChannelSession::OnBytes(const uint8_t* data, size_t len)
         
         handler->Execute(&ctx);
     }
-
-
-    return true;
 }
-
-
 // 지금 방식은 클라이언트 하나에 해당해서 Send를 하는 방식인데 Player 클래스를 vector로 가지고 있고
 // 같은 맵, 시야 범위 등등 환경요소들을 확인해서 보내는 방식으로 변경 필요
 
@@ -125,3 +132,5 @@ int ChannelSession::SendNok(int type, const std::string &errMsg)
     send(m_fd, packet.c_str(), packet.size(), 0);
     return 0;
 }
+
+

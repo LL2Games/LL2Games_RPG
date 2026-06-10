@@ -78,7 +78,7 @@ void PlayerPacketSender::SendPlayerSkillList(Player* player)
     
     
     std::vector<std::string> payload;
-
+    payload.push_back(std::to_string(sizeof(playerSkillList)));
     // 나중에 스탯 정보에 공격력도 들어가야함
     for(auto skill : playerSkillList)
     {
@@ -97,7 +97,6 @@ void PlayerPacketSender::SendPlayersMove(Player* sender, Vec2 pos, float speed, 
     std::vector<std::string> payload;
 	payload.reserve(4);
 	payload.push_back(std::to_string(sender->GetId()));
-
 	payload.push_back(std::to_string(pos.xPos));
 	payload.push_back(std::to_string(pos.yPos));
 	payload.push_back(std::to_string(speed));

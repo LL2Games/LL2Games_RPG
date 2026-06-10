@@ -139,9 +139,6 @@ std::vector<Monster*> CombatService::ComputeHitMonsters(Player* attacker, std::v
     Vec2 attackerPos = attacker->GetPos();
 
     canHitMonsters.reserve(monsters.size());
-    K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] attackerPos X : [%f] , Y : [%f].\n", __FILE__, __FUNCTION__, __LINE__,attackerPos.xPos,attackerPos.yPos);
-    K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] attackDir [%d] \n", __FILE__, __FUNCTION__, __LINE__,attack_dir);
-    K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] monster count [%d] \n", __FILE__, __FUNCTION__, __LINE__,monsters.size());
 
     //gunoo22 260226 몬스터 체력 안다는 이슈 -> 레퍼런스로 안받음
     for (Monster& m : monsters) 
@@ -149,11 +146,7 @@ std::vector<Monster*> CombatService::ComputeHitMonsters(Player* attacker, std::v
         if(!m.IsAlive()) continue;
         bool isHit = false;
         const Collider2D& monsterCollider = m.GetCollider();
-        K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] monster Name [%ss] \n", __FILE__, __FUNCTION__, __LINE__,m.GetName());
-        K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] mosterInstance [%d] \n", __FILE__, __FUNCTION__, __LINE__,m.GetInstanceId());
-        K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] monsterPos X [%f], Y [%f] \n", __FILE__, __FUNCTION__, __LINE__,m.GetPos().xPos, m.GetPos().yPos);
-        
-
+  
         if (skillDef.hit.shape == HitShape::BOX)
         {
             Collider2D attackCollider = Collision::MakeBoxAttackCollider(skillDef, attack_dir);

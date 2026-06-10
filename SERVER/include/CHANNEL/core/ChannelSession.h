@@ -15,6 +15,7 @@ public:
 
     int OnPacket(Packet packet);
     bool OnBytes(const uint8_t* data, size_t len);
+   
 
     int Send(int type, const std::vector<std::string>& payload);
     //int Send(int type, std::vector<std::string> payload={});
@@ -27,7 +28,7 @@ public:
 
     void SetPlayerManager(PlayerManager* playerManager) {m_playerManager = playerManager;}
     int GetFd() const {return m_fd;}
-
+    void Dispatch(const ParsedPacket& pkt);
 private:
    
 private:

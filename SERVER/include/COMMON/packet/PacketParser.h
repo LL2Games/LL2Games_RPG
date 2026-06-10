@@ -8,6 +8,7 @@
 class PacketParser {
 public:
     static std::optional<ParsedPacket> Parse(std::vector<char>& buf);
+    static ParseResult TryParse(std::vector<char>& buf);
     static bool ParseLengthPrefixedString( const char *payload, const size_t payload_len, size_t &offset, std::string &outValue, std::string &errMsg);
     static bool ParseNextIntField(const char* data, size_t payloadSize, size_t& offset, int& outValue, std::string& errMsg);
     static bool ParseNextFloatField(const char* data, size_t payloadSize, size_t& offset, float& outValue, std::string& errMsg);
