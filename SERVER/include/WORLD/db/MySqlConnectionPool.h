@@ -10,6 +10,7 @@ public:
     static MySqlConnectionPool *GetInstance();
 
     int Init(const int pool_size);
+
     MYSQL*  GetConnection();
     int ReleaseConnection(MYSQL*);
 private:

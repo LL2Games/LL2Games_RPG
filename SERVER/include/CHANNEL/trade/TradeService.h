@@ -43,6 +43,13 @@ private:
     int DecreaseItem(MYSQL *conn, const std::string &char_id, const TradeItem &item);
     int IncreaseItem(MYSQL *conn, const std::string &char_id, TradeItem &item);
 
+    int SelectInventoryItemSlot(MYSQL *conn, const std::string &char_id, TradeItem &item, bool& hasItem);
+    int UpdateInventoryItemCountPlus(MYSQL* conn, long long charId, int itemId, int amount);
+    int updateInventoryItemCountMinus(MYSQL* conn, long long charId, int itemId, int amount);
+    int SelectNextInventorySlotPos(MYSQL* conn,long long charId,int inventoryType,int& slotPos);
+    int InsertInventoryItem(MYSQL* conn,long long charId,int inventoryType,int slotPos,int itemId,int amount);
+    int DeleteInventoryItem(MYSQL* conn,long long charId,int itemId);
+
 public:
     TradeService();
     ~TradeService();

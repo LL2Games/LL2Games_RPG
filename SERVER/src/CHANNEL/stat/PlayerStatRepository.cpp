@@ -19,37 +19,79 @@ PlayerStatRepository::~PlayerStatRepository()
 int PlayerStatRepository::Update(const std::string &charId, const std::string &statType, std::string &errMsg)
 {
     MYSQL *conn = m_mySql->GetConnection();
-    std::string query;
-    my_ulonglong affected;
-    int result = 0;
     if (!conn)
     {
-        K_slog_trace(K_SLOG_ERROR, "[%s][%d] MYSQL GetConnection failed", __FILE__, __LINE__);
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] MYSQL GetConnection failed Error", __FILE__, __FUNCTION__, __LINE__);
         errMsg = "MYSQL GetConnection failed";
         return -1;
     }
-    query = "UPDATE character_stat SET " + statType + " = " + statType + " + 1 WHERE char_id = " + charId;
-    result = mysql_query(conn, query.c_str());
-    if (result != 0)
+
+    MYSQL_STMT* stmt = mysql_stmt_init(conn);
+    if(!stmt)
     {
-        K_slog_trace(K_SLOG_ERROR, "[%s][%d]UPDATE FAIL: %s", __FILE__, __LINE__, mysql_error(conn));
-        errMsg = std::string("UPDATE FAIL: ") + mysql_error(conn);
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_init failed Error [%s] ", __FILE__, __FUNCTION__, __LINE__, mysql_error(conn));
+        errMsg = mysql_error(conn);
         return -1;
     }
 
-    affected = mysql_affected_rows(conn);
-    if (affected == (my_ulonglong)-1)
+    std::string column;
+
+    if (statType == "str")
+        column = "str";
+    else if (statType == "dex")
+        column = "dex";
+    else if (statType == "int")
+        column = "int";
+    else if (statType == "luk")
+        column = "luk";
+    else
     {
-        K_slog_trace(K_SLOG_ERROR, "[%s][%d]affected_rows ERROR: %s", __FILE__, __LINE__, mysql_error(conn));
-        errMsg = std::string("affected_rows ERROR: ") + mysql_error(conn);
+        errMsg = "invalid statType";
+        m_mySql->ReleaseConnection(conn);
         return -1;
     }
-    else if (affected == 0)
+
+    std::string query = "UPDATE character_stat SET " + column + " = " + column + " + 1 WHERE char_id = ?";
+    
+    if(mysql_stmt_prepare(stmt, query.c_str(), query.size()) != 0)
     {
-         // char 없음 or 이미 같은 값
-        K_slog_trace(K_SLOG_TRACE, "[%s][%d]No row updated (char_id=%d)", __FILE__, __LINE__, charId);
-        return 0;
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_prepare Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_errno(stmt));
+        errMsg = mysql_stmt_errno(stmt);
+        mysql_stmt_close(stmt);
+        return -1;
     }
+
+    long long char_id = std::atoll(charId.c_str());
+    MYSQL_BIND param[1]{};
+
+    param[1].buffer_type = MYSQL_TYPE_LONGLONG;
+    param[1].buffer = &char_id;
+
+    if(mysql_stmt_bind_param(stmt, param) != 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_bind_param Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_errno(stmt));
+        errMsg = mysql_stmt_errno(stmt);
+        mysql_stmt_close(stmt);
+        return -1;
+    }
+
+    if(mysql_stmt_execute(stmt) !=0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_execute Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_errno(stmt));
+        errMsg = mysql_stmt_errno(stmt);
+        mysql_stmt_close(stmt);
+        return -1;
+    }
+
+    my_ulonglong affectedRows = mysql_stmt_affected_rows(stmt);
+
+    if (affectedRows == 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] update affected 0 rows [%s]", __FILE__ ,__FUNCTION__, __LINE__);
+        mysql_stmt_close(stmt);
+        return -1;
+    }
+    mysql_stmt_close(stmt);
 
     return 0;
 }

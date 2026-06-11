@@ -42,12 +42,12 @@ int WorldServer::Init(const int port)
     if (bind(m_listen_fd, (struct sockaddr *)&addr, sizeof(addr)) < 0)
     {
         K_slog_trace(K_SLOG_ERROR, "[%s] bind [port=%d]", DAEMON_NAME, port);
-        return false;
+        return -1;
     }
     if (listen(m_listen_fd, 10) < 0)
     {
         K_slog_trace(K_SLOG_ERROR, "[%s] listen", DAEMON_NAME);
-        return false;
+        return -1;
     }
 
     K_slog_trace(K_SLOG_TRACE, "[%s] Listening on %d", DAEMON_NAME, port);

@@ -3,6 +3,7 @@
 #include "RedisClient.h"
 #include "MySqlConnectionPool.h"
 #include "RedisClient.h"
+#include <string.h>
 
 CharacterService::CharacterService()
 {
@@ -15,9 +16,12 @@ CharacterService::~CharacterService()
 }
 
 std::vector<std::string> CharacterService::GetCharacterList(const std::string& account_id)
-{
+{  
+    long long charId =0;
+    std::string name;
+    int level = 0;
+    int job = 0;
     std::vector<std::string> char_list;
-    std::string query;
     MYSQL* conn = nullptr;
     RedisClient* redis = RedisClient::GetInstance();
 
@@ -45,41 +49,123 @@ std::vector<std::string> CharacterService::GetCharacterList(const std::string& a
     if (!conn)
     {
         K_slog_trace(K_SLOG_ERROR, "[%s][%d] MYSQL GetConnection failed", __FUNCTION__, __LINE__);
-        goto err; 
+        return char_list;
     }
 
-    query = std::string("SELECT char_id, name, level, job FROM `character` WHERE account_id ='" + account_id + "'");
-    K_slog_trace(K_SLOG_DEBUG, "[%s][%d] query[%s]", __FUNCTION__, __LINE__, query.c_str());
-
-    if (mysql_query(conn, query.c_str()) == 0)
+    MYSQL_STMT* stmt = mysql_stmt_init(conn);
+    if(!stmt)
     {
-        MYSQL_RES* res = mysql_store_result(conn);
-        MYSQL_ROW row;
-
-        while ((row = mysql_fetch_row(res)))
-        {
-            std::string char_id = row[0];
-            std::string summary = char_id + "$" + std::string(row[1]) + "$" + row[2] + "$" + row[3];
-            char_list.push_back(summary);
-
-            //Redis캐시 적재
-            if (redis != nullptr)
-            {
-                redis->HSet("charlist:" + account_id, char_id, summary, E_TTL_CHARLIST); 
-            }
-        }
-        mysql_free_result(res);
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_prepare Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_error(conn));
+        return char_list;
     }
 
-    m_db->ReleaseConnection(conn);
+    const char* query = "SELECT char_id, name, level, job FROM `character` WHERE account_id = ?";
 
+    if(mysql_stmt_prepare(stmt, query, strlen(query)) != 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_prepare Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_error(stmt));
+        mysql_stmt_close(stmt);
+        return char_list;
+    }
+
+    unsigned long accountIdLength =
+    static_cast<unsigned long>(account_id.size());
+
+    MYSQL_BIND param[1]{};
+
+    param[0].buffer_type = MYSQL_TYPE_STRING;
+    param[0].buffer = const_cast<char*>(account_id.c_str());
+    param[0].buffer_length = accountIdLength;
+    param[0].length = &accountIdLength;
+
+    if(mysql_stmt_bind_param(stmt, param) != 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_bind_param Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_error(stmt));
+        mysql_stmt_close(stmt);
+        return char_list;
+    }
+
+    if(mysql_stmt_execute(stmt) != 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_execute Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_error(stmt));
+        mysql_stmt_close(stmt);
+        return char_list;
+    }
+
+    char nameBuffer[64]{};
+    unsigned long nameLength = 0;
+    bool nameIsNull = false;
+    bool nameError = false;
+
+    MYSQL_BIND resultBind[4];
+
+    resultBind[0].buffer_type = MYSQL_TYPE_LONGLONG;
+    resultBind[0].buffer = &charId;
+  
+    resultBind[1].buffer_type = MYSQL_TYPE_STRING;
+    resultBind[1].buffer = nameBuffer;
+    resultBind[1].buffer_length = sizeof(nameBuffer);
+    resultBind[1].length = &nameLength;
+    resultBind[1].is_null = &nameIsNull;
+    resultBind[1].error = &nameError;
+
+    resultBind[2].buffer_type = MYSQL_TYPE_LONG;
+    resultBind[2].buffer = &level;
+
+    resultBind[3].buffer_type = MYSQL_TYPE_LONG;
+    resultBind[3].buffer = &job;
+
+    if(mysql_stmt_bind_result(stmt, resultBind) !=0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_bind_result Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_error(stmt));
+        mysql_stmt_close(stmt);
+        return char_list;
+    }
+
+    if(mysql_stmt_store_result(stmt) != 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_bind_result Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_error(stmt));
+        mysql_stmt_close(stmt);
+        return char_list; 
+    }
+
+    while (true)
+    {
+        int fetchResult = mysql_stmt_fetch(stmt);
+
+        if (fetchResult == MYSQL_NO_DATA)
+        {
+            break;
+        }
+
+        if (fetchResult != 0 && fetchResult != MYSQL_DATA_TRUNCATED)
+        {
+            break;
+        }
+
+        if (nameIsNull)
+            name = "";
+        else
+            name.assign(nameBuffer, nameLength);
+
+        std::string charIdStr = std::to_string(charId);
+        std::string summary = charIdStr + "$" + name + "$" + std::to_string(level) + "$" + std::to_string(job);
+        char_list.push_back(summary);
+
+         //Redis캐시 적재
+        if (redis != nullptr)
+        {
+            redis->HSet("charlist:" + account_id, std::to_string(charId), summary, E_TTL_CHARLIST); 
+        }
+    }
+    
+    mysql_stmt_close(stmt);
+    m_db->ReleaseConnection(conn);
     //test
     for (auto list: char_list)
     {
         K_slog_trace(K_SLOG_DEBUG, "[%s][%d] list[%s]", __FUNCTION__, __LINE__, list.c_str());
     }
 
-    //3.응답값 리턴
-err:
     return char_list;
 }

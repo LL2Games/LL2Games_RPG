@@ -7,6 +7,8 @@
 
 std::unordered_map<int, TradeSession *> TradeService::m_sessions;
 
+
+
 TradeService::TradeService()
 {
     m_mySql = MySqlConnectionPool::GetInstance();
@@ -254,7 +256,6 @@ err:
     return 0;
 }
 
-
 int TradeService::Cancel(Player *requester, std::string &errMsg)
 {
     TradeSession *session = nullptr;
@@ -312,7 +313,6 @@ void TradeService::DeleteTradeSession(TradeSession *session)
 
     delete session;
 }
-
 //당장 불필요
 TradeSession *TradeService::GetTradeSession(Player *player)
 {
@@ -406,27 +406,18 @@ const std::vector<TradeItem>& TradeService::GetTargetItems(Player *player)
 
 int TradeService::DecreaseItem(MYSQL *conn, const std::string &char_id, const TradeItem &item)
 {
-    std::string query;
-    int result = 0;
-
-    //UPDATE (수량 감소)
-    query = "UPDATE character_inventory SET item_count = item_count - " + std::to_string(item.amount) + " WHERE char_id = " + char_id + " AND item_id = " + item.id;
-
-    K_slog_trace(K_SLOG_DEBUG, "[%s][%d] query: %s", __FUNCTION__, __LINE__, query.c_str());
-    result = mysql_query(conn, query.c_str());
-    if (result != 0)
+    long long charId = std::stoll(char_id);
+    int itemId = std::stoi(item.id);
+    
+    if(updateInventoryItemCountMinus(conn,charId,itemId,item.amount) !=0)
     {
-        K_slog_trace(K_SLOG_ERROR, "[%s][%d] UPDATE FAIL: %s", __FUNCTION__, __LINE__, mysql_error(conn));
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] updateInventoryItemCountMinus Fail", __FILE__, __FUNCTION__, __LINE__);
         return -1;
     }
 
-    //DELETE(수량 0 일경우)
-    query = "DELETE FROM character_inventory WHERE char_id = " + char_id + " AND item_id = " + item.id + " AND item_count <= 0";
-    K_slog_trace(K_SLOG_DEBUG, "[%s][%d] query: %s", __FUNCTION__, __LINE__, query.c_str());
-    result = mysql_query(conn, query.c_str());
-    if (result != 0)
+    if(DeleteInventoryItem(conn, charId, itemId) != 0)
     {
-        K_slog_trace(K_SLOG_ERROR, "[%s][%d] DELETE FAIL: %s", __FUNCTION__, __LINE__, mysql_error(conn));
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] DeleteInventoryItem Fail", __FILE__, __FUNCTION__, __LINE__);
         return -1;
     }
 
@@ -435,89 +426,430 @@ int TradeService::DecreaseItem(MYSQL *conn, const std::string &char_id, const Tr
 
 int TradeService::IncreaseItem(MYSQL *conn, const std::string &char_id, TradeItem &item)
 {
-    std::string query;
-    int result = 0;
-    MYSQL_RES *res = nullptr;
-    MYSQL_ROW row;
     bool hasItem = false;
+    long long charId = std::stoll(char_id);
+    int inventoryType = std::stoi(item.type);
+    int itemId = std::stoi(item.id);
     int slotPos = 0;
-
-    // 아이템 보유 여부 확인
-    query = "SELECT slot_pos FROM character_inventory WHERE char_id = " + char_id + " AND item_id = " + item.id + " LIMIT 1";
-
-    K_slog_trace(K_SLOG_DEBUG, "[%s][%d] query: %s", __FUNCTION__, __LINE__, query.c_str());
-    result = mysql_query(conn, query.c_str());
-    if (result != 0)
+    if(SelectInventoryItemSlot(conn,char_id,item, hasItem) != 0)
     {
-        K_slog_trace(K_SLOG_ERROR, "[%s][%d] SELECT FAIL: %s", __FUNCTION__, __LINE__, mysql_error(conn));
+        K_slog_trace(K_SLOG_DEBUG, "[%s : %s : %d] SelectInventoryItemSlot Error", __FILE__ ,__FUNCTION__, __LINE__);
         return -1;
     }
 
-    res = mysql_store_result(conn);
-    if (res == nullptr)
-    {
-        K_slog_trace(K_SLOG_ERROR, "[%s][%d] SELECT RESULT FAIL: %s", __FUNCTION__, __LINE__, mysql_error(conn));
-        return -1;
-    }
-
-    hasItem = (mysql_fetch_row(res) != nullptr);
-    mysql_free_result(res);
-    res = nullptr;
 
     if (hasItem)
     {
-        // UPDATE (이미 있으면 수량 증가)
-        query = "UPDATE character_inventory SET item_count = item_count + " + std::to_string(item.amount) + " WHERE char_id = " + char_id + " AND item_id = " + item.id;
-
-        K_slog_trace(K_SLOG_DEBUG, "[%s][%d] query: %s", __FUNCTION__, __LINE__, query.c_str());
-        result = mysql_query(conn, query.c_str());
-        if (result != 0)
+        int itemId = std::stoi(item.id);
+        if(UpdateInventoryItemCountPlus(conn, charId, itemId, item.amount) != 0)
         {
-            K_slog_trace(K_SLOG_ERROR, "[%s][%d] UPDATE FAIL: %s", __FUNCTION__, __LINE__, mysql_error(conn));
-            return -1;
+            K_slog_trace(K_SLOG_DEBUG, "[%s : %s : %d] UpdateInventoryItemCount fail", __FILE__ ,__FUNCTION__, __LINE__);
+            return -1;    
         }
-
-        return 0;
     }
 
-    // INSERT (없으면 다음 슬롯에 추가)
-    // slotPos 구하기 비어있는 가장 빠른 slot_pos
-    query = "SELECT COALESCE(MAX(slot_pos) + 1, 0) FROM character_inventory WHERE char_id = " + char_id + " AND inventory_type = " + item.type;
-
-    K_slog_trace(K_SLOG_DEBUG, "[%s][%d] query: %s", __FUNCTION__, __LINE__, query.c_str());
-    result = mysql_query(conn, query.c_str());
-    if (result != 0)
+    if(SelectNextInventorySlotPos(conn, charId, inventoryType, slotPos) != 0)
     {
-        K_slog_trace(K_SLOG_ERROR, "[%s][%d] SELECT SLOT FAIL: %s", __FUNCTION__, __LINE__, mysql_error(conn));
+        K_slog_trace(K_SLOG_DEBUG, "[%s : %s : %d] SelectNextInventorySlotPos fail", __FILE__ ,__FUNCTION__, __LINE__);
         return -1;
     }
 
-    res = mysql_store_result(conn);
-    if (res == nullptr)
+    if(InsertInventoryItem(conn, charId, inventoryType, slotPos, itemId, item.amount))
     {
-        K_slog_trace(K_SLOG_ERROR, "[%s][%d] SELECT SLOT RESULT FAIL: %s", __FUNCTION__, __LINE__, mysql_error(conn));
-        return -1;
+        K_slog_trace(K_SLOG_DEBUG, "[%s : %s : %d] InsertInventoryItem fail", __FILE__ ,__FUNCTION__, __LINE__);
+        return -1; 
     }
-
-    row = mysql_fetch_row(res);
-    if (row != nullptr && row[0] != nullptr)
-        slotPos = std::atoi(row[0]);
-
-    mysql_free_result(res);
-    res = nullptr;
-
-    query = "INSERT INTO character_inventory (char_id, inventory_type, slot_pos, item_id, item_count) VALUES (" + char_id + ", " +  item.type + ", " + std::to_string(slotPos) + ", " + item.id + ", " + std::to_string(item.amount) + ")";
-
-    K_slog_trace(K_SLOG_DEBUG, "[%s][%d] query: %s", __FUNCTION__, __LINE__, query.c_str());
-    result = mysql_query(conn, query.c_str());
-    if (result != 0)
-    {
-        K_slog_trace(K_SLOG_ERROR, "[%s][%d] INSERT FAIL: %s", __FUNCTION__, __LINE__, mysql_error(conn));
-        return -1;
-    }
-
     //내 슬롯 index 업데이트
     item.slot_index = slotPos;
 
+    return 0;
+}
+
+int TradeService::SelectInventoryItemSlot(MYSQL *conn, const std::string &char_id, TradeItem &item, bool& hasItem)
+{
+     int slotPos = 0;
+    MYSQL_STMT* stmt = mysql_stmt_init(conn);
+    if(!stmt)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] SELECT FAIL: %s", __FILE__, __FUNCTION__, __LINE__, mysql_error(conn));
+        return -1;
+    }
+    // 아이템 보유 여부 확인
+    const char* query = "SELECT slot_pos FROM charactor_inventory WHERE char_id = ? AND item_id = ? LIMIT 1"; 
+
+    if(mysql_stmt_prepare(stmt, query, strlen(query)) != 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_prepare ERROR [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_error(conn));
+        mysql_stmt_close(stmt);
+        return -1;
+    }
+
+    MYSQL_BIND param[2]{};
+    
+    long long charId = std::stoll(char_id);
+
+    param[0].buffer_type = MYSQL_TYPE_LONGLONG;
+    param[0].buffer = &charId;
+    
+    param[1].buffer_type = MYSQL_TYPE_LONG;
+    param[1].buffer =&item.id;
+    
+    if(mysql_stmt_bind_param(stmt, param) != 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d ] mysql_stmt_bind_param ERROR [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_error(stmt));
+        mysql_stmt_close(stmt);
+        return -1;
+    }
+
+    if(mysql_stmt_execute(stmt) != 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d ] mysql_stmt_execute ERROR [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_error(stmt));
+        mysql_stmt_close(stmt);
+        return -1;
+    }
+
+    MYSQL_BIND resultBind[1]{};
+
+    resultBind[0].buffer_type = MYSQL_TYPE_LONG;
+    resultBind[0].buffer = &slotPos;
+
+    if(mysql_stmt_bind_result(stmt, resultBind) !=0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d ] mysql_stmt_bind_result ERROR [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_error(stmt));
+        mysql_stmt_close(stmt);
+        return -1;
+    }
+
+    if(mysql_stmt_store_result(stmt) !=0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d ] mysql_stmt_store_result ERROR [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_error(stmt));
+        mysql_stmt_close(stmt);
+        return -1;
+    }
+
+    int fetchResult = mysql_stmt_fetch(stmt);
+    if (fetchResult == 0)
+    {
+        hasItem = true; // row 있음
+        return 0;
+    }
+    else if (fetchResult == MYSQL_NO_DATA)
+    {
+        hasItem = false; // row 없음
+        return -1;
+    }
+    else if (fetchResult == MYSQL_DATA_TRUNCATED)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d ] mysql_stmt_fetch DATA TRUNCATED  [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_error(stmt));
+        hasItem = true; // 존재 여부만 보면 true
+        return 0;
+    }
+    else
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d ] mysql_stmt_fetch ERROR [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_error(stmt));
+        mysql_stmt_close(stmt);
+        return -1;
+    }
+}
+
+int TradeService::UpdateInventoryItemCountPlus(MYSQL* conn, long long charId, int itemId, int amount)
+{
+    MYSQL_STMT* stmt = mysql_stmt_init(conn);
+    if(!stmt)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_init ERROR [%s]", __FILE__ ,__FUNCTION__, __LINE__, mysql_error(conn));
+        return -1;
+    }
+
+    const char* query = "UPDATE character_inventory SET item_count = item_count + ? WHERE char_id = ? AND item_id = ? ";
+
+    if(mysql_stmt_prepare(stmt, query, strlen(query)) != 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_prepare ERROR [%s]", __FILE__ ,__FUNCTION__, __LINE__, mysql_error(conn));
+        mysql_stmt_close(stmt);
+        return -1;
+    }
+
+    MYSQL_BIND param[3]{};
+
+    param[0].buffer_type = MYSQL_TYPE_LONG;
+    param[0].buffer = &amount;
+
+    param[1].buffer_type = MYSQL_TYPE_LONGLONG;
+    param[1].buffer = &charId;
+
+    param[2].buffer_type = MYSQL_TYPE_LONG;
+    param[2].buffer = &itemId;
+
+    if(mysql_stmt_bind_param(stmt, param) != 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_bind_param ERROR [%s]", __FILE__ ,__FUNCTION__, __LINE__, mysql_stmt_error(stmt));
+        mysql_stmt_close(stmt);
+        return -1;
+    }
+
+    if(mysql_stmt_execute(stmt) != 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_execute ERROR [%s]", __FILE__ ,__FUNCTION__, __LINE__, mysql_stmt_error(stmt));
+        mysql_stmt_close(stmt);
+        return -1;
+    }
+    my_ulonglong affectedRows = mysql_stmt_affected_rows(stmt);
+
+    if (affectedRows == 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] update affected 0 rows", __FILE__ ,__FUNCTION__, __LINE__);
+        mysql_stmt_close(stmt);
+        return -1;
+    }
+    mysql_stmt_close(stmt);
+    return 0;
+
+}
+
+int TradeService::updateInventoryItemCountMinus(MYSQL *conn, long long charId, int itemId, int amount)
+{
+    MYSQL_STMT* stmt = mysql_stmt_init(conn);
+
+    if(!stmt)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_init Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_error(conn));
+        return -1;
+    }
+
+    const char* query = "UPDATE character_inventory SET item_count = item_count - ? WHERE char_id = ? AND item_id = ? AND item_count >= ?";
+
+    if(mysql_stmt_prepare(stmt, query, strlen(query)) != 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_prepare Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_error(stmt));
+        mysql_stmt_close(stmt);
+        return -1;    
+    }
+
+    MYSQL_BIND param[4]{};
+
+    param[0].buffer_type = MYSQL_TYPE_LONG;
+    param[0].buffer = &amount;
+
+    param[1].buffer_type = MYSQL_TYPE_LONGLONG;
+    param[1].buffer = &charId;
+
+    param[2].buffer_type = MYSQL_TYPE_LONG;
+    param[2].buffer = &itemId;
+
+    param[3].buffer_type = MYSQL_TYPE_LONG;
+    param[3].buffer = &amount;
+
+    if(mysql_stmt_bind_param(stmt, param) != 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_bind_param Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_error(stmt));
+        mysql_stmt_close(stmt);
+        return -1;
+    }
+
+    if(mysql_stmt_execute(stmt) != 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_execute Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_error(stmt));
+        mysql_stmt_close(stmt);
+        return -1;
+    }
+
+    my_ulonglong affectedRows = mysql_stmt_affected_rows(stmt);
+
+    if (affectedRows == 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] update affected 0 rows", __FILE__ ,__FUNCTION__, __LINE__);
+        mysql_stmt_close(stmt);
+        return -1;
+    }
+    mysql_stmt_close(stmt);
+
+    return 0;
+}
+
+int TradeService::SelectNextInventorySlotPos(MYSQL* conn,long long charId,int inventoryType,int& slotPos)
+{
+    MYSQL_STMT* stmt = mysql_stmt_init(conn);
+    if(!stmt)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_init Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_error(conn));
+        return -1;
+    }
+    //query = "SELECT COALESCE(MAX(slot_pos) + 1, 0) FROM character_inventory WHERE char_id = " + char_id + " AND inventory_type = " + item.type;
+    const char* query = "SELECT COALESCE(MAX(slot_pos)) + 1, 0) FROM character_inventroy WHERE char_id = ? AND inventory_type = ?";
+
+    if(mysql_stmt_prepare(stmt, query, strlen(query))!=0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_init Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_errno(stmt));
+        return -1;
+    }
+
+    MYSQL_BIND param[2]{};
+
+    param[0].buffer_type = MYSQL_TYPE_LONGLONG;
+    param[0].buffer = &charId;
+
+    param[1].buffer_type = MYSQL_TYPE_LONG;
+    param[1].buffer = &inventoryType;
+
+    if(mysql_stmt_bind_param(stmt, param) != 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_bind_param Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_errno(stmt));
+        mysql_stmt_close(stmt);
+        return -1;
+    }
+    
+    if(mysql_stmt_execute(stmt) !=0 )
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_execute Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_errno(stmt));
+        mysql_stmt_close(stmt);
+        return -1;
+    }
+
+
+    MYSQL_BIND resultBind[1];
+    
+    resultBind[0].buffer_type = MYSQL_TYPE_LONG;
+    resultBind[0].buffer = &slotPos;
+
+    if(mysql_stmt_bind_result(stmt, resultBind) !=0 )
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_bind_result Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_errno(stmt));
+        mysql_stmt_close(stmt);
+        return -1;
+    }
+
+    if(mysql_stmt_store_result(stmt) !=0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_bind_result Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_errno(stmt));
+        mysql_stmt_close(stmt);
+        return -1;
+    }
+
+    int fetchResult = mysql_stmt_fetch(stmt);
+    if(fetchResult == MYSQL_NO_DATA)
+    {
+        mysql_stmt_free_result(stmt);
+        mysql_stmt_close(stmt);
+        return false;
+    }
+
+    if(fetchResult != 0 && fetchResult != MYSQL_DATA_TRUNCATED)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_fetch ERROR [%s] Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_errno(stmt));
+        mysql_stmt_free_result(stmt);
+        mysql_stmt_close(stmt);
+        return false;
+    }
+
+    mysql_stmt_free_result(stmt);
+    mysql_stmt_close(stmt);
+    return 0;
+}
+
+int TradeService::InsertInventoryItem(MYSQL* conn,long long charId,int inventoryType,int slotPos,int itemId,int amount)
+{
+    MYSQL_STMT* stmt = mysql_stmt_init(conn);
+    if(!stmt)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_init Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_error(conn));
+        return -1;
+    }
+
+    const char* query = "INSERT INTO character_inventory (char_id, inventory_type, slot_pos, item_id, item_count) VALUES (?, ?, ?, ?, ?)";
+    
+    if(mysql_stmt_prepare(stmt, query, strlen(query)) != 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_prepare Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_errno(stmt));
+        mysql_stmt_close(stmt);
+        return -1;
+    }
+
+    MYSQL_BIND param[5]{};
+
+    param[0].buffer_type = MYSQL_TYPE_LONGLONG;
+    param[0].buffer = &charId;
+
+    param[1].buffer_type = MYSQL_TYPE_LONG;
+    param[1].buffer = &inventoryType;
+
+    param[2].buffer_type = MYSQL_TYPE_LONG;
+    param[2].buffer = &slotPos;
+
+    param[3].buffer_type = MYSQL_TYPE_LONG;
+    param[3].buffer = &itemId;
+
+    param[4].buffer_type = MYSQL_TYPE_LONG;
+    param[4].buffer = &amount;
+
+    if(mysql_stmt_bind_param(stmt, param) != 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_bind_param Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_errno(stmt));
+        mysql_stmt_close(stmt);
+        return -1;
+    }
+
+    if(mysql_stmt_execute(stmt) != 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_execute Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_errno(stmt));
+        mysql_stmt_close(stmt);
+        return -1;
+    }
+
+    mysql_stmt_close(stmt);
+    return 0;
+}
+
+int TradeService::DeleteInventoryItem(MYSQL *conn, long long charId, int itemId)
+{
+    MYSQL_STMT* stmt = mysql_stmt_init(conn);
+
+    if(!stmt)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_init Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_error(conn));
+        return -1;
+    }
+
+    const char* query = "DELETE FROM character_inventory WHERE char_id = ? AND item_id = ? AND item_count <= 0";
+
+    if(mysql_stmt_prepare(stmt, query, strlen(query)) != 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_prepare Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_error(stmt));
+        mysql_stmt_close(stmt);
+        return -1;
+    }
+    
+    MYSQL_BIND param[2];
+
+    param[0].buffer_type = MYSQL_TYPE_LONGLONG;
+    param[0].buffer = &charId;
+
+    param[1].buffer_type = MYSQL_TYPE_LONG;
+    param[1].buffer = &itemId;
+
+
+    if(mysql_stmt_bind_param(stmt, param) != 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_bind_param Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_error(stmt));
+        mysql_stmt_close(stmt);
+        return -1;
+    }
+
+    if(mysql_stmt_execute(stmt) != 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_execute Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_error(stmt));
+        mysql_stmt_close(stmt);
+        return -1;
+    }
+
+    my_ulonglong affectedRows = mysql_stmt_affected_rows(stmt);
+
+    if (affectedRows == 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] update affected 0 rows", __FILE__ ,__FUNCTION__, __LINE__);
+        mysql_stmt_close(stmt);
+        return -1;
+    }
+    mysql_stmt_close(stmt);
     return 0;
 }

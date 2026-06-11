@@ -13,6 +13,16 @@ BaseDaemon::BaseDaemon(const std::string &name, const std::string& path, const i
 {
 }
 
+BaseDaemon::BaseDaemon(const std::string& name, const std::string& path, const std::string& configPath)
+    : m_name(name), m_path(path), m_configPath(configPath)
+{
+}
+
+BaseDaemon::BaseDaemon(const std::string &name, const std::string& path, const std::string& configPath, const int flag)
+    : m_name(name), m_path(path), m_configPath(configPath), m_flag(flag)
+{
+}
+
 pid_t BaseDaemon::Run()
 {
     int fd[2];
@@ -58,7 +68,7 @@ pid_t BaseDaemon::Run()
         printf("daemon Start[%s] pid=%d\n", m_name.c_str(), (int)m_pid);
 
         //./chatD ./chatD
-        execl(GetExecPath(), GetExecPath(), NULL);
+        execl(GetExecPath(), GetExecPath(), "--config", m_configPath.c_str(), static_cast<char*>(nullptr));
         perror("execl");
         _exit(127);
     }
@@ -130,7 +140,7 @@ pid_t BaseDaemon::Run(const int flag)
         K_slog_trace(K_SLOG_DEBUG, "[%s][%d]execl %s -[%s]", __FILE__, __LINE__, GetExecPath(), sflag.c_str());
 
         //./chatD ./chatD ./1
-        execl(GetExecPath(), GetExecPath(), sflag.c_str(), NULL);
+        execl(GetExecPath(), GetExecPath(), sflag.c_str(), "--config", m_configPath.c_str(), static_cast<char*>(nullptr));
         perror("execl");
         _exit(127);
     }

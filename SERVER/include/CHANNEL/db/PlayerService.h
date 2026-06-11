@@ -24,6 +24,9 @@ public:
     static bool UpdatePlayerPosition(int playerId, float x, float y);
 
 private:
+    static bool LoadPlayerInfo(int characterId, PlayerInitData& playerInit);
+    static bool LoadPlayerStat(int characterId, AllStat& allStat);
+private:
     static MySqlConnectionPool* m_mySql;
     static RedisClient* m_redis;
     static std::unique_ptr<Player> m_player;

@@ -1,8 +1,15 @@
 #include "LevelManager.h"
 
 LevelManager *LevelManager::m_instance =nullptr;
-MySqlConnectionPool *LevelManager::m_mySql = MySqlConnectionPool::GetInstance();
+MySqlConnectionPool *LevelManager::m_mySql = nullptr;
 RedisClient *LevelManager::m_redis = nullptr;
+
+LevelManager::LevelManager()
+{
+    m_mySql = MySqlConnectionPool::GetInstance();
+    m_redis = RedisClient::GetInstance();
+}
+
 
 LevelManager *LevelManager::GetInstance()
 {
@@ -48,6 +55,9 @@ bool LevelManager::LoadLevelTable()
 
     while ((row = mysql_fetch_row(res)) != nullptr)
     {
+        if (row[0] == nullptr || row[1] == nullptr)
+            continue;
+
         int level = std::atoi(row[0]);
         int64_t needExp = std::atoll(row[1]);
 

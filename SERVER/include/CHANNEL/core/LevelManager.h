@@ -10,7 +10,7 @@
 class LevelManager
 {
 public:
-    LevelManager(){};
+    LevelManager();
     ~LevelManager(){};
 
     bool Init();

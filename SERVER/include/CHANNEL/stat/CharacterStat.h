@@ -31,6 +31,17 @@ struct ExpStat
     int64_t need_exp;
 };
 
+struct AllStat
+{
+    BaseStat baseStat{};
+    DerivedStat derivedStat{};
+    ExpStat expStat{};
+
+    int curHp;
+    int curMp;
+    int remainAp;
+};
+
 struct MainSubStat
 {
     e_BaseStat main;
