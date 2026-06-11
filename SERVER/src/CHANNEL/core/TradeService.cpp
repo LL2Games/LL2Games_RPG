@@ -446,6 +446,7 @@ int TradeService::IncreaseItem(MYSQL *conn, const std::string &char_id, TradeIte
             K_slog_trace(K_SLOG_DEBUG, "[%s : %s : %d] UpdateInventoryItemCount fail", __FILE__ ,__FUNCTION__, __LINE__);
             return -1;    
         }
+        return 0;
     }
 
     if(SelectNextInventorySlotPos(conn, charId, inventoryType, slotPos) != 0)
@@ -532,17 +533,20 @@ int TradeService::SelectInventoryItemSlot(MYSQL *conn, const std::string &char_i
     if (fetchResult == 0)
     {
         hasItem = true; // row 있음
+        mysql_stmt_close(stmt);
         return 0;
     }
     else if (fetchResult == MYSQL_NO_DATA)
     {
         hasItem = false; // row 없음
+        mysql_stmt_close(stmt);
         return 0;
     }
     else if (fetchResult == MYSQL_DATA_TRUNCATED)
     {
         K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d ] mysql_stmt_fetch DATA TRUNCATED  [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_error(stmt));
         hasItem = true; // 존재 여부만 보면 true
+        mysql_stmt_close(stmt);
         return 0;
     }
     else
@@ -677,11 +681,11 @@ int TradeService::SelectNextInventorySlotPos(MYSQL* conn,long long charId,int in
         return -1;
     }
     //query = "SELECT COALESCE(MAX(slot_pos) + 1, 0) FROM character_inventory WHERE char_id = " + char_id + " AND inventory_type = " + item.type;
-    const char* query = "SELECT COALESCE(MAX(slot_pos) + 1, 0) FROM character_inventroy WHERE char_id = ? AND inventory_type = ?";
+    const char* query = "SELECT COALESCE(MAX(slot_pos) + 1, 0) FROM character_inventory WHERE char_id = ? AND inventory_type = ?";
 
     if(mysql_stmt_prepare(stmt, query, strlen(query))!=0)
     {
-        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_init Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_errno(stmt));
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_init Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_error(stmt));
         return -1;
     }
 
@@ -695,14 +699,14 @@ int TradeService::SelectNextInventorySlotPos(MYSQL* conn,long long charId,int in
 
     if(mysql_stmt_bind_param(stmt, param) != 0)
     {
-        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_bind_param Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_errno(stmt));
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_bind_param Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_error(stmt));
         mysql_stmt_close(stmt);
         return -1;
     }
     
     if(mysql_stmt_execute(stmt) !=0 )
     {
-        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_execute Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_errno(stmt));
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_execute Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_error(stmt));
         mysql_stmt_close(stmt);
         return -1;
     }
@@ -715,14 +719,14 @@ int TradeService::SelectNextInventorySlotPos(MYSQL* conn,long long charId,int in
 
     if(mysql_stmt_bind_result(stmt, resultBind) !=0 )
     {
-        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_bind_result Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_errno(stmt));
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_bind_result Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_error(stmt));
         mysql_stmt_close(stmt);
         return -1;
     }
 
     if(mysql_stmt_store_result(stmt) !=0)
     {
-        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_bind_result Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_errno(stmt));
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_bind_result Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_error(stmt));
         mysql_stmt_close(stmt);
         return -1;
     }
@@ -737,7 +741,7 @@ int TradeService::SelectNextInventorySlotPos(MYSQL* conn,long long charId,int in
 
     if(fetchResult != 0 && fetchResult != MYSQL_DATA_TRUNCATED)
     {
-        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_fetch ERROR [%s] Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_errno(stmt));
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_fetch ERROR [%s] Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_error(stmt));
         mysql_stmt_free_result(stmt);
         mysql_stmt_close(stmt);
         return false;
@@ -761,7 +765,7 @@ int TradeService::InsertInventoryItem(MYSQL* conn,long long charId,int inventory
     
     if(mysql_stmt_prepare(stmt, query, strlen(query)) != 0)
     {
-        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_prepare Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_errno(stmt));
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_prepare Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_error(stmt));
         mysql_stmt_close(stmt);
         return -1;
     }
@@ -785,14 +789,14 @@ int TradeService::InsertInventoryItem(MYSQL* conn,long long charId,int inventory
 
     if(mysql_stmt_bind_param(stmt, param) != 0)
     {
-        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_bind_param Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_errno(stmt));
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_bind_param Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_error(stmt));
         mysql_stmt_close(stmt);
         return -1;
     }
 
     if(mysql_stmt_execute(stmt) != 0)
     {
-        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_execute Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_errno(stmt));
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_execute Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_error(stmt));
         mysql_stmt_close(stmt);
         return -1;
     }
@@ -820,7 +824,7 @@ int TradeService::DeleteInventoryItem(MYSQL *conn, long long charId, int itemId)
         return -1;
     }
     
-    MYSQL_BIND param[2];
+    MYSQL_BIND param[2]{};
 
     param[0].buffer_type = MYSQL_TYPE_LONGLONG;
     param[0].buffer = &charId;
@@ -847,9 +851,8 @@ int TradeService::DeleteInventoryItem(MYSQL *conn, long long charId, int itemId)
 
     if (affectedRows == 0)
     {
-        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] update affected 0 rows", __FILE__ ,__FUNCTION__, __LINE__);
         mysql_stmt_close(stmt);
-        return -1;
+        return 0;
     }
     mysql_stmt_close(stmt);
     return 0;

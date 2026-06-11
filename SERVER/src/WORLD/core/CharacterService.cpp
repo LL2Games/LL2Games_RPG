@@ -97,7 +97,7 @@ std::vector<std::string> CharacterService::GetCharacterList(const std::string& a
     bool nameIsNull = false;
     bool nameError = false;
 
-    MYSQL_BIND resultBind[4];
+    MYSQL_BIND resultBind[4]{};
 
     resultBind[0].buffer_type = MYSQL_TYPE_LONGLONG;
     resultBind[0].buffer = &charId;

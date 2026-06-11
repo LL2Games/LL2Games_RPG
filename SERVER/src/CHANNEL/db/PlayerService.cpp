@@ -167,7 +167,7 @@ bool PlayerService::LoadInventoryMeta(Player* player)
 
     MYSQL_BIND resultBind[3]{};
 
-    resultBind[0].buffer_type = MYSQL_TYPE_TINY;
+    resultBind[0].buffer_type = MYSQL_TYPE_LONG;
     resultBind[0].buffer = &inventoryMetaInfo.inventoryType;
 
     resultBind[1].buffer_type = MYSQL_TYPE_LONG;
@@ -192,25 +192,25 @@ bool PlayerService::LoadInventoryMeta(Player* player)
         return false;
     }
 
-    int fetchResult = mysql_stmt_fetch(stmt);
-    if (fetchResult == MYSQL_NO_DATA)
+    while (true)
     {
-        mysql_stmt_free_result(stmt);
-        mysql_stmt_close(stmt);
-        m_mySql->ReleaseConnection(conn);
-        return false;
-    }
+        int fetchResult = mysql_stmt_fetch(stmt);
 
-    if (fetchResult != 0 && fetchResult != MYSQL_DATA_TRUNCATED)
-    {
-        K_slog_trace(K_SLOG_ERROR, "mysql_stmt_fetch ERROR [%s]", mysql_stmt_error(stmt));
-        mysql_stmt_free_result(stmt);
-        mysql_stmt_close(stmt);
-        m_mySql->ReleaseConnection(conn);
-        return false;
-    }
+        if (fetchResult == MYSQL_NO_DATA)
+            break;
 
-    InventoryManager->CreateInventory(inventoryMetaInfo);
+        if (fetchResult != 0)
+        {
+            K_slog_trace(K_SLOG_ERROR, "mysql_stmt_fetch ERROR [%s]", mysql_stmt_error(stmt));
+
+            mysql_stmt_free_result(stmt);
+            mysql_stmt_close(stmt);
+            m_mySql->ReleaseConnection(conn);
+            return false;
+        }
+
+        InventoryManager->CreateInventory(inventoryMetaInfo);
+    }
 
     mysql_stmt_free_result(stmt);
     mysql_stmt_close(stmt);
@@ -400,7 +400,7 @@ bool PlayerService::LoadLearnedSkill(Player* player)
 
     }
 
-    MYSQL_BIND resultBind[2];
+    MYSQL_BIND resultBind[2]{};
 
     resultBind[0].buffer_type = MYSQL_TYPE_LONG;
     resultBind[0].buffer = &skill_id;

@@ -31,6 +31,7 @@ int PlayerStatRepository::Update(const std::string &charId, const std::string &s
     {
         K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_init failed Error [%s] ", __FILE__, __FUNCTION__, __LINE__, mysql_error(conn));
         errMsg = mysql_error(conn);
+        m_mySql->ReleaseConnection(conn);
         return -1;
     }
 
@@ -48,6 +49,7 @@ int PlayerStatRepository::Update(const std::string &charId, const std::string &s
     {
         errMsg = "invalid statType";
         m_mySql->ReleaseConnection(conn);
+        mysql_stmt_close(stmt);
         return -1;
     }
 
@@ -55,9 +57,10 @@ int PlayerStatRepository::Update(const std::string &charId, const std::string &s
     
     if(mysql_stmt_prepare(stmt, query.c_str(), query.size()) != 0)
     {
-        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_prepare Error [%d]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_errno(stmt));
-        errMsg = mysql_stmt_errno(stmt);
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_prepare Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_error(stmt));
+        errMsg = "mysql_stmt_prepare Error";
         mysql_stmt_close(stmt);
+        m_mySql->ReleaseConnection(conn);
         return -1;
     }
 
@@ -69,17 +72,19 @@ int PlayerStatRepository::Update(const std::string &charId, const std::string &s
 
     if(mysql_stmt_bind_param(stmt, param) != 0)
     {
-        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_bind_param Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_errno(stmt));
-        errMsg = mysql_stmt_errno(stmt);
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_bind_param Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_error(stmt));
+        errMsg = "mysql_stmt_bind_param Error";
         mysql_stmt_close(stmt);
+        m_mySql->ReleaseConnection(conn);
         return -1;
     }
 
     if(mysql_stmt_execute(stmt) !=0)
     {
-        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_execute Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_errno(stmt));
-        errMsg = mysql_stmt_errno(stmt);
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_execute Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_error(stmt));
+        errMsg = "mysql_stmt_execute Error";
         mysql_stmt_close(stmt);
+        m_mySql->ReleaseConnection(conn);
         return -1;
     }
 
@@ -87,11 +92,12 @@ int PlayerStatRepository::Update(const std::string &charId, const std::string &s
 
     if (affectedRows == 0)
     {
-        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] update affected 0 rows [%s]", __FILE__ ,__FUNCTION__, __LINE__);
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] update affected 0 rows", __FILE__ ,__FUNCTION__, __LINE__);
         mysql_stmt_close(stmt);
+        m_mySql->ReleaseConnection(conn);
         return -1;
     }
     mysql_stmt_close(stmt);
-
+    m_mySql->ReleaseConnection(conn);
     return 0;
 }
