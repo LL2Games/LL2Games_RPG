@@ -55,7 +55,7 @@ int PlayerStatRepository::Update(const std::string &charId, const std::string &s
     
     if(mysql_stmt_prepare(stmt, query.c_str(), query.size()) != 0)
     {
-        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_prepare Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_errno(stmt));
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_prepare Error [%d]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_errno(stmt));
         errMsg = mysql_stmt_errno(stmt);
         mysql_stmt_close(stmt);
         return -1;
@@ -64,8 +64,8 @@ int PlayerStatRepository::Update(const std::string &charId, const std::string &s
     long long char_id = std::atoll(charId.c_str());
     MYSQL_BIND param[1]{};
 
-    param[1].buffer_type = MYSQL_TYPE_LONGLONG;
-    param[1].buffer = &char_id;
+    param[0].buffer_type = MYSQL_TYPE_LONGLONG;
+    param[0].buffer = &char_id;
 
     if(mysql_stmt_bind_param(stmt, param) != 0)
     {

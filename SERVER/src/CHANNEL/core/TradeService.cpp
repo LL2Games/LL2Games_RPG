@@ -475,7 +475,7 @@ int TradeService::SelectInventoryItemSlot(MYSQL *conn, const std::string &char_i
         return -1;
     }
     // 아이템 보유 여부 확인
-    const char* query = "SELECT slot_pos FROM charactor_inventory WHERE char_id = ? AND item_id = ? LIMIT 1"; 
+    const char* query = "SELECT slot_pos FROM character_inventory WHERE char_id = ? AND item_id = ? LIMIT 1"; 
 
     if(mysql_stmt_prepare(stmt, query, strlen(query)) != 0)
     {
@@ -491,8 +491,9 @@ int TradeService::SelectInventoryItemSlot(MYSQL *conn, const std::string &char_i
     param[0].buffer_type = MYSQL_TYPE_LONGLONG;
     param[0].buffer = &charId;
     
+    int itemId = std::stoi(item.id);
     param[1].buffer_type = MYSQL_TYPE_LONG;
-    param[1].buffer =&item.id;
+    param[1].buffer =&itemId;
     
     if(mysql_stmt_bind_param(stmt, param) != 0)
     {
@@ -536,7 +537,7 @@ int TradeService::SelectInventoryItemSlot(MYSQL *conn, const std::string &char_i
     else if (fetchResult == MYSQL_NO_DATA)
     {
         hasItem = false; // row 없음
-        return -1;
+        return 0;
     }
     else if (fetchResult == MYSQL_DATA_TRUNCATED)
     {
@@ -676,7 +677,7 @@ int TradeService::SelectNextInventorySlotPos(MYSQL* conn,long long charId,int in
         return -1;
     }
     //query = "SELECT COALESCE(MAX(slot_pos) + 1, 0) FROM character_inventory WHERE char_id = " + char_id + " AND inventory_type = " + item.type;
-    const char* query = "SELECT COALESCE(MAX(slot_pos)) + 1, 0) FROM character_inventroy WHERE char_id = ? AND inventory_type = ?";
+    const char* query = "SELECT COALESCE(MAX(slot_pos) + 1, 0) FROM character_inventroy WHERE char_id = ? AND inventory_type = ?";
 
     if(mysql_stmt_prepare(stmt, query, strlen(query))!=0)
     {
@@ -707,7 +708,7 @@ int TradeService::SelectNextInventorySlotPos(MYSQL* conn,long long charId,int in
     }
 
 
-    MYSQL_BIND resultBind[1];
+    MYSQL_BIND resultBind[1]{};
     
     resultBind[0].buffer_type = MYSQL_TYPE_LONG;
     resultBind[0].buffer = &slotPos;
