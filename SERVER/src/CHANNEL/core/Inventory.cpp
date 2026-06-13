@@ -49,11 +49,17 @@ bool Inventory::AddItem(AddItemData& addItemData, std::vector<AddItemResult>& re
 
     int remainCount = addItemData.count;
 
-    // 1. stackable 아이템이면 기존 슬롯부터 채운다
+    // 1. stackable 아이템이면 기존 슬롯부터 순서대로 채운다
     if (addItemData.stackable)
     {
-        for (auto& [slotPos, slot] : m_slots)
+        for (int slotPos = 0; slotPos < m_maxSlot; ++slotPos)
         {
+            auto it = m_slots.find(slotPos);
+            if (it == m_slots.end())
+                continue;
+
+            InventorySlot& slot = it->second;
+
             if (!slot.isEnable)
                 continue;
 
@@ -73,6 +79,8 @@ bool Inventory::AddItem(AddItemData& addItemData, std::vector<AddItemResult>& re
             result.slotPos = slotPos;
             result.itemId = addItemData.itemId;
             result.itemCount = slot.itemCount;
+            result.inventoryType = slot.inventoryType;
+
             results.push_back(result);
 
             if (remainCount <= 0)
@@ -80,9 +88,15 @@ bool Inventory::AddItem(AddItemData& addItemData, std::vector<AddItemResult>& re
         }
     }
 
-    // 2. 남은 수량은 빈 슬롯에 넣는다
-    for (auto& [slotPos, slot] : m_slots)
+    // 2. 남은 수량은 빈 슬롯에 순서대로 넣는다
+    for (int slotPos = 0; slotPos < m_maxSlot; ++slotPos)
     {
+        auto it = m_slots.find(slotPos);
+        if (it == m_slots.end())
+            continue;
+
+        InventorySlot& slot = it->second;
+
         if (!slot.isEnable)
             continue;
 
@@ -104,13 +118,14 @@ bool Inventory::AddItem(AddItemData& addItemData, std::vector<AddItemResult>& re
         result.slotPos = slotPos;
         result.itemId = addItemData.itemId;
         result.itemCount = slot.itemCount;
-        results.push_back(result);
+        result.inventoryType = slot.inventoryType;
 
+        results.push_back(result);
+        
         if (remainCount <= 0)
             return true;
     }
-    K_slog_trace(K_SLOG_DEBUG, "AddItem Success");
-    return remainCount <= 0;
+    return false;
 }
 
 // 아이템 사용 시 아이템 개수 변경

@@ -1,7 +1,7 @@
 {
-  "item_id": 4001002,
+  "item_id": 4000000,
   "name": "Blue Snail Shell",
-  "type": "material",
+  "type": "etc",
 
   "stackable": true,
   "max_stack": 999,
