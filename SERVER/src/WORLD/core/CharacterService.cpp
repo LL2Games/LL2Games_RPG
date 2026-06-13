@@ -56,6 +56,7 @@ std::vector<std::string> CharacterService::GetCharacterList(const std::string& a
     if(!stmt)
     {
         K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_prepare Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_error(conn));
+        m_db->ReleaseConnection(conn);
         return char_list;
     }
 
@@ -65,6 +66,7 @@ std::vector<std::string> CharacterService::GetCharacterList(const std::string& a
     {
         K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_prepare Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_error(stmt));
         mysql_stmt_close(stmt);
+        m_db->ReleaseConnection(conn);
         return char_list;
     }
 
@@ -82,6 +84,7 @@ std::vector<std::string> CharacterService::GetCharacterList(const std::string& a
     {
         K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_bind_param Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_error(stmt));
         mysql_stmt_close(stmt);
+        m_db->ReleaseConnection(conn);
         return char_list;
     }
 
@@ -89,6 +92,7 @@ std::vector<std::string> CharacterService::GetCharacterList(const std::string& a
     {
         K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_execute Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_error(stmt));
         mysql_stmt_close(stmt);
+        m_db->ReleaseConnection(conn);
         return char_list;
     }
 
@@ -119,6 +123,7 @@ std::vector<std::string> CharacterService::GetCharacterList(const std::string& a
     {
         K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_bind_result Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_error(stmt));
         mysql_stmt_close(stmt);
+        m_db->ReleaseConnection(conn);
         return char_list;
     }
 
@@ -126,6 +131,7 @@ std::vector<std::string> CharacterService::GetCharacterList(const std::string& a
     {
         K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] mysql_stmt_bind_result Error [%s]", __FILE__, __FUNCTION__, __LINE__, mysql_stmt_error(stmt));
         mysql_stmt_close(stmt);
+        m_db->ReleaseConnection(conn);
         return char_list; 
     }
 

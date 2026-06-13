@@ -32,6 +32,7 @@ int MySqlConnectionPool::Init(const int pool_size)
             mysql_close(conn);
             continue;
         }
+        mysql_autocommit(conn, 0);
         m_pool.push(conn);
         cnt++;
     }

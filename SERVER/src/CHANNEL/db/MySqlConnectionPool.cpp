@@ -37,6 +37,7 @@ int MySqlConnectionPool::Init(const int pool_size)
             mysql_close(conn);
             continue;
         }
+
         m_pool.push(conn);
        cnt++;
     }
@@ -76,6 +77,7 @@ int MySqlConnectionPool::Init(const MySqlConfig& mysqlConfig, const int pool_siz
             mysql_close(conn);
             continue;
         }
+
 
         m_pool.push(conn);
         cnt++;
@@ -125,6 +127,11 @@ MySqlConnectionPool* MySqlConnectionPool::GetInstance(const MySqlConfig& mysqlCo
 
 MYSQL* MySqlConnectionPool::GetConnection()
 {
+    // m_pool이 생성안됐을 때 대비해서 안전 코드 생성
+    if(m_pool.empty())
+    {
+        return nullptr;
+    }
     MYSQL* conn = m_pool.front();
     m_pool.pop();
     return conn;

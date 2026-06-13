@@ -48,7 +48,7 @@ int main(int ac, char **av)
     }
 
     g_config = loader.ToAppConfig();
-
+    MySqlConnectionPool::GetInstance(g_config.mysql, 8);
     WorldServer server;
 
    if (server.Init(g_config.worldServer.port) != 0)
