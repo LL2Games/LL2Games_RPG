@@ -13,7 +13,10 @@ WorldServer::~WorldServer() {}
 
 int WorldServer::Init(const std::string &configPath)
 {
-    m_channel_manager.Init();
+    if(m_channel_manager.Init() != EXIT_SUCCESS)
+    {
+        return -1;
+    }
     //server conf read, parsing
     K_slog_trace(K_SLOG_DEBUG, "[%s][%d] configPath[%s]", __FUNCTION__, __LINE__, configPath); //test
 
@@ -22,7 +25,11 @@ int WorldServer::Init(const std::string &configPath)
 
 int WorldServer::Init(const int port)
 {
-    m_channel_manager.Init();
+    if(m_channel_manager.Init() != EXIT_SUCCESS)
+    {
+        K_slog_trace(K_SLOG_ERROR, "m_channel_manager.Init failed");
+        return -1;
+    }
 
     m_listen_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (m_listen_fd < 0)
@@ -42,12 +49,12 @@ int WorldServer::Init(const int port)
     if (bind(m_listen_fd, (struct sockaddr *)&addr, sizeof(addr)) < 0)
     {
         K_slog_trace(K_SLOG_ERROR, "[%s] bind [port=%d]", DAEMON_NAME, port);
-        return false;
+        return -1;
     }
     if (listen(m_listen_fd, 10) < 0)
     {
         K_slog_trace(K_SLOG_ERROR, "[%s] listen", DAEMON_NAME);
-        return false;
+        return -1;
     }
 
     K_slog_trace(K_SLOG_TRACE, "[%s] Listening on %d", DAEMON_NAME, port);
@@ -83,11 +90,16 @@ int WorldServer::Run()
 
         if (FD_ISSET(m_listen_fd, &reads))
             OnAccept();
-        
+        std::vector<int> read2Fd;
         for (auto session : m_sessions)
         {
             if (FD_ISSET(session.first, &reads))
-                OnReceive(session.first);
+                read2Fd.push_back(session.first);
+        }
+
+        for(int fd : read2Fd)
+        {
+            OnReceive(fd);
         }
 
     }
@@ -132,12 +144,7 @@ int WorldServer::OnReceive(int fd)
         tempLen = recv(fd, temp, sizeof(temp), 0);
         if (tempLen <= 0)
         {
-            //disconnect
-            //OnDisconnect(fd);
-            K_slog_trace(K_SLOG_TRACE, "Client %d disconnected\n", fd);
-            close(fd);
-            delete m_sessions[fd];
-            m_sessions.erase(fd);
+            OnDisconnect(fd);    
             return 1;
         }
         buf.append(temp, tempLen);
@@ -167,6 +174,23 @@ int WorldServer::OnReceive(int fd)
         handler->Execute(&ctx);
     }
     K_slog_trace(K_SLOG_DEBUG, "[%s][%d] ProcessClient fd=%d done", __FUNCTION__, __LINE__, fd);
+
+    return 0;
+}
+
+int WorldServer::OnDisconnect(int fd)
+{
+    auto it = m_sessions.find(fd);
+    if(it == m_sessions.end())
+    {
+        return 0;
+    }
+
+    K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d ] Client %d disconnected",
+                 __FILE__, __FUNCTION__, __LINE__, fd);
+    close(fd);
+    delete it->second;
+    m_sessions.erase(it);
 
     return 0;
 }

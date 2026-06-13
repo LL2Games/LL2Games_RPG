@@ -42,9 +42,11 @@ INCLUDES := \
 	-I$(INC_DIR)/COMMON/packet \
 	-I$(INC_DIR)/COMMON/slog\
 	-I$(INC_DIR)/COMMON/command\
+	-I$(INC_DIR)/COMMON/config \
 	-I$(INC_DIR)/COMMON/ipc\
 	-I$(INC_DIR)/COMMON/thread\
 	-I$(INC_DIR)/CHANNEL/util
+	
 
 LIB_PATH := \
     -L$(LIB_DIR)/mysql \
@@ -66,6 +68,8 @@ SRCS := \
 	thread/WorkerThread.cpp\
 	\
 	packet/PacketParser.cpp\
+	\
+	config/ConfigLoader.cpp
 	
 	
 #packet/PacketFactory.cpp

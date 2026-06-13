@@ -66,6 +66,7 @@ void ItemPacketSender::SendRemoveDropItem(const std::vector<int>& removeItems, c
         if (!session) continue;
         std::vector<std::string> payload;
 		
+		payload.push_back(std::to_string(removeItems.size()));
 		for(size_t i =0; i < removeItems.size(); i++)
 		{
         	payload.push_back(std::to_string(removeItems[i]));

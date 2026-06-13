@@ -37,6 +37,46 @@ std::optional<ParsedPacket> PacketParser::Parse(std::vector<char>& buf)
     return parsedPacket;
 }
 
+ParseResult PacketParser::TryParse(std::vector<char> &buf)
+{
+        ParsedPacket parsedPacket;
+
+    if (buf.size() < sizeof(PacketHeader))
+    {
+        return { ParseStatus::NeedMoreData, {} };
+    }
+
+    PacketHeader* hdr = reinterpret_cast<PacketHeader*>(buf.data());
+    uint16_t pktLen = hdr->length;
+
+    if (pktLen < sizeof(PacketHeader))
+    {
+        return { ParseStatus::InvalidPacket, {} };
+    }
+
+    if (pktLen > BUFFER_SIZE)
+    {
+        return { ParseStatus::InvalidPacket, {} };
+    }
+
+    if (buf.size() < pktLen)
+    {
+        return { ParseStatus::NeedMoreData, {} };
+    }
+
+    uint16_t type = hdr->type;
+
+    const char* payload = reinterpret_cast<const char*>(buf.data() + sizeof(PacketHeader));
+    int payloadLen = pktLen - sizeof(PacketHeader);
+
+    parsedPacket.type = type;
+    parsedPacket.payload = std::string(payload, payloadLen);
+
+    buf.erase(buf.begin(), buf.begin() + pktLen);
+
+    return { ParseStatus::Complete, parsedPacket };
+}
+
 bool PacketParser::ParseLengthPrefixedString(
     const char *payload,
     const size_t payload_len,

@@ -136,3 +136,17 @@ typedef struct packet
     PacketHeader header{};
     std::vector<uint8_t> payload;
 } Packet;
+
+enum class ParseStatus
+{
+    Complete,
+    NeedMoreData,
+    InvalidPacket,
+};
+
+struct ParseResult
+{
+    ParseStatus status;
+    ParsedPacket packet;
+};
+

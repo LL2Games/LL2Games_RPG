@@ -274,16 +274,28 @@ void ChannelServer::OnReceive(int fd)
     {
         memset(temp, 0x00, sizeof(temp));
         tempLen = recv(fd, temp, sizeof(temp), 0);
-        if (tempLen <= 0)
+
+        if (tempLen > 0)
         {
-            OnDisconnect(fd);
-            K_slog_trace(K_SLOG_TRACE, "Client %d disconnected\n", fd);
-            close(fd);
-            // delete m_sessions[fd];
-            // m_sessions.erase(fd);
-            return ;
+            buf.append(temp, tempLen);
         }
-        buf.append(temp, tempLen);
+        else if (tempLen == 0)
+        {
+            // 진짜 클라이언트 종료
+            OnDisconnect(fd);
+            close(fd);
+            return;
+        }
+        else
+        {
+            if (errno == EAGAIN || errno == EWOULDBLOCK)
+                break; // 정상. 지금 읽을 데이터 없음
+        
+            // 진짜 recv 에러
+            OnDisconnect(fd);
+            close(fd);
+            return;
+        }
     } while (tempLen == BUFFER_SIZE);
 
     //K_slog_trace(K_SLOG_DEBUG, "fd %d\n", fd);

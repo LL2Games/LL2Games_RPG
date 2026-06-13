@@ -88,7 +88,7 @@ bool Player::CanAttack(SkillDef* skillDef)
     // 먼저 플레이어가 공격 가능한 상태인지 확인
     if (m_CurrentState == PlayerState::STUNNED)
     {
-        K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] 플레이어가 공격 가능한 상태가 아닙니다.\n", __FILE__, __FUNCTION__, __LINE__);
+        K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] 현재 스턴 상태 입니다. 플레이어가 공격 가능한 상태가 아닙니다.\n", __FILE__, __FUNCTION__, __LINE__);
         return false;
     }
 
