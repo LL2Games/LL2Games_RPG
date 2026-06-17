@@ -3,12 +3,7 @@
 #include <iostream>
 #include <signal.h>
 #include "ProcessManager.h"
-#include "K_slog.h"
-
-//log
-#include "K_slog.h"
-#define LOG_PATH "../logs/main"
-#define DAEMON_NAME "MAIN_SERVER"
+#include "common.h"
 
 void CleanChildren(int sig)
 {
@@ -28,7 +23,7 @@ int main()
     signal(SIGINT, CleanChildren);
 
     //log
-    K_slog_init(LOG_PATH, DAEMON_NAME);
+    K_slog_init(MAIN_LOG_PATH, MAIN_DAEMON_NAME);
     ProcessManager* PM = ProcessManager::Instance();
     PM->Init();
     PM->StartDaemons();

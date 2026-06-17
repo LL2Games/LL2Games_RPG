@@ -7,86 +7,91 @@
 #include "MapManager.h"
 #endif
 
-#define DAEMON_NAME "CHANNEL_SERVER"
-#define PORT 9001
-#define LOG_PATH "../logs/channel"
-
-
 #if 1
 namespace
 {
     AppConfig g_config;
 }
 
-int main(int ac, char** av)
+int main(int ac, char **av)
 {
-    K_slog_init(LOG_PATH, DAEMON_NAME);
-    K_slog_trace(K_SLOG_TRACE, "[%s]==============START==============", DAEMON_NAME);
-
-    int channelIndex = 0;
-    std::string configPath;
-
-    for (int i = 1; i < ac; ++i)
+    try
     {
-        std::string arg = av[i];
+        K_slog_init(CHANNEL_LOG_PATH, CHANNEL_DAEMON_NAME);
+        K_slog_trace(K_SLOG_TRACE, "[%s]==============START==============", CHANNEL_DAEMON_NAME);
 
-        if (arg == "--config")
+        int channelIndex = 0;
+        std::string configPath;
+
+        for (int i = 1; i < ac; ++i)
         {
-            if (i + 1 >= ac)
+            std::string arg = av[i];
+
+            if (arg == "--config")
             {
-                K_slog_trace(K_SLOG_ERROR, "Missing config path after --config");
-                K_slog_close();
-                return -1;
+                if (i + 1 >= ac)
+                {
+                    K_slog_trace(K_SLOG_ERROR, "Missing config path after --config");
+                    K_slog_close();
+                    return -1;
+                }
+
+                configPath = av[++i];
             }
-
-            configPath = av[++i];
+            else
+            {
+                channelIndex = std::atoi(arg.c_str());
+            }
         }
-        else
+
+        if (configPath.empty())
         {
-            channelIndex = std::atoi(arg.c_str());
+            K_slog_trace(K_SLOG_ERROR, "Missing required --config argument");
+            K_slog_close();
+            return -1;
         }
-    }
 
-    if (configPath.empty())
+        ConfigLoader loader;
+        if (!loader.Load(configPath))
+        {
+            K_slog_trace(K_SLOG_ERROR, "Failed to load config: %s", configPath.c_str());
+            K_slog_close();
+            return -1;
+        }
+
+        g_config = loader.ToAppConfig();
+        MySqlConnectionPool::GetInstance(g_config.mysql);
+        ChannelServer channelServer;
+
+        bool start = channelServer.Init(g_config.channelServer.port + channelIndex);
+        if (start == false)
+        {
+            K_slog_close();
+            return -1;
+        }
+
+        channelServer.Run();
+
+        K_slog_trace(K_SLOG_TRACE, "[%s]..................the End..............", CHANNEL_DAEMON_NAME);
+        K_slog_close();
+    }
+    catch (const std::exception& ex)
     {
-        K_slog_trace(K_SLOG_ERROR, "Missing required --config argument");
+        printf("[%s] Exception: %s\n", CHANNEL_DAEMON_NAME, ex.what());
+        K_slog_trace(K_SLOG_ERROR, "Exception: %s", ex.what());
         K_slog_close();
         return -1;
     }
 
-    ConfigLoader loader;
-    if (!loader.Load(configPath))
-    {
-        K_slog_trace(K_SLOG_ERROR, "Failed to load config: %s", configPath.c_str());
-        K_slog_close();
-        return -1;
-    }
-
-    g_config = loader.ToAppConfig();
-    MySqlConnectionPool::GetInstance(g_config.mysql);
-    ChannelServer channelServer;
-
-    bool start = channelServer.Init(g_config.channelServer.port + channelIndex);
-    if (start == false)
-    {
-        K_slog_close();
-        return -1;
-    }
-
-    channelServer.Run();
-
-    K_slog_trace(K_SLOG_TRACE, "[%s]..................the End..............", DAEMON_NAME);
-    K_slog_close();
     return 0;
 }
 #else
-int main(int ac, char** av)
+int main(int ac, char **av)
 {
-    //log
-    K_slog_init(LOG_PATH, DAEMON_NAME);
-    K_slog_trace(K_SLOG_TRACE, "[%s]==============START==============", DAEMON_NAME);
-   
-    
+    // log
+    K_slog_init(CHANNEL_LOG_PATH, CHANNEL_DAEMON_NAME);
+    K_slog_trace(K_SLOG_TRACE, "[%s]==============START==============", CHANNEL_DAEMON_NAME);
+
     bool Start = false;
 
     ChannelServer channelServer;
@@ -98,17 +103,15 @@ int main(int ac, char** av)
     else
         Start = channelServer.Init(PORT);
 
-    if(Start == false)
+    if (Start == false)
     {
         return -1;
     }
 
-
     channelServer.Run();
 
-    K_slog_trace(K_SLOG_TRACE, "[%s]..................the End..............", DAEMON_NAME);
+    K_slog_trace(K_SLOG_TRACE, "[%s]..................the End..............", CHANNEL_DAEMON_NAME);
     K_slog_close();
     return 0;
-
 }
 #endif

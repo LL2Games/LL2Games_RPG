@@ -1,8 +1,6 @@
 #include "Server.h"
 #include "Client.h"
-// #include "CHAT/packet/PacketParser.h"
-// #include "CHAT/packet/PacketFactory.h"
-#include "K_slog.h"
+#include "common.h"
 #include "Packet.h"
 #include "IPacketHandler.h"
 #include "PacketParser.h"
@@ -10,7 +8,6 @@
 #include <unistd.h>
 #include <cstring>
 
-#define DAEMON_NAME "CHAT_DAEMON"
 #define BUFFER_SIZE 1024
 
 #define MSG_KEY 1234
@@ -26,7 +23,7 @@ bool Server::Init(const int port)
     m_listenFd = socket(AF_INET, SOCK_STREAM, 0);
     if (m_listenFd < 0)
     {
-        K_slog_trace(K_SLOG_ERROR, "[%s] socket", DAEMON_NAME);
+        K_slog_trace(K_SLOG_ERROR, "[%s] socket", CHAT_DAEMON_NAME);
         return false;
     }
 
@@ -40,16 +37,16 @@ bool Server::Init(const int port)
 
     if (bind(m_listenFd, (struct sockaddr *)&addr, sizeof(addr)) < 0)
     {
-        K_slog_trace(K_SLOG_ERROR, "[%s] bind [port=%d]", DAEMON_NAME, port);
+        K_slog_trace(K_SLOG_ERROR, "[%s] bind [port=%d]", CHAT_DAEMON_NAME, port);
         return false;
     }
     if (listen(m_listenFd, 10) < 0)
     {
-        K_slog_trace(K_SLOG_ERROR, "[%s] listen", DAEMON_NAME);
+        K_slog_trace(K_SLOG_ERROR, "[%s] listen", CHAT_DAEMON_NAME);
         return false;
     }
 
-    K_slog_trace(K_SLOG_TRACE, "[%s] Listening on %d", DAEMON_NAME, port);
+    K_slog_trace(K_SLOG_TRACE, "[%s] Listening on %d", CHAT_DAEMON_NAME, port);
 
     return true;
 }
@@ -118,7 +115,7 @@ void Server::ProcessClient(Client *cli)
         if (tempLen <= 0)
         {
             // disconnect
-            K_slog_trace(K_SLOG_TRACE, "[%s] Client %d disconnected", DAEMON_NAME, cli->GetFD());
+            K_slog_trace(K_SLOG_TRACE, "[%s] Client %d disconnected", CHAT_DAEMON_NAME, cli->GetFD());
             close(cli->GetFD());
             for (auto it = m_clients.begin(); it != m_clients.end(); it++)
             {

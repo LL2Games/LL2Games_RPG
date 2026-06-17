@@ -1,13 +1,11 @@
+#include "common.h"
 #include "WorldServer.h"
 #include <sys/socket.h>
 #include <sys/select.h>
 #include <arpa/inet.h>
 #include <string.h>
 #include <unistd.h>
-#include "K_slog.h"
 #include "PacketParser.h"
-
-#define WORLD_DAEMON_NAME "WORLD_SERVER"
 
 WorldServer::WorldServer() {}
 WorldServer::~WorldServer() {}

@@ -1,9 +1,7 @@
+#include "common.h"
 #include "WorldServer.h"
-#include "K_slog.h"
 #include "ConfigLoader.h"
 
-#define WORLD_DAEMON_NAME "WORLD_SERVER"
-#define WORLD_LOG_PATH "../logs/world"
 namespace
 {
     AppConfig g_config;
@@ -12,57 +10,67 @@ namespace
 #if 1
 int main(int ac, char **av)
 {
-    K_slog_init(WORLD_LOG_PATH, WORLD_DAEMON_NAME);
-    K_slog_trace(K_SLOG_TRACE, "[%s]==============START==============", WORLD_DAEMON_NAME);
-
-    std::string configPath;
-
-    for (int i = 1; i < ac; ++i)
+    try
     {
-        std::string arg = av[i];
+        K_slog_init(WORLD_LOG_PATH, WORLD_DAEMON_NAME);
+        K_slog_trace(K_SLOG_TRACE, "[%s]==============START==============", WORLD_DAEMON_NAME);
 
-        if (arg == "--config")
+        std::string configPath;
+
+        for (int i = 1; i < ac; ++i)
         {
-            if (i + 1 >= ac)
+            std::string arg = av[i];
+
+            if (arg == "--config")
             {
-                K_slog_trace(K_SLOG_ERROR, "Missing config path after --config");
-                K_slog_close();
-                return -1;
+                if (i + 1 >= ac)
+                {
+                    K_slog_trace(K_SLOG_ERROR, "Missing config path after --config");
+                    K_slog_close();
+                    return -1;
+                }
+
+                configPath = av[++i];
             }
-
-            configPath = av[++i];
         }
-    }
 
-    if (configPath.empty())
+        if (configPath.empty())
+        {
+            K_slog_trace(K_SLOG_ERROR, "Missing required --config argument");
+            K_slog_close();
+            return -1;
+        }
+
+        ConfigLoader loader;
+        if (!loader.Load(configPath))
+        {
+            K_slog_trace(K_SLOG_ERROR, "Failed to load config: %s", configPath.c_str());
+            K_slog_close();
+            return -1;
+        }
+
+        g_config = loader.ToAppConfig();
+        MySqlConnectionPool::GetInstance(g_config.mysql, 8);
+        WorldServer server;
+
+        if (server.Init(g_config.worldServer.port) != 0)
+        {
+            K_slog_close();
+            return -1;
+        }
+
+        server.Run();
+
+        K_slog_trace(K_SLOG_TRACE, "[%s]..................the End..............", WORLD_DAEMON_NAME);
+        K_slog_close();
+    }
+    catch (const std::exception &ex)
     {
-        K_slog_trace(K_SLOG_ERROR, "Missing required --config argument");
+        printf("[%s] Exception: %s\n", WORLD_DAEMON_NAME, ex.what());
+        K_slog_trace(K_SLOG_ERROR, "Exception: %s", ex.what());
         K_slog_close();
         return -1;
     }
-
-    ConfigLoader loader;
-    if (!loader.Load(configPath))
-    {
-        K_slog_trace(K_SLOG_ERROR, "Failed to load config: %s", configPath.c_str());
-        K_slog_close();
-        return -1;
-    }
-
-    g_config = loader.ToAppConfig();
-    MySqlConnectionPool::GetInstance(g_config.mysql, 8);
-    WorldServer server;
-
-   if (server.Init(g_config.worldServer.port) != 0)
-    {
-        K_slog_close();
-        return -1;
-    }
-
-    server.Run();
-
-    K_slog_trace(K_SLOG_TRACE, "[%s]..................the End..............", WORLD_DAEMON_NAME);
-    K_slog_close();
     return 0;
 }
 

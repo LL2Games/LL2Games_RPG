@@ -58,3 +58,19 @@
 // ============================================================
 #define MAX_BUF 1024
 #define MAX_CLIENTS FD_SETSIZE
+
+
+#define MAIN_DAEMON_NAME "MAIN_SERVER"
+#define MAIN_LOG_PATH "../logs/main"
+
+#define LOGIN_DAEMON_NAME "LOGIN_SERVER"
+#define LOGIN_LOG_PATH "../logs/login"
+
+#define WORLD_DAEMON_NAME "WORLD_SERVER"
+#define WORLD_LOG_PATH "../logs/world"
+
+#define CHANNEL_DAEMON_NAME "CHANNEL_SERVER"
+#define CHANNEL_LOG_PATH "../logs/channel"
+
+#define CHAT_DAEMON_NAME "CHAT_SERVER"
+#define CHAT_LOG_PATH "../logs/chat"
