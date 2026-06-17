@@ -1,6 +1,10 @@
-#include "UTIL.h"
+#include "utility.h"
+#include <iconv.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
 
-char *UTIL::ANSIToUTF8(const char *pszCode)
+char *utility::ANSIToUTF8(const char *pszCode)
 {
     if (!pszCode)
         return nullptr;
@@ -13,7 +17,7 @@ char *UTIL::ANSIToUTF8(const char *pszCode)
     }
 
     size_t inlen = strlen(pszCode);
-    size_t outlen = inlen * 3 + 1; // UTF-8¿∫ √÷¥Î 3πË ±Ê¿Ã
+    size_t outlen = inlen * 3 + 1; // UTF-8ÏùÄ ÏµúÎåÄ 3Î∞∞ Í∏∏Ïù¥
     char *outbuf = new char[outlen];
     memset(outbuf, 0, outlen);
 
@@ -32,7 +36,7 @@ char *UTIL::ANSIToUTF8(const char *pszCode)
     return outbuf;
 }
 
-char *UTIL::UTF8ToANSI(const char *pszCode)
+char *utility::UTF8ToANSI(const char *pszCode)
 {
     if (!pszCode)
         return nullptr;
@@ -45,7 +49,7 @@ char *UTIL::UTF8ToANSI(const char *pszCode)
     }
 
     size_t inlen = strlen(pszCode);
-    size_t outlen = inlen * 3 + 1; // CP949 ∫Ø»ØΩ√ ø©¿Ø∑”∞‘
+    size_t outlen = inlen * 3 + 1; // CP949 Î≥ÄÌôòÏãú Ïó¨Ïú†Î°≠Í≤å
     char *outbuf = new char[outlen];
     memset(outbuf, 0, outlen);
 
@@ -64,7 +68,7 @@ char *UTIL::UTF8ToANSI(const char *pszCode)
     return outbuf;
 }
 
-void UTIL::FREE(char *p)
+void utility::CM_FREE(char *p)
 {
     if (p)
     {

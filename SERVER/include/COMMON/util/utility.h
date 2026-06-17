@@ -25,5 +25,9 @@ namespace utility
         if (end == s.c_str()) return false;          // 변환된 게 없음
         return *end == '\0';                         // 끝까지 다 소비했는지
     };
+
+    char* ANSIToUTF8(const char* pszCode);
+    char* UTF8ToANSI(const char* pszCode);   
+    void  CM_FREE(char *p);
 }
 

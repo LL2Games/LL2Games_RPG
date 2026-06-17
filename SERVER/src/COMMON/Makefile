@@ -40,12 +40,12 @@ INCLUDES := \
 	-I$(INC_DIR)/COMMON \
 	-I$(INC_DIR)/COMMON/db \
 	-I$(INC_DIR)/COMMON/packet \
-	-I$(INC_DIR)/COMMON/slog\
-	-I$(INC_DIR)/COMMON/command\
+	-I$(INC_DIR)/COMMON/slog \
+	-I$(INC_DIR)/COMMON/command \
 	-I$(INC_DIR)/COMMON/config \
-	-I$(INC_DIR)/COMMON/ipc\
-	-I$(INC_DIR)/COMMON/thread\
-	-I$(INC_DIR)/CHANNEL/util
+	-I$(INC_DIR)/COMMON/ipc \
+	-I$(INC_DIR)/COMMON/thread \
+	-I$(INC_DIR)/COMMON/util
 	
 
 LIB_PATH := \
@@ -56,23 +56,22 @@ LIB_PATH := \
 # Sources
 # ==================================
 SRCS := \
-	slog/slog.cpp \
-	slog/K_slog.cpp \
+	config/ConfigLoader.cpp \
 	\
 	db/MySqlConnectionPool.cpp \
 	db/RedisClient.cpp \
 	\
-	ipc/CommandMsgQueue.cpp\
+	ipc/CommandMsgQueue.cpp \
 	\
-	thread/ThreadPool.cpp\
-	thread/WorkerThread.cpp\
+	packet/PacketParser.cpp \
 	\
-	packet/PacketParser.cpp\
+	slog/slog.cpp \
+	slog/K_slog.cpp \
 	\
-	config/ConfigLoader.cpp
-	
-	
-#packet/PacketFactory.cpp
+	thread/ThreadPool.cpp \
+	thread/WorkerThread.cpp \
+	\
+	util/utility.cpp
 
 # ==================================
 # Objects / Deps

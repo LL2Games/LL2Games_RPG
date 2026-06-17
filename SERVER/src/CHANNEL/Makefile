@@ -36,6 +36,7 @@ INCLUDES := \
 	-I$(INC_DIR)/COMMON/config \
 	-I$(INC_DIR)/COMMON/ipc \
 	-I$(INC_DIR)/COMMON/thread \
+	-I$(INC_DIR)/COMMON/util \
 	\
 	-I$(SRC_DIR)/CHANNEL/app \
     -I$(SRC_DIR)/CHANNEL/db \
