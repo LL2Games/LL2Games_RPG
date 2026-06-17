@@ -1,5 +1,5 @@
-#include "core/Server.h"
-#include "db/MySQLManager.h"
+#include "Server.h"
+#include "MySQLManager.h"
 #include "ConfigLoader.h"
 
 #define DAEMON_NAME "LOGIN_SERVER"

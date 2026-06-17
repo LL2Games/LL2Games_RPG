@@ -30,14 +30,15 @@ LDFLAGS      := -pthread \
 # ==================================
 INCLUDES := \
     -I$(INC_DIR) \
+    -I$(INC_DIR)/COMMON \
     -I$(INC_DIR)/COMMON/packet \
 	-I$(INC_DIR)/COMMON/slog \
     -I$(INC_DIR)/COMMON/config \
-    -I$(INC_DIR)/LOGIN \
-    -I$(INC_DIR)/LOGIN/core \
-    -I$(INC_DIR)/LOGIN/db \
-    -I$(INC_DIR)/LOGIN/packet \
-    -I$(INC_DIR)/LOGIN/util
+    \
+    -I$(SRC_DIR)/LOGIN/app \
+    -I$(SRC_DIR)/LOGIN/db \
+    -I$(SRC_DIR)/LOGIN/packet \
+    -I$(SRC_DIR)/LOGIN/util
 
 LIB_PATH := \
     -L$(LIB_DIR)/common \
@@ -54,8 +55,8 @@ TARGET := $(BIN_DIR)/loginD
 # Source Files
 # ==================================
 SRCS := \
-    core/Server.cpp \
-    core/Client.cpp \
+    app/Server.cpp \
+    app/Client.cpp \
     \
     packet/LoginPacketFactory.cpp \
     packet/LoginHandler.cpp \
