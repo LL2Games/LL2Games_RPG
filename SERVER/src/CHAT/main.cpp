@@ -1,5 +1,5 @@
-#include "CHAT/core/Server.h"
-#include "db/MySQLManager.h"
+#include "Server.h"
+#include "MySQLManager.h"
 #include "ConfigLoader.h"
 
 #include "K_slog.h"

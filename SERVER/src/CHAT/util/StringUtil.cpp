@@ -1,4 +1,4 @@
-#include "CHAT/util/StringUtil.h"
+#include "StringUtil.h"
 #include <algorithm>
 
 std::string StringUtil::Trim(const std::string &s)
