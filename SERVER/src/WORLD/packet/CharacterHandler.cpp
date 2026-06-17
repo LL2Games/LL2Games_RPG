@@ -1,4 +1,4 @@
-#include "packet/CharacterHandler.h"
+#include "CharacterHandler.h"
 #include "CharacterService.h"
 #include "WorldSession.h"
 #include "K_slog.h"

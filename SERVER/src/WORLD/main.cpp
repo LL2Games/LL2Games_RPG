@@ -1,7 +1,9 @@
 #include "WorldServer.h"
 #include "K_slog.h"
-#include "util/type.h"
 #include "ConfigLoader.h"
+
+#define WORLD_DAEMON_NAME "WORLD_SERVER"
+#define WORLD_LOG_PATH "../logs/world"
 namespace
 {
     AppConfig g_config;
@@ -10,8 +12,8 @@ namespace
 #if 1
 int main(int ac, char **av)
 {
-    K_slog_init(LOG_PATH, DAEMON_NAME);
-    K_slog_trace(K_SLOG_TRACE, "[%s]==============START==============", DAEMON_NAME);
+    K_slog_init(WORLD_LOG_PATH, WORLD_DAEMON_NAME);
+    K_slog_trace(K_SLOG_TRACE, "[%s]==============START==============", WORLD_DAEMON_NAME);
 
     std::string configPath;
 
@@ -59,7 +61,7 @@ int main(int ac, char **av)
 
     server.Run();
 
-    K_slog_trace(K_SLOG_TRACE, "[%s]..................the End..............", DAEMON_NAME);
+    K_slog_trace(K_SLOG_TRACE, "[%s]..................the End..............", WORLD_DAEMON_NAME);
     K_slog_close();
     return 0;
 }
@@ -68,12 +70,12 @@ int main(int ac, char **av)
 int main()
 {
     WorldServer server;
-    K_slog_init(LOG_PATH, DAEMON_NAME);
-    K_slog_trace(K_SLOG_TRACE, "[%s]==============START==============", DAEMON_NAME);
-    server.Init(PORT);
+    K_slog_init(WORLD_LOG_PATH, WORLD_DAEMON_NAME);
+    K_slog_trace(K_SLOG_TRACE, "[%s]==============START==============", WORLD_DAEMON_NAME);
+    server.Init(WORLD_PORT);
     server.Run();
 
-    K_slog_trace(K_SLOG_TRACE, "[%s]..................the End..............", DAEMON_NAME);
+    K_slog_trace(K_SLOG_TRACE, "[%s]..................the End..............", WORLD_DAEMON_NAME);
     K_slog_close();
     return 0;
 }

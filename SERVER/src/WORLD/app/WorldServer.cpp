@@ -6,7 +6,8 @@
 #include <unistd.h>
 #include "K_slog.h"
 #include "PacketParser.h"
-#include "util/type.h"
+
+#define WORLD_DAEMON_NAME "WORLD_SERVER"
 
 WorldServer::WorldServer() {}
 WorldServer::~WorldServer() {}
@@ -34,7 +35,7 @@ int WorldServer::Init(const int port)
     m_listen_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (m_listen_fd < 0)
     {
-        K_slog_trace(K_SLOG_ERROR, "[%s] socket", DAEMON_NAME);
+        K_slog_trace(K_SLOG_ERROR, "[%s] socket", WORLD_DAEMON_NAME);
         return -1;
     }
 
@@ -48,16 +49,16 @@ int WorldServer::Init(const int port)
 
     if (bind(m_listen_fd, (struct sockaddr *)&addr, sizeof(addr)) < 0)
     {
-        K_slog_trace(K_SLOG_ERROR, "[%s] bind [port=%d]", DAEMON_NAME, port);
+        K_slog_trace(K_SLOG_ERROR, "[%s] bind [port=%d]", WORLD_DAEMON_NAME, port);
         return -1;
     }
     if (listen(m_listen_fd, 10) < 0)
     {
-        K_slog_trace(K_SLOG_ERROR, "[%s] listen", DAEMON_NAME);
+        K_slog_trace(K_SLOG_ERROR, "[%s] listen", WORLD_DAEMON_NAME);
         return -1;
     }
 
-    K_slog_trace(K_SLOG_TRACE, "[%s] Listening on %d", DAEMON_NAME, port);
+    K_slog_trace(K_SLOG_TRACE, "[%s] Listening on %d", WORLD_DAEMON_NAME, port);
 
     return 0;
 }
