@@ -170,14 +170,15 @@ SERVER/
 ├── bin/          # 컴파일된 데몬 실행 파일 (mainD, loginD, chatD, worldD, channelD)
 ├── build/        # 빌드 산출물
 ├── docs/         # UML 다이어그램 및 아키텍처 문서
-├── include/      # 서버 타입별로 구성된 헤더 파일
-│   ├── COMMON/   # 공유 코드 (패킷 베이스, DB 풀, 스레드 풀, 로깅)
-│   ├── MAIN/     # MAIN 서버 헤더
-│   ├── LOGIN/    # LOGIN 서버 헤더
-│   ├── CHAT/     # CHAT 서버 헤더
-│   ├── WORLD/    # WORLD 서버 헤더
-│   └── CHANNEL/  # CHANNEL 서버 헤더
-├── src/          # 서버 타입별로 구성된 소스 파일
+├── include/      # 서버 공용 헤더
+│   └── COMMON/   # 공용 타입, 패킷, DB, IPC, 스레드, 설정, 로깅, 유틸
+├── src/          # 서버별 소스 및 서버 전용 헤더
+│   ├── COMMON/   # 공용 라이브러리 구현
+│   ├── MAIN/     # 프로세스 관리자 및 데몬 모니터
+│   ├── LOGIN/    # 인증 및 계정 서버
+│   ├── CHAT/     # 채팅 및 커맨드 라우팅 서버
+│   ├── WORLD/    # 캐릭터 선택, 채널 선택, 월드 레벨 서버
+│   └── CHANNEL/  # 핵심 게임플레이 서버
 ├── obj/          # 컴파일된 오브젝트 파일 (src 구조 미러링)
 ├── lib/          # 정적 및 공유 라이브러리
 │   ├── common/   # 공통 라이브러리
@@ -189,40 +190,86 @@ SERVER/
 
 ### 서버 모듈 구조
 
-각 서버 데몬은 일관된 내부 구성을 따릅니다:
+각 서버 데몬은 역할에 따라 다음 모듈 이름을 사용합니다:
 
 ```
-SERVER/{include,src}/{SERVER_TYPE}/
-├── core/         # 핵심 비즈니스 로직, 서버 생명주기, 도메인 모델
+SERVER/src/{SERVER_TYPE}/
+├── app/          # 서버 생명주기, 세션, 서버 전용 애플리케이션 서비스
 ├── db/           # 데이터베이스 접근 계층 (MySQL, Redis)
 ├── packet/       # 패킷 핸들러, 팩토리, 직렬화
-├── ipc/          # 프로세스 간 통신 (메시지 큐)
-├── command/      # 커맨드 패턴 구현 (CHAT만 해당)
-├── stat/         # 캐릭터 스탯 시스템 (CHANNEL만 해당)
-└── util/         # 서버별 유틸리티
+├── command/      # 커맨드 패턴 구현 (CHAT)
+├── daemon/       # 데몬 프로세스 추상화 및 생성 (MAIN)
+├── manager/      # 프로세스/리소스 관리자 (MAIN, CHANNEL)
+├── monitor/      # 프로세스 상태 감시 (MAIN)
+├── util/         # 서버별 유틸리티
+├── Makefile      # 서버별 빌드 스크립트
+└── main.cpp      # 데몬 진입점
 ```
 
 ```
-SERVER/{include,src}/CHANNEL/
-├── app/          # ChannelServer, ChannelSession, main 생명주기/네트워크 세션
+SERVER/src/CHANNEL/
+├── app/          # ChannelServer, ChannelSession, 네트워크 세션
 ├── domain/       # 순수 게임 객체: Player, Monster, Item, Inventory, Projectile
-├── manager/      # 런타임 리소스/캐시 관리: PlayerManager, MapManager 등
+├── manager/      # 런타임 리소스/캐시 관리: PlayerManager, ItemManager 등
 ├── service/      # 비즈니스 유스케이스: MapService, ItemService, CombatService 등
-├── map/          # 맵 인스턴스/맵 루프가 커지면 분리
+├── map/          # 맵 인스턴스, 맵 관리자, 맵 업데이트 태스크
 ├── db/           # MySQL/Redis/Repository/DB 기반 Service
 ├── packet/       # 패킷 핸들러/팩토리/송신기
 ├── ipc/          # 서버 간 메시지 큐
 ├── stat/         # 스탯 전용 도메인/서비스/저장소
-├── trade/        # 거래 도메인/서비스
 ├── util/         # 수학, 시간, 파싱 등 범용 유틸
-└── data/         # JSON 데이터
+├── data/         # 아이템, 몬스터, 맵, 스킬, 드롭 JSON 데이터
+├── Makefile      # CHANNEL 서버 빌드 스크립트
+└── main.cpp      # CHANNEL 데몬 진입점
+```
+
+```
+SERVER/src/MAIN/
+├── daemon/       # BaseDaemon 및 서버별 Daemon 구현
+├── manager/      # ProcessManager
+├── monitor/      # ProcessMonitor
+├── Makefile
+└── main.cpp
+```
+
+```
+SERVER/src/LOGIN/
+├── app/          # Server, Client
+├── db/           # MySQLManager
+├── packet/       # LoginHandler, LoginPacketFactory
+├── util/         # StringUtil
+├── Makefile
+└── main.cpp
+```
+
+```
+SERVER/src/CHAT/
+├── app/          # Server, Client
+├── command/      # CommandDispatcher, FindUserCommand
+├── db/           # MySQLManager
+├── packet/       # ChatInitHandler, ChatMsgHandler, ChatPacketFactory
+├── util/         # StringUtil
+├── Makefile
+└── main.cpp
+```
+
+```
+SERVER/src/WORLD/
+├── app/          # WorldServer, WorldSession, ChannelManager, CharacterService
+├── db/           # MySQL/Redis 클라이언트
+├── packet/       # 월드 초기화, 캐릭터, 채널 선택 패킷 처리
+├── Makefile
+└── main.cpp
 ```
 
 ### 계층별 책임
 
 | 계층 | 책임 | 규칙 |
 |------|------|------|
-| **Core** | 서버 초기화, 이벤트 루프, 도메인 모델, 비즈니스 로직 | - |
+| **App** | 서버 초기화, 이벤트 루프, 세션, 서버 전용 애플리케이션 흐름 | 네트워크 생명주기와 유스케이스 연결 |
+| **Domain** | 게임 객체와 상태 모델 | 외부 I/O 의존성을 최소화 |
+| **Manager** | 런타임 리소스, 캐시, 프로세스 및 객체 수명 관리 | 조회/등록/삭제 중심으로 유지 |
+| **Service** | 비즈니스 유스케이스와 도메인 조합 로직 | 패킷 핸들러는 서비스에 위임 |
 | **Database** | MySQL 커넥션 풀링, Redis 작업, Repository 패턴 | 이 계층 외부에서 SQL 쿼리 금지 |
 | **Packet** | 패킷 타입 정의, 핸들러, 직렬화, 네트워크 프로토콜 | 핸들러는 얇게 유지하고 서비스에 위임 |
 | **IPC** | 메시지 큐 작업, 서버 간 통신 | 클라이언트 대면 패킷 계층과 분리 |
