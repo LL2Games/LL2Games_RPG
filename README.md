@@ -202,6 +202,22 @@ SERVER/{include,src}/{SERVER_TYPE}/
 └── util/         # 서버별 유틸리티
 ```
 
+```
+SERVER/{include,src}/CHANNEL/
+├── app/          # ChannelServer, ChannelSession, main 생명주기/네트워크 세션
+├── domain/       # 순수 게임 객체: Player, Monster, Item, Inventory, Projectile
+├── manager/      # 런타임 리소스/캐시 관리: PlayerManager, MapManager 등
+├── service/      # 비즈니스 유스케이스: MapService, ItemService, CombatService 등
+├── map/          # 맵 인스턴스/맵 루프가 커지면 분리
+├── db/           # MySQL/Redis/Repository/DB 기반 Service
+├── packet/       # 패킷 핸들러/팩토리/송신기
+├── ipc/          # 서버 간 메시지 큐
+├── stat/         # 스탯 전용 도메인/서비스/저장소
+├── trade/        # 거래 도메인/서비스
+├── util/         # 수학, 시간, 파싱 등 범용 유틸
+└── data/         # JSON 데이터
+```
+
 ### 계층별 책임
 
 | 계층 | 책임 | 규칙 |

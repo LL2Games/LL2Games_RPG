@@ -1,5 +1,5 @@
 #pragma once
-#include "CHANNEL/core/common.h"
+#include "common.h"
 #include <queue>
 #include "ConfigLoader.h"
 

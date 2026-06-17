@@ -1,7 +1,7 @@
 #pragma once
 #include "common.h"
 #include "CommonEnum.h"
-#include "util/PlayerData.h"
+#include "PlayerData.h"
 #include "CharacterStat.h"
 #include "InventoryManager.h"
 #include "PlayerState.h"

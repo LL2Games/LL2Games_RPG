@@ -1,5 +1,5 @@
-#include "CHANNEL/db/RedisUtility.h"
-#include "CHANNEL/util/PlayerData.h"
+#include "RedisUtility.h"
+#include "PlayerData.h"
 #include <sstream>
 
 bool GetStr(const Map& map, const std::string& key, std::string& value)
