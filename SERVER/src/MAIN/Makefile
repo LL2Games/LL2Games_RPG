@@ -31,10 +31,10 @@ INCLUDES := \
     -I$(INC_DIR)/COMMON \
     -I$(INC_DIR)/COMMON/packet \
 	-I$(INC_DIR)/COMMON/slog \
-    -I$(INC_DIR)/MAIN \
-    -I$(INC_DIR)/MAIN/daemon \
-    -I$(INC_DIR)/MAIN/manager \
-    -I$(INC_DIR)/MAIN/monitor
+    \
+    -I$(SRC_DIR)/MAIN/daemon \
+    -I$(SRC_DIR)/MAIN/manager \
+    -I$(SRC_DIR)/MAIN/monitor
 
 LIB_PATH := \
     -L$(LIB_DIR)/common
