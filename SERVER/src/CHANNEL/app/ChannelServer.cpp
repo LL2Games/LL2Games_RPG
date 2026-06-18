@@ -1,12 +1,16 @@
 #include "ChannelServer.h"
 #include "common.h"
 #include "thread"
-
+#include "RedisClient.h"
+#include "RedisUtility.h"
+#include "ChannelStateUpdateTask.h"
+#include "RedisCommonEnum.h"
 
 #define THREAD_POOL_COUNT 4
+#define MAX_USER_COUNT 1000
 
 
-ChannelServer::ChannelServer() : m_channel_id(0), m_listen_fd(0), m_epfd(0), m_running(false), m_map_manager(this), m_map_service(m_player_mamager, m_map_manager), m_pool(THREAD_POOL_COUNT)
+ChannelServer::ChannelServer(const int channelId) : m_channel_id(channelId), m_listen_fd(0), m_epfd(0), m_running(false), m_map_manager(this), m_map_service(m_player_mamager, m_map_manager), m_pool(THREAD_POOL_COUNT), m_current_user_count(0), m_max_user_count(MAX_USER_COUNT)
 {
     m_item_manager = ItemManager::GetInstance();
     m_monster_manager = MonsterManager::GetInstance();
@@ -65,6 +69,10 @@ bool ChannelServer::Init(const int port)
    
    //맵매니저 스레드 시작
    m_map_manager.Start();
+
+   //채널 상태 업데이트 스레드 시작
+    std::thread stateUpdateThread(&ChannelServer::UpdateChannelState, this, 3, 10); // 3초마다 업데이트, TTL은 10초
+    stateUpdateThread.detach(); // 스레드를 분리하여 백그라운드에서 실행
 
    return true;
 }
@@ -259,8 +267,8 @@ void ChannelServer::OnAccept()
             inet_ntop(AF_INET, &caddr.sin_addr, ip, sizeof(ip));
             // 로그로 접속한 IP 정보 출력
         }
-
-
+        m_current_user_count++;
+        K_slog_trace(K_SLOG_TRACE, "[%s][%d] New Connection FD [%d] Current User Count [%d]\n", __FUNCTION__, __LINE__, cfd, m_current_user_count);
     }
 }
 
@@ -325,10 +333,71 @@ void ChannelServer::OnDisconnect(int fd)
 
     close(fd);
 
-    std::cout << "Disconnected FD [" << fd <<"]" << std::endl;
+    m_current_user_count--;
+    K_slog_trace(K_SLOG_TRACE, "[%s][%d] Disconnected FD [%d] Current User Count [%d]\n", __FUNCTION__, __LINE__, fd, m_current_user_count);
 }
 
 void ChannelServer::BroadCast()
 {
 
+}
+
+void ChannelServer::UpdateChannelState(const int interval, const int ttl)
+{
+    while(true)
+    {
+        auto task = std::make_unique<ChannelStateUpdateTask>(this, ttl);
+        this->GetThreadPool()->Submit(std::move(task));
+        sleep(interval); // 지정된 시간마다 업데이트
+    }
+}
+
+void ChannelServer::UpdateChannelStateToRedis(const int ttl)
+{
+    RedisClient* redis = RedisClient::GetInstance();
+    int curUser = m_current_user_count;
+    int maxUser = m_max_user_count;
+    std::string state;
+    int rc;
+
+    if (redis == nullptr)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] RedisClient is nullptr", __FUNCTION__, __LINE__);
+        return;
+    }
+
+    int percentage = 0;
+    if (maxUser > 0)
+    {
+        percentage = (curUser * 100) / maxUser;
+    }
+    percentage = std::min(percentage, 100); // 최대 100%로 제한
+
+    if (percentage >= 90)
+    {
+        state = ChannelState::FULL;
+    }
+    else if (percentage >= 70)
+    {
+        state = ChannelState::BUSY;
+    }
+    else
+    {
+        state = ChannelState::NORMAL;
+    }
+
+    
+    std::map<std::string, std::string> redisMap;
+    redisMap["state"] = state;
+    redisMap["percentage"] = std::to_string(percentage);
+
+    rc = redis->HSetAll("channel:" + std::to_string(m_channel_id) + ":status", redisMap, ttl); // 지정된 시간 동안 유지
+    if (rc != 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] Failed to update channel status to Redis", __FUNCTION__, __LINE__);
+        return;
+    }
+
+    K_slog_trace(K_SLOG_DEBUG, "[%s][%d] Updated channel status to Redis: state=%s, percentage=%d%%", __FUNCTION__, __LINE__, state.c_str(), percentage);
+    K_slog_trace(K_SLOG_DEBUG, "[%s][%d] Current User Count: %d, Max User Count: %d", __FUNCTION__, __LINE__, curUser, maxUser);
 }
