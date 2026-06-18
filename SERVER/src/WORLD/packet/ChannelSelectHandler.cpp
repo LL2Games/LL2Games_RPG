@@ -1,4 +1,4 @@
-#include "packet/ChannelSelectHandler.h"
+#include "ChannelSelectHandler.h"
 #include "WorldSession.h"
 #include "ChannelManager.h"
 #include "K_slog.h"

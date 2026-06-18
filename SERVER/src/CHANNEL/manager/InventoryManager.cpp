@@ -1,4 +1,4 @@
-#include "InventroyManager.h"
+#include "InventoryManager.h"
 #include "Inventory_Info.h"
 #include "ItemManager.h"
 

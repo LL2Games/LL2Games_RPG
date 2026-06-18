@@ -1,4 +1,4 @@
-#include "CHANNEL/db/RedisClient.h"
+#include "RedisClient.h"
 
 
 #define REDIS_HOST "100.114.42.54"

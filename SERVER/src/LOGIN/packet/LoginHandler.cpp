@@ -1,7 +1,7 @@
 #include "Packet.h"
 #include "LoginHandler.h"
 #include "Client.h"
-#include "db/MySQLManager.h"
+#include "MySQLManager.h"
 #include <sys/socket.h>
 #include "K_slog.h"
 #include "PacketParser.h"

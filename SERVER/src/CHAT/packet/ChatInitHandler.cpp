@@ -4,7 +4,7 @@
 #include <functional>
 #include <string>
 #include "K_slog.h"
-#include "db/MySQLManager.h"
+#include "MySQLManager.h"
 #include "PacketParser.h"
 
 void ChatInitHandler::Execute(PacketContext *ctx)
