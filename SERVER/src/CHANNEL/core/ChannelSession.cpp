@@ -6,7 +6,7 @@
 #include "MapInstance.h"
 #include "PlayerManager.h"
 
-ChannelSession::ChannelSession(int fd, ChannelServer* server) : m_fd(fd), m_server(server), m_player(nullptr)
+ChannelSession::ChannelSession(int fd, ChannelServer* server) : m_fd(fd), m_server(server), m_player(nullptr), m_playerManager(nullptr)
 {
    m_recvBuf.reserve(8192);
 }
@@ -24,7 +24,10 @@ ChannelSession::~ChannelSession()
             K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d] map->OnLeave(Id:%d)", __FILE__, __FUNCTION__, __LINE__, m_player->GetId());
         }
 
-        m_playerManager->RemovePlayer(m_player->GetId());
+        if (m_playerManager != nullptr)
+        {
+            m_playerManager->RemovePlayer(m_player->GetId());
+        }
     }
     K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d] ChannelSession Destroy(fd:%d)", __FILE__, __FUNCTION__, __LINE__, m_fd);
 }
@@ -92,19 +95,10 @@ int ChannelSession::Send(int type, const std::vector<std::string>& payload)
 {
     std::string body = PacketParser::MakeBody(payload);
     std::string packet = PacketParser::MakePacket(type, body);
-    send(m_fd, packet.c_str(), packet.size(), 0);
-   
-    return 0;
+    
+    return EnqueueSend(std::move(packet));
 }
 
-// int ChannelSession::Send(int type, std::vector<std::string> payload)
-// {
-//     std::string body = PacketParser::MakeBody(payload);
-//     std::string packet = PacketParser::MakePacket(type, body);
-//     send(m_fd, packet.c_str(), packet.size(), 0);
-   
-//     return 0;
-// }
 
 int ChannelSession::SendOk(int type, std::vector<std::string> payload)
 {
@@ -117,9 +111,8 @@ int ChannelSession::SendOk(int type, std::vector<std::string> payload)
     payload.insert(payload.begin(), "ok");
     std::string body = PacketParser::MakeBody(payload);
     std::string packet = PacketParser::MakePacket(type, body);
-    
-    send(m_fd, packet.c_str(), packet.size(), 0);
-    return 0;
+
+   return EnqueueSend(std::move(packet));
 }
 
 int ChannelSession::SendNok(int type, const std::string &errMsg)
@@ -129,8 +122,78 @@ int ChannelSession::SendNok(int type, const std::string &errMsg)
     msg.push_back(errMsg);
     std::string body = PacketParser::MakeBody(msg);
     std::string packet = PacketParser::MakePacket(type, body);
-    send(m_fd, packet.c_str(), packet.size(), 0);
+
+    return EnqueueSend(std::move(packet));
+}
+
+int ChannelSession::EnqueueSend(std::string packet)
+{
+    if (packet.empty())
+        return -1;
+
+    m_sendQueue.push_back(std::move(packet));
+
+    if (m_server != nullptr)
+        m_server->EnableWriteEvent(m_fd);
+
     return 0;
 }
 
+bool ChannelSession::FlushSend()
+{
+    while (!m_sendQueue.empty())
+    {
+        std::string& packet = m_sendQueue.front();
+
+        ssize_t sent = send(
+            m_fd,
+            packet.data() + m_sendOffset,
+            packet.size() - m_sendOffset,
+            MSG_NOSIGNAL
+        );
+
+        if (sent > 0)
+        {
+            m_sendOffset += static_cast<size_t>(sent);
+
+            if (m_sendOffset == packet.size())
+            {
+                m_sendQueue.pop_front();
+                m_sendOffset = 0;
+            }
+
+            continue;
+        }
+
+        if (sent < 0)
+        {
+            if (errno == EINTR)
+                continue;
+
+            if (errno == EAGAIN || errno == EWOULDBLOCK)
+                return true;
+
+            K_slog_trace(
+                K_SLOG_ERROR,
+                "[%s : %s : %d] send failed fd:%d errno:%d",
+                __FILE__,
+                __FUNCTION__,
+                __LINE__,
+                m_fd,
+                errno
+            );
+
+            return false;
+        }
+
+        return false;
+    }
+
+    return true;
+}
+
+bool ChannelSession::HasPendingSend() const
+{
+   return !m_sendQueue.empty();
+}
 

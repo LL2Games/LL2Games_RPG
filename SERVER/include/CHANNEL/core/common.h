@@ -7,6 +7,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h> // TCP_NODELAY는 이 헤더가 필수입니다!
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <sys/select.h>
