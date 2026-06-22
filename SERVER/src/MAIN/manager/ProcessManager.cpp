@@ -34,14 +34,16 @@ void ProcessManager::Init()
 
 void ProcessManager::StartDaemons()
 {
+
+    const std::string configPath = "../Config/server.conf";
     
-    m_login = DaemonFactory::Create(DaemonType::LOGIN);
-    m_world = DaemonFactory::Create(DaemonType::WORLD);
+    m_login = DaemonFactory::Create(DaemonType::LOGIN,configPath);
+    m_world = DaemonFactory::Create(DaemonType::WORLD,configPath);
 
     for (int i = 0; i < CHANNEL_COUNT; i++)
     {
-        m_chats.push_back(DaemonFactory::Create(DaemonType::CHAT, i));
-        m_channels.push_back(DaemonFactory::Create(DaemonType::CHANNEL, i));
+        m_chats.push_back(DaemonFactory::Create(DaemonType::CHAT, configPath, i));
+        m_channels.push_back(DaemonFactory::Create(DaemonType::CHANNEL, configPath, i));
     }
 
     m_login->Run();

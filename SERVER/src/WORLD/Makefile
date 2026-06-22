@@ -32,10 +32,11 @@ INCLUDES := \
     -I$(INC_DIR)/COMMON \
     -I$(INC_DIR)/COMMON/packet \
 	-I$(INC_DIR)/COMMON/slog \
-    -I$(INC_DIR)/WORLD \
-    -I$(INC_DIR)/WORLD/core \
-    -I$(INC_DIR)/WORLD/db \
-    -I$(INC_DIR)/WORLD/packet
+    -I$(INC_DIR)/COMMON/config \
+    \
+    -I$(SRC_DIR)/WORLD/app \
+    -I$(SRC_DIR)/WORLD/db \
+    -I$(SRC_DIR)/WORLD/packet
 
 LIB_PATH := \
     -L$(LIB_DIR)/common \
@@ -51,10 +52,10 @@ TARGET := $(BIN_DIR)/worldD
 # Source Files
 # ==================================
 SRCS := \
-    core/WorldServer.cpp \
-    core/WorldSession.cpp \
-    core/CharacterService.cpp \
-    core/ChannelManager.cpp \
+    app/WorldServer.cpp \
+    app/WorldSession.cpp \
+    app/CharacterService.cpp \
+    app/ChannelManager.cpp \
     \
     packet/WorldPacketFactory.cpp \
     packet/CharacterHandler.cpp \

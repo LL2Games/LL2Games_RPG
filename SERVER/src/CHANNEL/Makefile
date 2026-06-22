@@ -33,16 +33,21 @@ INCLUDES := \
     -I$(INC_DIR)/COMMON/packet \
 	-I$(INC_DIR)/COMMON/slog \
 	-I$(INC_DIR)/COMMON/command \
+	-I$(INC_DIR)/COMMON/config \
 	-I$(INC_DIR)/COMMON/ipc \
 	-I$(INC_DIR)/COMMON/thread \
-    -I$(INC_DIR)/CHANNEL \
-    -I$(INC_DIR)/CHANNEL/core \
-    -I$(INC_DIR)/CHANNEL/db \
-    -I$(INC_DIR)/CHANNEL/packet \
-	-I$(INC_DIR)/CHANNEL/stat \
-	-I$(INC_DIR)/CHANNEL/ipc \
-	-I$(INC_DIR)/CHANNEL/util \
-	-I$(INC_DIR)/CHANNEL/trade
+	-I$(INC_DIR)/COMMON/util \
+	\
+	-I$(SRC_DIR)/CHANNEL/app \
+    -I$(SRC_DIR)/CHANNEL/db \
+	-I$(SRC_DIR)/CHANNEL/domain \
+	-I$(SRC_DIR)/CHANNEL/ipc \
+	-I$(SRC_DIR)/CHANNEL/manager \
+	-I$(SRC_DIR)/CHANNEL/map \
+    -I$(SRC_DIR)/CHANNEL/packet \
+	-I$(SRC_DIR)/CHANNEL/service \
+	-I$(SRC_DIR)/CHANNEL/stat \
+	-I$(SRC_DIR)/CHANNEL/util \
 
 LIB_PATH := \
     -L$(LIB_DIR)/common \
@@ -58,30 +63,36 @@ TARGET := $(BIN_DIR)/channelD
 # Source Files
 # ==================================
 SRCS := \
-	core/ChannelServer.cpp \
-	core/ChannelSession.cpp \
-	core/MapManager.cpp \
-	core/MapInstance.cpp \
-	core/MapService.cpp \
-	core/PlayerManager.cpp \
-	core/Player.cpp \
-	core/Monster.cpp \
-	core/MonsterManager.cpp \
-	core/Item.cpp \
-	core/StatService.cpp \
-	core/CombatService.cpp \
-	core/SkillManager.cpp \
-	core/ItemManager.cpp \
-	core/ItemService.cpp \
-	core/Inventory.cpp \
-	core/DropManager.cpp\
-	core/InventoryManager.cpp\
-	core/QuickSlotManager.cpp\
-	core/Projectile.cpp \
-	core/ProjectileManager.cpp \
-	core/TradeService.cpp\
-	core/LevelManager.cpp\
+	app/ChannelServer.cpp \
+	app/ChannelSession.cpp \
     \
+    db/MySqlConnectionPool.cpp \
+	db/PlayerService.cpp \
+	db/RedisClient.cpp \
+	db/RedisUtility.cpp \
+	\
+	domain/Player.cpp \
+	domain/Monster.cpp \
+	domain/Item.cpp \
+	domain/Inventory.cpp \
+	domain/Projectile.cpp \
+	\
+	ipc/CommandReceiver.cpp \
+	ipc/CommandMsgQueue.cpp \
+	\
+	manager/PlayerManager.cpp \
+	manager/MonsterManager.cpp \
+	manager/ItemManager.cpp \
+	manager/InventoryManager.cpp\
+	manager/QuickSlotManager.cpp\
+	manager/SkillManager.cpp \
+	manager/DropManager.cpp\
+	manager/ProjectileManager.cpp \
+	manager/LevelManager.cpp\
+	\
+	map/MapManager.cpp \
+	map/MapInstance.cpp \
+	\
 	packet/ChannelPacketFactory.cpp \
 	packet/ChannelInitHandler.cpp \
 	packet/PlayerHandler.cpp \
@@ -100,16 +111,13 @@ SRCS := \
 	packet/ItemPacketSender.cpp\
 	packet/HandleTrade.cpp \
 	packet/InventoryPacketHandler.cpp\
-	packet/InventoryPacketSender.cpp\
-    \
-    db/MySqlConnectionPool.cpp \
-	db/PlayerService.cpp \
-	db/RedisClient.cpp \
-	db/RedisUtility.cpp \
 	\
-	ipc/CommandReceiver.cpp \
-	ipc/CommandMsgQueue.cpp \
-    \
+	service/MapService.cpp \
+	service/StatService.cpp \
+	service/CombatService.cpp \
+	service/ItemService.cpp \
+	service/TradeService.cpp \
+	\
 	stat/PlayerStatRepository.cpp \
 	stat/CharacterStat.cpp \
 	\

@@ -1,4 +1,4 @@
-#include "packet/ChannelSelectHandler.h"
+#include "ChannelSelectHandler.h"
 #include "WorldSession.h"
 #include "ChannelManager.h"
 #include "K_slog.h"
@@ -70,9 +70,23 @@ err:
         else
         {
             ChannelInfo info = *opt;
+            int channel_state = (int)channel_manager->CanEnterChannel(channel_id);
+            // switch (channel_state)
+            // {
+            // case ChannelState::E_Normal: //정상
+            //     break;
+            // case ChannelState::E_Busy: //혼잡
+            //     break;
+            // case ChannelState::E_Full:  //만원
+            //     break;
+            // case ChannelState::E_Die:   //죽음
+            //     break;
+            // }
+
             std::vector<std::string> channel_info;
             channel_info.push_back(info.ip);
             channel_info.push_back(std::to_string(info.port));
+            channel_info.push_back(std::to_string(channel_state)); //상태에 따른 클라이언트 처리 가능
             session->SendOk(PKT_SELECT_CHANNEL, channel_info);
         }
     }

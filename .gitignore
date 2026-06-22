@@ -101,3 +101,8 @@ Desktop.ini
 # Linux
 *~
 .cache/
+
+#############################################
+# Local config
+#############################################
+SERVER/Config/server.conf

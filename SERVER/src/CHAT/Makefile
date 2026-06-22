@@ -35,14 +35,14 @@ INCLUDES := \
     -I$(INC_DIR)/COMMON/packet \
 	-I$(INC_DIR)/COMMON/slog \
     -I$(INC_DIR)/COMMON/command \
+    -I$(INC_DIR)/COMMON/config \
     -I$(INC_DIR)/COMMON/ipc \
-    -I$(INC_DIR)/CHAT \
-    -I$(INC_DIR)/CHAT/core \
-    -I$(INC_DIR)/CHAT/db \
-    -I$(INC_DIR)/CHAT/packet \
-    -I$(INC_DIR)/CHAT/util \
-    -I$(INC_DIR)/CHAT/command \
-    -I$(INC_DIR)/CHAT/ipc
+    \
+    -I$(SRC_DIR)/CHAT/util \
+    -I$(SRC_DIR)/CHAT/packet \
+    -I$(SRC_DIR)/CHAT/db \
+    -I$(SRC_DIR)/CHAT/command \
+    -I$(SRC_DIR)/CHAT/app
 
 LIB_PATH := \
     -L$(LIB_DIR)/common \
@@ -58,8 +58,8 @@ TARGET := $(BIN_DIR)/chatD
 # Source Files
 # ==================================
 SRCS := \
-    core/Server.cpp \
-    core/Client.cpp \
+    app/Server.cpp \
+    app/Client.cpp \
     \
     packet/ChatPacketFactory.cpp \
     packet/ChatInitHandler.cpp \

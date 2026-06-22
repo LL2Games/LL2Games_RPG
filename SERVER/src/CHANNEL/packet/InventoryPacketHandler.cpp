@@ -1,7 +1,7 @@
 #include "InventoryPacketHandler.h"
 #include "ChannelSession.h"
 #include "PacketParser.h"
-#include "InventroyManager.h"
+#include "InventoryManager.h"
 #include "InventoryPacketSender.h"
 #include "Player.h"
 
