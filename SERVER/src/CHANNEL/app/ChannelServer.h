@@ -36,6 +36,8 @@ public:
     void OnReceive(int fd);
     void OnDisconnect(int fd);
     void BroadCast(); // 매개변수로 packet 받아야함
+    void EnableWriteEvent(int fd);
+public:
     PlayerManager* GetPlayerManager() { return &m_player_mamager; }
     MapService* GetMapService() {return &m_map_service;}
     PlayerService* GetPlayerService() {return &m_player_service;}
@@ -54,6 +56,9 @@ private:
     void OnAccept();
 
     static int SetNonblocking(int fd);
+
+    void DisableWriteEvent(int fd);
+    void OnSend(int fd);
 
 private:
     int m_channel_id;
