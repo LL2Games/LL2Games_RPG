@@ -1,31 +1,26 @@
 #pragma once
-#include <hiredis/hiredis.h>
-#include <string>
-#include <map>
+#include "common.h"
 #include <optional>
+#include "ConfigLoader.h"
 
-enum TTL {
-    E_TTL_CHARLIST = 300,
-};
-
-//SingleTone
 class RedisClient
 {
 public:
-    RedisClient();
     ~RedisClient();
 
-    static RedisClient *GetInstance();
+static int Init(const RedisConfig& redisConfig);
+static RedisClient *GetInstance();
 
-    int Set(const std::string key, const std::string value);
-    std::string Get(std::string key);
-    
-    int HSet(const std::string key, const std::string& field, const std::string &value, const int expire = 60);
-    std::optional<std::map<std::string, std::string>> HGetAll(const std::string key);
-    //Publish(channel, msg)
+int Set(const std::string key, const std::string value);
+std::string Get(std::string key);
+
+int HSet(const std::string key, const std::string& field, const std::string &value, const int expire =60);
+int HSetAll(const std::string& key, std::map<std::string, std::string> redis_map, const int expire);
+std::optional<std::map<std::string, std::string>> HGetAll(const std::string key);
+
 private:
+    explicit RedisClient(const RedisConfig& redisConfig);
+    bool IsConnected() const;
     redisContext* m_ctx;
     static RedisClient *m_instance;
-
-    int Init();
 };

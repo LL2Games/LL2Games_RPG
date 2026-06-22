@@ -5,6 +5,11 @@
 #include "RedisClient.h"
 #include <string.h>
 
+enum TTL {
+    E_TTL_CHARLIST = 300,
+};
+
+
 CharacterService::CharacterService()
 {
     m_db = MySqlConnectionPool::GetInstance();

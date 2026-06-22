@@ -70,8 +70,6 @@ private:
     MonsterManager* m_monster_manager;
     SkillManager* m_skill_manager;
     DropManager* m_drop_manager;
-    //MySqlConnectionPool m_db;
-    RedisClient m_redis;
     
     MapService m_map_service;
     StatService m_stat_service;
