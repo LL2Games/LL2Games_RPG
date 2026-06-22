@@ -61,7 +61,7 @@ int main(int ac, char **av)
 
         g_config = loader.ToAppConfig();
         MySqlConnectionPool::GetInstance(g_config.mysql);
-        ChannelServer channelServer;
+        ChannelServer channelServer(channelIndex + 1); // 채널 인덱스는 1부터 시작
 
         bool start = channelServer.Init(g_config.channelServer.port + channelIndex);
         if (start == false)

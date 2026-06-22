@@ -2,6 +2,7 @@
 #include "K_slog.h"
 #include "RedisClient.h"
 #include "MySqlConnectionPool.h"
+#include "RedisCommonEnum.h"
 
 ChannelManager::ChannelManager()
 {
@@ -128,4 +129,43 @@ ChannelInfo ChannelManager::SelectBestChannel()
 
 //err:
     return info;
+}
+
+int ChannelManager::CanEnterChannel(const std::string& channel_id)
+{
+    E_ChannelState result_state = E_ChannelState::Die;
+    RedisClient* redis = RedisClient::GetInstance();
+    if (redis == nullptr)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] RedisClient is nullptr", __FUNCTION__, __LINE__);
+        return (int)E_ChannelState::Die;
+    }
+
+    auto redis_value = redis->HGetAll("channel:" + channel_id + ":status");
+    if (redis_value.has_value() && !redis_value->empty())
+    {
+        auto it = redis_value->find("state");
+        if (it != redis_value->end())
+        {
+            std::string state = it->second;
+            if (state == ChannelState::NORMAL)
+                result_state = E_ChannelState::Normal;
+            else if (state == ChannelState::BUSY)
+                result_state = E_ChannelState::Busy;
+            else if (state == ChannelState::FULL)
+                result_state = E_ChannelState::Full;
+            else 
+                result_state = E_ChannelState::Die;
+
+            K_slog_trace(K_SLOG_DEBUG, "[%s][%d] channel(%s) status from Redis: state=%s", __FUNCTION__, __LINE__, channel_id.c_str(), state.c_str());
+            K_slog_trace(K_SLOG_DEBUG, "[%s][%d] channel(%s) percentage from Redis: percentage=%s%%", __FUNCTION__, __LINE__, channel_id.c_str(), redis_value->find("percentage") != redis_value->end() ? redis_value->find("percentage")->second.c_str() : "N/A");
+        }
+    }
+    else
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] Failed to get channel status from Redis for channel(%s)", __FUNCTION__, __LINE__, channel_id.c_str());
+        return (int)E_ChannelState::Die;
+    }
+
+    return (int)result_state;
 }

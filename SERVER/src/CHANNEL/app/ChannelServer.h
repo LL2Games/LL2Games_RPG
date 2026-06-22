@@ -27,7 +27,7 @@
 class ChannelServer
 {
 public:
-    ChannelServer();
+    ChannelServer(const int channelId = 0);
     ~ChannelServer();
 
     bool Init(const int port);
@@ -44,6 +44,8 @@ public:
     CombatService* GetCombatService() {return &m_combat_service;}
     TradeService* GetTradeService() {return &m_trade_service;}
     ThreadPool* GetThreadPool() {return &m_pool;}
+    void UpdateChannelState(const int interval, const int ttl);
+    void UpdateChannelStateToRedis(const int ttl);
 private:
     bool InitListenSocket(int port);
     bool InitEpoll();
@@ -82,4 +84,7 @@ private:
     TradeService m_trade_service;
 
     LevelManager* m_level_manager;
+
+    unsigned int m_current_user_count;
+    unsigned int m_max_user_count;
 };
