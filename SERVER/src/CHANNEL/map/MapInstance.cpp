@@ -160,23 +160,28 @@ int MapInstance::SpawnMonster()
 
 void MapInstance::OnEnter(int PlayerID, Player* player)
 {
+	// 논리적으로 연관된 공유 데이터는 같은 lock 안에서 함께 갱신해야 한다.
 	{
 		std::lock_guard<std::mutex> lock(m_playerMutex);
 		auto it = m_playerList.find(PlayerID);
 
 		if(it != m_playerList.end()) return;
+	
+
+		m_playerList[PlayerID] = player;
+
+		if (m_playerCount == 0) {
+    	    m_has_player = true;
+    	    m_destroyRequested = false; // 혹시 남아있던 요청 초기화
+    	    m_emptyTime = {};
+    	}
+		m_playerCount++;
 	}
-
-	m_playerList[PlayerID] = player;
-
-	if (m_playerCount == 0) {
-        m_has_player = true;
-        m_destroyRequested = false; // 혹시 남아있던 요청 초기화
-        m_emptyTime = {};
-    }
-	m_playerCount++;
 	K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d] PlayerID(%d)", __FILE__, __FUNCTION__, __LINE__, PlayerID);
 	K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d] m_playerCount(%d)", __FILE__, __FUNCTION__, __LINE__, m_playerCount);
+	// 들어온 플레이어에 대한 정보 다른 플레이어들한테 전달
+	PlayerPacketSender::SendExistingPlayersToNewPlayer(player, m_playerList);
+	PlayerPacketSender::SendPlayerEnter(player, m_playerList);
 	// 들어온 플레이어 한테 몬스터 정보 전달
 	SendMonsterSnapshot(player);
 }
@@ -209,7 +214,7 @@ void MapInstance::GiveExp(int playerID, float exp)
 	(void)exp;
 }
 
-void MapInstance::HandleMove(Player* sender, Vec2 pos, float speed)
+void MapInstance::HandleMove(Player* sender, Vec2 pos, float speed, int dir)
 {
 	if(!sender) return;
 
@@ -224,11 +229,11 @@ void MapInstance::HandleMove(Player* sender, Vec2 pos, float speed)
 			K_slog_trace(K_SLOG_ERROR, "[%s][%d] [%d]해당 맵에 존재하지 않은 플레이어 입니다.", __FUNCTION__, __LINE__, m_mapID);
 			return;
 		}
+		
+		sender->SetPos(pos);
+		sender->SetState(PlayerState::MOVE);
+		PlayerPacketSender::SendPlayersMove(sender, pos, speed, dir, m_playerList);
 	}
-
-	sender->SetPos(pos);
-
-	PlayerPacketSender::SendPlayersMove(sender, pos, speed, m_playerList);
 }
 
 void MapInstance::SendMonsterSnapshot(Player* player)

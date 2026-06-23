@@ -6,6 +6,7 @@
 #include "ChannelServer.h"
 #include "Player.h"
 #include "utility.h"
+#include "PlayerPacketSender.h"
 
  // 플레이어가 공격 했을 때 피격 당하는 몬스터
 
@@ -26,6 +27,7 @@ void PlayerHandler::AttackPacket(PacketContext * ctx)
 
     int skill_id = 0;
     int attack_dir = 0;
+    int result = 0;
 
     if(ctx == nullptr)
     {
@@ -103,14 +105,22 @@ void PlayerHandler::AttackPacket(PacketContext * ctx)
         K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] StringToInt fail", __FILE__, __FUNCTION__, __LINE__);
         goto err;
     }
-    combat_service->HandleAttack(player, skill_id, attack_dir);
+    result = combat_service->HandleAttack(player, skill_id, attack_dir);
 
+    if(result != 1)
+    {
+        rc = EXIT_FAILURE;
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] HandleAttack fail", __FILE__, __FUNCTION__, __LINE__);
+        goto err;
+    }
+    
+    
 err:
     if (rc != EXIT_SUCCESS) { 
         session->SendNok(PKT_PLAYER_ATTACK, errMsg);
     } else {
         K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] Player Attack End", __FILE__, __FUNCTION__, __LINE__);
-        session->SendOk(PKT_PLAYER_ATTACK);
+        PlayerPacketSender::SendPlayerAttack(player,skill_id,attack_dir,player->GetCurrentMap()->GetPlayerList());
     }
 
 }
@@ -122,6 +132,7 @@ void PlayerHandler::BasicAttackPacket(PacketContext * ctx)
     Player *player = nullptr;
 
     size_t offset = 0;
+    int result = 0;
     int rc = EXIT_SUCCESS;
 
     std::string attack_dir_str;
@@ -189,14 +200,19 @@ void PlayerHandler::BasicAttackPacket(PacketContext * ctx)
 
     K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] HandleBasicAttack \n", __FILE__, __FUNCTION__, __LINE__);
 
-    combat_service->HandleBasicAttack(player, attack_dir);
-
+    result = combat_service->HandleBasicAttack(player, attack_dir);
+    if(result != 1)
+    {
+        rc = EXIT_FAILURE;
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] HandleBasicAttack fail", __FILE__, __FUNCTION__, __LINE__);
+        goto err;
+    }
 err:
     if (rc != EXIT_SUCCESS) { 
         session->SendNok(PKT_PLAYER_BASIC_ATTACK, errMsg);
     } else {
         K_slog_trace(K_SLOG_TRACE, "[%s : %s][%d] Player Attack End", __FILE__, __FUNCTION__, __LINE__);
-        session->SendOk(PKT_PLAYER_BASIC_ATTACK);
+        PlayerPacketSender::SendPlayerAttack(player,static_cast<int>(player->GetWeaponType()),attack_dir,player->GetCurrentMap()->GetPlayerList());
     }
 }
 

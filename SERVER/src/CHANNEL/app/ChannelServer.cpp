@@ -283,7 +283,6 @@ void ChannelServer::OnReceive(int fd)
         {
             // 진짜 클라이언트 종료
             OnDisconnect(fd);
-            close(fd);
             return;
         }
         else
@@ -293,7 +292,6 @@ void ChannelServer::OnReceive(int fd)
         
             // 진짜 recv 에러
             OnDisconnect(fd);
-            close(fd);
             return;
         }
     } while (tempLen == BUFFER_SIZE);
