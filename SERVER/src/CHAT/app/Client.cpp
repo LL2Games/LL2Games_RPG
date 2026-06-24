@@ -1,5 +1,4 @@
 #include "Client.h"
-#include "MySQLManager.h"
 #include "PacketParser.h"
 #include <sys/socket.h>
 #include <unistd.h>

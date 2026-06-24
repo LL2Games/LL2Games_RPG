@@ -4,7 +4,6 @@
 #include <functional>
 #include <string>
 #include "K_slog.h"
-#include "MySQLManager.h"
 #include "PacketParser.h"
 #include "CommandDispatcher.h"
 

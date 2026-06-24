@@ -1,20 +1,21 @@
 #pragma once
 #include <mysql/mysql.h>
 #include <string>
-
+#include "ConfigLoader.h"
+#include "MySqlConnectionPool.h"
 // Signetone
 
 class MySQLManager
 {
 public:
-    static MySQLManager &Instance();
-
-    bool Connect(const char *host, const char *user, const char *pass, const char *db, const int port);
+static int Init(const MySqlConfig& mysqlConfig);
+    static MySQLManager *GetInstance();
 
     bool Login(const std::string &id, const std::string &pw);
     //std::string GetNick(const std::string &id);
 
 private:
-    MySQLManager() = default;
-    MYSQL *m_conn = nullptr;
+    explicit MySQLManager();
+    static MySQLManager* m_instance;
+    MySqlConnectionPool* m_pool;
 };
