@@ -53,7 +53,7 @@ public:
     void SetPlayerHitResult(Player* player, int monster_instanceId, PlayerHitResult& result);
     bool PickupDropItem(Player* player, int dropItemId, std::vector<AddItemResult>& addItemResults);
     bool CanPickupByDistance(Vec2 playerPos, Vec2 ItemPos);
-    bool SpawnDropItem(Monster* monster, std::vector<DropResult> dropItems);
+    bool SpawnDropItem(const Vec2& dropPos, Player* owner, const std::vector<DropResult>& dropItems);
     void CheckDropItem();
     
 private:
@@ -113,7 +113,8 @@ private:
 
     // 동기화
     std::mutex m_playerMutex;
-
+    std::mutex m_dropItemMutex;
+    std::mutex m_monsterMutex;
 private:
     MonsterManager* m_monsterManager;
     CombatService* m_combatService;

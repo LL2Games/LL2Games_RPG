@@ -127,6 +127,7 @@ MySqlConnectionPool* MySqlConnectionPool::GetInstance(const MySqlConfig& mysqlCo
 
 MYSQL* MySqlConnectionPool::GetConnection()
 {
+    std::lock_guard<std::mutex> lock(m_sqlMutex); 
     // m_pool이 생성안됐을 때 대비해서 안전 코드 생성
     if(m_pool.empty())
     {
@@ -139,9 +140,12 @@ MYSQL* MySqlConnectionPool::GetConnection()
 
 int MySqlConnectionPool::ReleaseConnection(MYSQL* conn)
 {
-    if(conn !=nullptr)
+    if (conn == nullptr)
     {
-        m_pool.push(conn);
+        return -1;
     }
+
+    std::lock_guard<std::mutex> lock(m_sqlMutex);
+    m_pool.push(conn);
     return 0;
 }

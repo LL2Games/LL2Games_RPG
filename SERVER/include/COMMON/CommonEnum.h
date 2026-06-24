@@ -5,8 +5,9 @@
 #include <optional>
 #include "Collider.h"
 
-class MapInstance;
 
+class MapInstance;
+class Player;
 #pragma once
 enum class MapRegion{
     HENESYS,
@@ -71,6 +72,38 @@ struct MonsterTemplate {
     MonsterProjectileData projectileData;
 };
 
+struct MonsterMoveInfo
+{
+    int instanceId;
+    int state;
+    int dirX;
+    float xPos;
+    float yPos;
+    int currentHp;
+    int maxHp;
+};
+
+struct MonsterSnapshotInfo
+{
+    int monsterId;
+    int instanceId;
+    int dirX;
+    int currentHp;
+    int maxHp;
+    int state;
+    float xPos;
+    float yPos;
+    float moveSpeed;
+};
+
+struct DeadMonsterInfo
+{
+    int exp = 0;
+    std::string commonGroupId = 0;
+    std::string uniqueGroupId = 0;
+    Vec2 dropPos;
+    Player* owner = nullptr;
+};
 
 typedef struct MapInitData{
     uint32_t mapID;

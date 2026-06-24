@@ -2,6 +2,7 @@
 #include "common.h"
 #include <queue>
 #include "ConfigLoader.h"
+#include <mutex>
 
 class MySqlConnectionPool
 {
@@ -22,4 +23,5 @@ private:
     ~MySqlConnectionPool();
 
     static MySqlConnectionPool* m_instance;
+    std::mutex m_sqlMutex;
 };

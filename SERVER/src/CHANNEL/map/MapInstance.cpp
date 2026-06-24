@@ -69,10 +69,23 @@ int MapInstance::Update()
 //맵내에 있는 모든사용자에게 Update시 보내주는 정보
 void MapInstance::SendMapInfo()
 {
-	for(auto it = m_playerList.begin(); it != m_playerList.end(); ++it)
+	std::vector<Player*> players;
+	// 락 안에서 SnedMonster까지 보낼려면 너무 오랜시간 Lock을 잡고 있어 별로라서
+	// 락 안에서 PlayerList를 복사하고 복사본을 가지고 SendMonsterMove 하는 것이 좋다.
 	{
-		SendMonsterMove(it->second);
-	}
+        std::lock_guard<std::mutex> lock(m_playerMutex);
+
+        for (auto& [id, player] : m_playerList)
+        {
+            if (player != nullptr)
+                players.push_back(player);
+        }
+    }
+
+	for (Player* player : players)
+    {
+        SendMonsterMove(player);
+    }
 }
 
 int MapInstance::InitSpawnMonster()
@@ -165,10 +178,10 @@ void MapInstance::OnEnter(int PlayerID, Player* player)
 		auto it = m_playerList.find(PlayerID);
 
 		if(it != m_playerList.end()) return;
+	
+
+		m_playerList[PlayerID] = player;
 	}
-
-	m_playerList[PlayerID] = player;
-
 	if (m_playerCount == 0) {
         m_has_player = true;
         m_destroyRequested = false; // 혹시 남아있던 요청 초기화
@@ -239,15 +252,31 @@ void MapInstance::SendMonsterSnapshot(Player* player)
         return;
     }
 
-    std::vector<Monster*> aliveMonsters;
-    aliveMonsters.reserve(m_monsterList.size());
-
-    for (auto& monster : m_monsterList)
+    std::vector<MonsterSnapshotInfo> aliveMonsters;
+	// Monster*를 lock 밖으로 넘기면, 패킷 생성 시점에 다른 스레드가 Monster 상태를 변경할 수 있다.
+	// 따라서 lock 안에서 전송에 필요한 값만 snapshot으로 복사한 뒤, lock 밖에서 패킷을 전송한다.
     {
-        if (!monster.IsAlive())
-            continue;
+        std::lock_guard<std::mutex> lock(m_monsterMutex);
 
-        aliveMonsters.push_back(&monster);
+        aliveMonsters.reserve(m_monsterList.size());
+
+        for (auto& monster : m_monsterList)
+        {
+            if (!monster.IsAlive())
+                continue;
+
+            MonsterSnapshotInfo info;
+            info.instanceId = monster.GetInstanceId();
+            info.monsterId = monster.GetId();
+            info.state = static_cast<int>(monster.GetState());
+            info.dirX = static_cast<int>(monster.GetDir().xPos);
+            info.xPos = monster.GetPos().xPos;
+            info.yPos = monster.GetPos().yPos;
+            info.currentHp = monster.GetCurrentHP();
+            info.maxHp = monster.GetMaxHP();
+
+            aliveMonsters.push_back(info);
+        }
     }
 
     MonsterPacketSender::SendMonsterSnapShot(player, aliveMonsters);
@@ -261,16 +290,29 @@ void MapInstance::SendMonsterSnapshot(Player* player)
         return;
     }
 
-    std::vector<Monster*> aliveMonsters;
-    aliveMonsters.reserve(m_monsterList.size());
+    std::vector<MonsterMoveInfo> aliveMonsters;
+	{
+		std::lock_guard<std::mutex> lock(m_monsterMutex);
+    	aliveMonsters.reserve(m_monsterList.size());
+    	for (auto& monster : m_monsterList)
+    	{
+        	if (!monster.IsAlive())
+        	    continue;
 
-    for (auto& monster : m_monsterList)
-    {
-        if (!monster.IsAlive())
-            continue;
-		monster.SetState(MonsterState::E_Move);
-        aliveMonsters.push_back(&monster);
-    }
+        	monster.SetState(MonsterState::E_Move);
+
+        	MonsterMoveInfo info;
+        	info.instanceId = monster.GetInstanceId();
+        	info.state = static_cast<int>(monster.GetState());
+        	info.dirX = static_cast<int>(monster.GetDir().xPos);
+        	info.xPos = monster.GetPos().xPos;
+        	info.yPos = monster.GetPos().yPos;
+        	info.currentHp = monster.GetCurrentHP();
+        	info.maxHp = monster.GetMaxHP();
+
+        	aliveMonsters.push_back(info);
+    	}
+	}
 	MonsterPacketSender::SendMonsterMove(player, aliveMonsters);
  }
 
@@ -290,40 +332,68 @@ void MapInstance::RemoveMap()
 // 나중에 PacketSender로 옮겨야함
 void MapInstance::ResolveSkillHit(Player* Attacker, SkillDef& skillDef, std::vector<std::pair<Monster*, int>> hits)
 {
-	//skillDef는 상태이상 적용 시 필요한 정보 : 현재는 필요 없지만 후에 필요할지 몰라서 일단 매개변수로 추가해놓음
+	 if (Attacker == nullptr)
+        return;
 
-	K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] 공격 성공 ! 데이터 전송 준비 중.\n", __FILE__, __FUNCTION__, __LINE__);
-	//K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d] MapInstance Pointer[%p]", __FILE__, __FUNCTION__, __LINE__, this);
+    std::vector<MonsterHitResult> results;
+    std::vector<DeadMonsterInfo> deadMonsters;
+    std::unordered_map<int, Player*> playerSnapshot;
 
-	std::vector<MonsterHitResult> results;
     results.reserve(hits.size());
 
-	 K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] ResolveSkillHit hits size = %zu\n", __FILE__, __FUNCTION__, __LINE__, hits.size());
+    {
+        std::lock_guard<std::mutex> lock(m_monsterMutex);
 
-	for (auto& [m, dmg] : hits)
-	{
-		bool isDead = m->OnDamaged(Attacker, dmg);
-		// 몬스터가 죽었을 때 아이템 드롭
-		if(isDead)
-		{
+        for (auto& [monster, dmg] : hits)
+        {
+            if (monster == nullptr)
+                continue;
 
-			const ExpResult result = Attacker->AddExp(m->GetExp());
-			PlayerPacketSender::SendExpGain(Attacker, result);
+            bool isDead = monster->OnDamaged(Attacker, dmg);
 
-			if(result.levelUp)
-			{
-				PlayerPacketSender::SendPlayerStat(Attacker);
-			}
-			// dropItem 세팅
-			std::vector<DropResult> dropItems = m_dropManager->SetDropItem(m->GetCommonItemGroupID(), m->GetUniqueItemGroupID());
-			// 아이템 스폰
-			SpawnDropItem(m, dropItems);
-		}	
-		
-		results.push_back({m->GetInstanceId(), dmg, m->GetCurrentHP(), m->GetMaxHP(), isDead});
-	}
-    K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] SendMonsterOnDamaged.\n", __FILE__, __FUNCTION__, __LINE__);    
-	MonsterPacketSender::SendMonsterOnDamaged(Attacker, skillDef.skill_id, results, m_playerList);
+            if (isDead)
+            {
+                DeadMonsterInfo deadInfo;
+                deadInfo.exp = monster->GetExp();
+                deadInfo.commonGroupId = monster->GetCommonItemGroupID();
+                deadInfo.uniqueGroupId = monster->GetUniqueItemGroupID();
+                deadInfo.dropPos = monster->GetPos();
+                deadInfo.owner = monster->GetLastAttacker();
+
+                deadMonsters.push_back(deadInfo);
+            }
+
+            MonsterHitResult hitResult;
+            hitResult.monster_instance_id = monster->GetInstanceId();
+            hitResult.damage = dmg;
+            hitResult.cur_hp = monster->GetCurrentHP();
+            hitResult.max_hp = monster->GetMaxHP();
+            hitResult.dead = isDead;
+
+            results.push_back(hitResult);
+        }
+    }
+
+    for (auto& dead : deadMonsters)
+    {
+        const ExpResult expResult = Attacker->AddExp(dead.exp);
+        PlayerPacketSender::SendExpGain(Attacker, expResult);
+
+        if (expResult.levelUp)
+            PlayerPacketSender::SendPlayerStat(Attacker);
+
+        std::vector<DropResult> dropItems =
+            m_dropManager->SetDropItem(dead.commonGroupId, dead.uniqueGroupId);
+
+        SpawnDropItem(dead.dropPos, dead.owner, dropItems);
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(m_playerMutex);
+        playerSnapshot = m_playerList;
+    }
+
+    MonsterPacketSender::SendMonsterOnDamaged(Attacker, skillDef.skill_id, results, playerSnapshot);
 }
 
 
@@ -488,39 +558,46 @@ bool MapInstance::CanPickupByDistance(Vec2 playerPos, Vec2 ItemPos)
     return distanceSq <= PICKUP_DISTANCE * PICKUP_DISTANCE;
 }
 
-bool MapInstance::SpawnDropItem(Monster* monster, std::vector<DropResult> dropItems)
+bool MapInstance::SpawnDropItem(const Vec2& dropPos, Player* owner, const std::vector<DropResult>& dropItems)
 {
 	std::vector<DropSpawnInfo> spawnInfos;
+    std::unordered_map<int, Player*> playerSnapshot;
 
-	for(size_t i =0; i < dropItems.size(); i++)
-	{
-		DropItems Item;
-		Item.count = dropItems[i].count;
-		
-		Item.itemId = dropItems[i].itemId;
-		K_slog_trace(K_SLOG_DEBUG,"[%s][%d] Item.itemId [%d]", __FUNCTION__, __LINE__, Item.itemId);
-		Item.type = dropItems[i].type;
-		Item.dropId = m_dropId++;
-		Item.pos = monster->GetPos();
-		Item.owner = monster->GetLastAttacker();
-		Item.ownerExpireTimeMs = NowMs() + 60000; // 1분
-		Item.expireTimeMs = NowMs() + 120000; // 2분
+    {
+        std::lock_guard<std::mutex> lock(m_dropItemMutex);
 
-		m_dropItems[Item.dropId] = Item;
+        for (const auto& drop : dropItems)
+        {
+            DropItems item;
+            item.count = drop.count;
+            item.itemId = drop.itemId;
+            item.type = drop.type;
+            item.dropId = m_dropId++;
+            item.pos = dropPos;
+            item.owner = owner;
+            item.ownerExpireTimeMs = NowMs() + 60000;
+            item.expireTimeMs = NowMs() + 120000;
 
-		DropSpawnInfo info;
-		info.dropId = Item.dropId;
-		info.count = Item.count;
-		info.itemId = Item.itemId;
-		info.xPos = Item.pos.xPos;
-		info.yPos = Item.pos.yPos;
+            m_dropItems[item.dropId] = item;
 
-		spawnInfos.push_back(info);
-	}
+            DropSpawnInfo info;
+            info.dropId = item.dropId;
+            info.count = item.count;
+            info.itemId = item.itemId;
+            info.xPos = item.pos.xPos;
+            info.yPos = item.pos.yPos;
 
-	ItemPacketSender::SendSpawnItem(spawnInfos, m_playerList);
+            spawnInfos.push_back(info);
+        }
+    }
 
-	return true;
+    {
+        std::lock_guard<std::mutex> lock(m_playerMutex);
+        playerSnapshot = m_playerList;
+    }
+
+    ItemPacketSender::SendSpawnItem(spawnInfos, playerSnapshot);
+    return true;
 }
 
 void MapInstance::CheckDropItem()
