@@ -49,7 +49,7 @@ public:
 
     void GiveExp(int platerID, float exp);
     void HandleMove(Player* sender, Vec2 pos, float speed);
-    void ResolveSkillHit(Player* Attacker, SkillDef& skillDef, std::vector<std::pair<Monster*, int>> hits);
+    void ResolveSkillHit(Player* Attacker, SkillDef& skillDef, std::vector<std::pair<Monster*, int>>& hits);
     void SetPlayerHitResult(Player* player, int monster_instanceId, PlayerHitResult& result);
     bool PickupDropItem(Player* player, int dropItemId, std::vector<AddItemResult>& addItemResults);
     bool CanPickupByDistance(Vec2 playerPos, Vec2 ItemPos);
@@ -78,6 +78,8 @@ public:
 
     std::vector<Monster>& GetMonsterList(){ return m_monsterList;};
     ProjectileManager& GetProjectileManager() { return m_projectileManager; }
+
+    bool HasPlayer();
 
 private:
    	// 플레이어가 맵에 있는지 없는지 판단 변수

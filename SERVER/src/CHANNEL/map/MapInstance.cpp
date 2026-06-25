@@ -13,6 +13,24 @@
 
 
 #define MAPDELETELIMIT 5
+namespace
+{
+	struct DeadMonsterInfo
+	{
+	    int exp = 0;
+	    std::string commonGroupId;
+	    std::string uniqueGroupId;
+	    Vec2 dropPos{};
+	    Player* owner = nullptr;
+	};
+	
+	struct ContactDamageEvent
+	{
+    	Player* player = nullptr;
+    	PlayerHitResult result;
+	};
+}
+
 
 MapInstance::MapInstance() : m_playerCount(0), m_limit(std::chrono::minutes{MAPDELETELIMIT}), m_combatService(nullptr)
 {
@@ -50,7 +68,7 @@ int MapInstance::Init(const MapInitData& data)
 int MapInstance::Update()
 {
 	//K_slog_trace(K_SLOG_TRACE, "[%s:%s][%d] MapInstance Pointer[%p]", __FILE__, __FUNCTION__, __LINE__, this);
-	if(!m_has_player)
+	if(!HasPlayer())
 	{
 		RemoveMap();
 	}
@@ -133,6 +151,7 @@ int MapInstance::InitSpawnMonster()
 int MapInstance::UpdateMonster()
 {
 	//K_slog_trace(K_SLOG_ERROR, "[%s][%d] 몬스터 업데이트 시작", __FUNCTION__, __LINE__);
+	std::lock_guard<std::mutex> lock(m_monsterMutex);
 	for(auto& monster : m_monsterList) 
 	{
 		if(monster.IsAlive())
@@ -148,24 +167,44 @@ int MapInstance::SpawnMonster()
 {
 	auto now = std::chrono::steady_clock::now();
 
-	std::vector<Monster*> respawnList;
+	std::vector<MonsterRespawnInfo> respawnList;
 	
-	//K_slog_trace(K_SLOG_TRACE, "[%s][%d] 몬스터 리스폰 시작", __FUNCTION__, __LINE__);
-	for(auto& monster : m_monsterList) 
 	{
-		if(monster.IsAlive()) continue;
-		
-		if(monster.CheckRespawnTime(now)) 
+		std::lock_guard<std::mutex> lock(m_monsterMutex);
+		//K_slog_trace(K_SLOG_TRACE, "[%s][%d] 몬스터 리스폰 시작", __FUNCTION__, __LINE__);
+		for(auto& monster : m_monsterList) 
 		{
-			monster.Reset();
-			respawnList.push_back(&monster);
+			if(monster.IsAlive()) continue;
+			
+			if(monster.CheckRespawnTime(now)) 
+			{
+				monster.Reset();
+				MonsterRespawnInfo monsterRespawnInfo{};
+
+				monsterRespawnInfo.instanceId = monster.GetInstanceId();
+				monsterRespawnInfo.monsterId = monster.GetId();
+				monsterRespawnInfo.xPos = monster.GetPos().xPos;
+				monsterRespawnInfo.yPos = monster.GetPos().yPos;
+				monsterRespawnInfo.dirX = static_cast<int>(monster.GetDir().xPos);
+				monsterRespawnInfo.currentHp = monster.GetCurrentHP();
+				monsterRespawnInfo.MaxHp = monster.GetMaxHP();
+				monsterRespawnInfo.state = static_cast<int>(monster.GetState()); 
+
+				respawnList.push_back(monsterRespawnInfo);
+			}
 		}
 	}
 
+	std::unordered_map<int, Player*> playerSnapshot;
 
-	if(respawnList.size() > 0)
 	{
-		MonsterPacketSender::SendMonsterRespawn(m_playerList,respawnList);
+	    std::lock_guard<std::mutex> lock(m_playerMutex);
+	    playerSnapshot = m_playerList;
+	}
+
+	if(!respawnList.empty())
+	{
+		MonsterPacketSender::SendMonsterRespawn(playerSnapshot, respawnList);
 	}
 	
     return 1;
@@ -173,6 +212,7 @@ int MapInstance::SpawnMonster()
 
 void MapInstance::OnEnter(int PlayerID, Player* player)
 {
+	 int playerCount = 0;
 	{
 		std::lock_guard<std::mutex> lock(m_playerMutex);
 		auto it = m_playerList.find(PlayerID);
@@ -181,39 +221,48 @@ void MapInstance::OnEnter(int PlayerID, Player* player)
 	
 
 		m_playerList[PlayerID] = player;
+		m_playerCount = static_cast<int>(m_playerList.size());
+
+		if (m_playerCount > 0)
+        {
+            m_has_player = true;
+            m_destroyRequested = false;
+            m_emptyTime = {};
+        }
+		playerCount = m_playerCount;
 	}
-	if (m_playerCount == 0) {
-        m_has_player = true;
-        m_destroyRequested = false; // 혹시 남아있던 요청 초기화
-        m_emptyTime = {};
-    }
-	m_playerCount++;
 	K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d] PlayerID(%d)", __FILE__, __FUNCTION__, __LINE__, PlayerID);
-	K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d] m_playerCount(%d)", __FILE__, __FUNCTION__, __LINE__, m_playerCount);
+	K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d] m_playerCount(%d)", __FILE__, __FUNCTION__, __LINE__, playerCount);
 	// 들어온 플레이어 한테 몬스터 정보 전달
 	SendMonsterSnapshot(player);
 }
 
 void MapInstance::OnLeave(int PlayerID)
 {
-	std::lock_guard<std::mutex> lock(m_playerMutex);
-		
-	auto it = m_playerList.find(PlayerID);
+    int playerCount = 0;
+    {
+        std::lock_guard<std::mutex> lock(m_playerMutex);
 
-	if(it == m_playerList.end()) return;
-	
-	m_playerList.erase(it);
-	
-	m_playerCount--;
-	if(m_playerCount == 0)
-	{
-		m_emptyTime = std::chrono::steady_clock::now();
-		m_has_player = false;
-		m_destroyRequested = false;
-	}
+        auto it = m_playerList.find(PlayerID);
+        if (it == m_playerList.end())
+            return;
+
+        m_playerList.erase(it);
+
+        m_playerCount = static_cast<int>(m_playerList.size());
+
+        if (m_playerCount == 0)
+        {
+            m_emptyTime = std::chrono::steady_clock::now();
+            m_has_player = false;
+            m_destroyRequested = false;
+        }
+
+        playerCount = m_playerCount;
+    }
 
 	K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d] PlayerID(%d)", __FILE__, __FUNCTION__, __LINE__, PlayerID);
-	K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d] m_playerCount(%d)", __FILE__, __FUNCTION__, __LINE__, m_playerCount);
+    K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d] m_playerCount(%d)", __FILE__, __FUNCTION__, __LINE__, playerCount);
 }
 
 void MapInstance::GiveExp(int playerID, float exp)
@@ -227,7 +276,7 @@ void MapInstance::HandleMove(Player* sender, Vec2 pos, float speed)
 	if(!sender) return;
 
 	//K_slog_trace(K_SLOG_TRACE, "[%s][%d] 플레이어 ID [%d]", __FUNCTION__, __LINE__, sender->GetId());
-	
+	std::unordered_map<int, Player*> playerSnapshot;
 	{
 		std::lock_guard<std::mutex> lock(m_playerMutex);
 		auto it = m_playerList.find(sender->GetId());
@@ -237,11 +286,12 @@ void MapInstance::HandleMove(Player* sender, Vec2 pos, float speed)
 			K_slog_trace(K_SLOG_ERROR, "[%s][%d] [%d]해당 맵에 존재하지 않은 플레이어 입니다.", __FUNCTION__, __LINE__, m_mapID);
 			return;
 		}
+		playerSnapshot = m_playerList;
 	}
 
 	sender->SetPos(pos);
 
-	PlayerPacketSender::SendPlayersMove(sender, pos, speed, m_playerList);
+	PlayerPacketSender::SendPlayersMove(sender, pos, speed, playerSnapshot);
 }
 
 void MapInstance::SendMonsterSnapshot(Player* player)
@@ -274,6 +324,7 @@ void MapInstance::SendMonsterSnapshot(Player* player)
             info.yPos = monster.GetPos().yPos;
             info.currentHp = monster.GetCurrentHP();
             info.maxHp = monster.GetMaxHP();
+			info.moveSpeed = monster.GetMoveSpeed();
 
             aliveMonsters.push_back(info);
         }
@@ -321,16 +372,31 @@ void MapInstance::RemoveMap()
 {
 	auto now = std::chrono::steady_clock::now();
 
-	if(!m_destroyRequested && (now - m_emptyTime) >= m_limit)
-	{
-		m_destroyRequested = true;
-		K_slog_trace(K_SLOG_TRACE, "[%s][%d] [%d]맵 삭제", __FUNCTION__, __LINE__, m_mapID);
-		if(m_onDestroyReq) m_onDestroyReq(m_mapID);	
-	}
+    std::function<void(int)> destroyCallback;
+    int mapId = 0;
+
+    {
+        std::lock_guard<std::mutex> lock(m_playerMutex);
+
+        if (m_destroyRequested)
+            return;
+
+        if ((now - m_emptyTime) < m_limit)
+            return;
+
+        m_destroyRequested = true;
+        destroyCallback = m_onDestroyReq;
+        mapId = m_mapID;
+    }
+
+    K_slog_trace(K_SLOG_TRACE, "[%s][%d] [%d]맵 삭제",__FUNCTION__, __LINE__, mapId);
+
+    if (destroyCallback)
+        destroyCallback(mapId);
 }
 
 // 나중에 PacketSender로 옮겨야함
-void MapInstance::ResolveSkillHit(Player* Attacker, SkillDef& skillDef, std::vector<std::pair<Monster*, int>> hits)
+void MapInstance::ResolveSkillHit(Player* Attacker, SkillDef& skillDef, std::vector<std::pair<Monster*, int>>& hits)
 {
 	 if (Attacker == nullptr)
         return;
@@ -399,11 +465,16 @@ void MapInstance::ResolveSkillHit(Player* Attacker, SkillDef& skillDef, std::vec
 
 void MapInstance::ProcessContactDamage(int64_t nowMs)
 {
+	std::vector<ContactDamageEvent> events;
+    std::unordered_map<int, Player*> playerSnapshot;
+
 	//K_slog_trace(K_SLOG_DEBUG, "[%s : %s : %d]START", __FILE__, __FUNCTION__, __LINE__);
 	{
-		std::lock_guard<std::mutex> lock(m_playerMutex);
-	   for(auto p : m_playerList)
-	   {
+		std::scoped_lock lock(m_playerMutex, m_monsterMutex);
+
+        playerSnapshot = m_playerList;
+	   	for(auto p : m_playerList)
+	   	{
 			Player* player = p.second;
 
 			// 플레이어가 죽었다면 스킵
@@ -440,13 +511,18 @@ void MapInstance::ProcessContactDamage(int64_t nowMs)
 			PlayerHitResult result;
 			result.damage = dmg;
 			SetPlayerHitResult(player, monster.GetInstanceId(), result);
-
+			
+			events.push_back({ player, result });
 			//K_slog_trace(K_SLOG_DEBUG, "[%s : %s : %d]SendPlayerOnDamaged", __FILE__, __FUNCTION__, __LINE__);
-			PlayerPacketSender::SendPlayerOnDamaged(player, result, m_playerList);
 			}
 		}
 	//K_slog_trace(K_SLOG_DEBUG, "[%s : %s : %d]END\n\n", __FILE__, __FUNCTION__, __LINE__);
 	}
+
+	for (const auto& event : events)
+    {
+        PlayerPacketSender::SendPlayerOnDamaged(event.player, event.result, playerSnapshot);
+    }
 }
 /*gunoo22 260223 원거리 공격 처리*/
 void MapInstance::ProcessRangedDamage(int64_t nowMs)
@@ -501,17 +577,18 @@ bool MapInstance::PickupDropItem(Player *player, int dropItemId, std::vector<Add
 		K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] player is nullptr.\n", __FILE__, __FUNCTION__, __LINE__);
 		return false;
 	}
-       
-
-    auto it = m_dropItems.find(dropItemId);
-    if (it == m_dropItems.end())
+       DropItems dropItem;
 	{
-		K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] dropItemId [%d] is nullptr.\n", __FILE__, __FUNCTION__, __LINE__, dropItemId);
-		return false;
+		std::lock_guard<std::mutex> lock(m_dropItemMutex);
+    	auto it = m_dropItems.find(dropItemId);
+    	if (it == m_dropItems.end())
+		{
+			K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] dropItemId [%d] is nullptr.\n", __FILE__, __FUNCTION__, __LINE__, dropItemId);
+			return false;
+		}
+	
+    	 dropItem = it->second;
 	}
-        
-
-    DropItems dropItem = it->second;
 
     if (!CanPickupByDistance(player->GetPos(), dropItem.pos))
 	{
@@ -520,29 +597,47 @@ bool MapInstance::PickupDropItem(Player *player, int dropItemId, std::vector<Add
 	}
         
 
-    if (dropItem.owner != nullptr &&
-        dropItem.owner->GetId() != player->GetId())
-		{
+    if (dropItem.owner != nullptr &&dropItem.owner->GetId() != player->GetId())
+	{
 			K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] 아이템 소유권이 없습니다.\n", __FILE__, __FUNCTION__, __LINE__);
 			return false;
-		}
+	}
+
+	{
+        std::lock_guard<std::mutex> lock(m_dropItemMutex);
+
+        auto it = m_dropItems.find(dropItemId);
+        if (it == m_dropItems.end())
+            return false;
+
+        m_dropItems.erase(it);
+    }
         
 
     InventoryManager* inven = player->GetInventoryManager();
     if (inven == nullptr)
 	{
+		std::lock_guard<std::mutex> lock(m_dropItemMutex);
 		K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] inven is nullptr.\n", __FILE__, __FUNCTION__, __LINE__);
+    	m_dropItems[dropItem.dropId] = dropItem;
 		return false;
 	}
     K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] dropItem.itemId [%d].\n", __FILE__, __FUNCTION__, __LINE__, dropItem.itemId);
 	K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] dropItem.dropId [%d].\n", __FILE__, __FUNCTION__, __LINE__,dropItem.dropId);
     if (!inven->AddItem(dropItem.itemId, dropItem.count, addItemResults))
-        return false;
+	{
+		std::lock_guard<std::mutex> lock(m_dropItemMutex);
+    	m_dropItems[dropItem.dropId] = dropItem;
+		return false;
+	}
+    	
+	std::unordered_map<int, Player*> playerSnapshot;
+    {
+        std::lock_guard<std::mutex> lock(m_playerMutex);
+        playerSnapshot = m_playerList;
+    }
 	
-    m_dropItems.erase(it);
-	K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] removeDropId [%d], requestDropItemId [%d]\n",  __FILE__, __FUNCTION__, __LINE__, dropItem.dropId, dropItemId);
-
-    ItemPacketSender::SendRemoveDropItem({dropItemId},m_playerList);
+    ItemPacketSender::SendRemoveDropItem({dropItemId},playerSnapshot);
     return true;
 }
 
@@ -562,10 +657,10 @@ bool MapInstance::SpawnDropItem(const Vec2& dropPos, Player* owner, const std::v
 {
 	std::vector<DropSpawnInfo> spawnInfos;
     std::unordered_map<int, Player*> playerSnapshot;
-
+	const auto nowMs = NowMs();
     {
         std::lock_guard<std::mutex> lock(m_dropItemMutex);
-
+		
         for (const auto& drop : dropItems)
         {
             DropItems item;
@@ -575,8 +670,10 @@ bool MapInstance::SpawnDropItem(const Vec2& dropPos, Player* owner, const std::v
             item.dropId = m_dropId++;
             item.pos = dropPos;
             item.owner = owner;
-            item.ownerExpireTimeMs = NowMs() + 60000;
-            item.expireTimeMs = NowMs() + 120000;
+
+			
+            item.ownerExpireTimeMs = nowMs + 60000;
+            item.expireTimeMs = nowMs + 120000;
 
             m_dropItems[item.dropId] = item;
 
@@ -595,7 +692,8 @@ bool MapInstance::SpawnDropItem(const Vec2& dropPos, Player* owner, const std::v
         std::lock_guard<std::mutex> lock(m_playerMutex);
         playerSnapshot = m_playerList;
     }
-
+	if (spawnInfos.empty())
+    	return true;
     ItemPacketSender::SendSpawnItem(spawnInfos, playerSnapshot);
     return true;
 }
@@ -605,28 +703,43 @@ void MapInstance::CheckDropItem()
 	int64_t nowMs = NowMs();
 	std::vector<int> removeItems;
 
-	for (auto it = m_dropItems.begin(); it != m_dropItems.end(); )
 	{
-    	auto& item = it->second;
-
-    	if (item.owner != nullptr && item.ownerExpireTimeMs <= nowMs)
-    	{
-    	    item.owner = nullptr; // 누구나 먹을 수 있게
-    	}
-
-    	if (item.expireTimeMs <= nowMs)
-    	{
-			//삭제 아이템에 대한 정보 전달
-			removeItems.push_back(it->second.dropId);
-    	    it = m_dropItems.erase(it);
-    	}
-    	else
-    	{
-    	    ++it;
-    	}
+		std::lock_guard<std::mutex> lock(m_dropItemMutex);
+		for (auto it = m_dropItems.begin(); it != m_dropItems.end(); )
+		{
+    		auto& item = it->second;
+		
+    		if (item.owner != nullptr && item.ownerExpireTimeMs <= nowMs)
+    		{
+    		    item.owner = nullptr; // 누구나 먹을 수 있게
+    		}
+		
+    		if (item.expireTimeMs <= nowMs)
+    		{
+				//삭제 아이템에 대한 정보 전달
+				removeItems.push_back(it->second.dropId);
+    		    it = m_dropItems.erase(it);
+    		}
+    		else
+    		{
+    		    ++it;
+    		}
+		}
 	}
 	
-	ItemPacketSender::SendRemoveDropItem(removeItems, m_playerList);
+	if (removeItems.empty())
+    	return;
+
+	std::unordered_map<int, Player*> playerSnapshot;
+	{
+		std::lock_guard<std::mutex> lock(m_playerMutex);
+        playerSnapshot = m_playerList;
+	}
+	ItemPacketSender::SendRemoveDropItem(removeItems, playerSnapshot);
 }
 
-
+bool MapInstance::HasPlayer()
+{
+	std::lock_guard<std::mutex> lock(m_playerMutex);
+	return m_has_player;
+}

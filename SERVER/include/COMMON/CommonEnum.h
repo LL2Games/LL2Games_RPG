@@ -91,19 +91,25 @@ struct MonsterSnapshotInfo
     int currentHp;
     int maxHp;
     int state;
+    int moveSpeed;
     float xPos;
     float yPos;
-    float moveSpeed;
+    
 };
 
-struct DeadMonsterInfo
+struct MonsterRespawnInfo
 {
-    int exp = 0;
-    std::string commonGroupId = 0;
-    std::string uniqueGroupId = 0;
-    Vec2 dropPos;
-    Player* owner = nullptr;
+	int instanceId = 0;
+	int monsterId = 0;
+	int currentHp = 0;
+	int MaxHp = 0;
+	int state = 0;
+	int dirX = 0;
+	float xPos =0.0f;
+	float yPos = 0.0f;
+		
 };
+
 
 typedef struct MapInitData{
     uint32_t mapID;

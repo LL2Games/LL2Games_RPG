@@ -30,6 +30,9 @@ void PlayerPacketSender::SendPlayerInfo(Player* player)
 
 void PlayerPacketSender::SendPlayerStat(Player* player)
 {
+    if (player == nullptr)
+        return;
+
     auto session = player->GetSession();
 
     if(!session) 
@@ -148,16 +151,21 @@ void PlayerPacketSender::SendPlayerOnDamaged(Player* Defender, PlayerHitResult r
 
 void PlayerPacketSender::SendExpGain(Player *player, const ExpResult& expResult)
 {
+    if (player == nullptr)
+        return;
+
+    auto session = player->GetSession();
+    if (session == nullptr)
+        return;
+
     std::vector<std::string> payload;
-	payload.reserve(5);
-   
+	
 	payload.push_back(std::to_string(expResult.gainedExp));
 	payload.push_back(std::to_string(expResult.newLevel));
 	payload.push_back(std::to_string(expResult.curExp));
 	payload.push_back(std::to_string(expResult.needExp));
     payload.push_back(std::to_string(static_cast<int>(expResult.levelUp)));
 
-	auto session = player->GetSession();	
 	session->Send(PKI_PLAYER_EXP_GAIN, payload);
     
 }

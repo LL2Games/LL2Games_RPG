@@ -85,17 +85,18 @@ void MonsterPacketSender::SendMonsterOnDamaged(Player* Attacker, int SkillID, st
     
 	for(auto it = playerList.begin(); it != playerList.end(); ++it)
 	{
-		//if(it->second == Attacker) continue;
-		
-		auto session = it->second->GetSession();
+		if (it->second == nullptr)
+            return;
+
+        auto session = it->second->GetSession();
         if (session == nullptr)
             continue;
-		
-		session->Send(PKT_MONSTER_ONDAMAGED, payload);
-	}
+
+        session->Send(PKT_MONSTER_ONDAMAGED, payload);
+    }
 }
 
-void MonsterPacketSender::SendMonsterRespawn(std::unordered_map<int, Player *> &playerList, const std::vector<Monster*>& monsters)
+void MonsterPacketSender::SendMonsterRespawn(std::unordered_map<int, Player *> &playerList, const std::vector<MonsterRespawnInfo>& monsters)
 {
     std::vector<std::string> payload;
 	
@@ -103,15 +104,14 @@ void MonsterPacketSender::SendMonsterRespawn(std::unordered_map<int, Player *> &
 
 	for(const auto& monster : monsters)
     {
-        payload.push_back(std::to_string(monster->GetInstanceId()));
-        payload.push_back(std::to_string(monster->GetId()));
-        payload.push_back(std::to_string(monster->GetPos().xPos));
-        payload.push_back(std::to_string(monster->GetPos().yPos));
-        payload.push_back(std::to_string((int)monster->GetDir().xPos));
-        payload.push_back(std::to_string(monster->GetCurrentHP()));
-        payload.push_back(std::to_string(monster->GetMaxHP()));
-        payload.push_back(std::to_string(static_cast<int>(monster->GetState())
-    ));
+        payload.push_back(std::to_string(monster.instanceId));
+        payload.push_back(std::to_string(monster.monsterId));
+        payload.push_back(std::to_string(monster.xPos));
+        payload.push_back(std::to_string(monster.yPos));
+        payload.push_back(std::to_string(monster.dirX));
+        payload.push_back(std::to_string(monster.currentHp));
+        payload.push_back(std::to_string(monster.MaxHp));
+        payload.push_back(std::to_string(monster.state));
     }
     
 	for(auto it = playerList.begin(); it != playerList.end(); ++it)
