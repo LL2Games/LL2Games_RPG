@@ -13,6 +13,7 @@ namespace
 
 int main(int ac, char **av)
 {
+    std::string daemonName = CHAT_DAEMON_NAME;
     try
     {
         int chatIndex = 0;
@@ -35,6 +36,7 @@ int main(int ac, char **av)
             else
             {
                 chatIndex = std::atoi(arg.c_str());
+                daemonName += "_" + std::to_string(chatIndex + 1); // 채널 인덱스는 1부터 시작
             }
         }
 
@@ -54,13 +56,13 @@ int main(int ac, char **av)
         g_config = loader.ToAppConfig();
         if (g_config.common.logLevel == 0)
         {
-            K_slog_init(CHAT_LOG_PATH, CHAT_DAEMON_NAME, 1);
-            K_slog_trace(K_SLOG_TRACE, "[%s]==============LOG_LEVEL: %d NO LOG==============", CHAT_DAEMON_NAME, g_config.common.logLevel);
+            K_slog_init(CHAT_LOG_PATH, daemonName.c_str(), 1);
+            K_slog_trace(K_SLOG_TRACE, "==============LOG_LEVEL: %d NO LOG==============", g_config.common.logLevel);
             K_slog_close();
         }
-        K_slog_init(CHAT_LOG_PATH, CHAT_DAEMON_NAME, g_config.common.logLevel);
-        K_slog_trace(K_SLOG_TRACE, "[%s]==============START==============", CHAT_DAEMON_NAME);
-        K_slog_trace(K_SLOG_TRACE, "[%s]==============LOG_LEVEL: %d==============", CHAT_DAEMON_NAME, g_config.common.logLevel);
+        K_slog_init(CHAT_LOG_PATH, daemonName.c_str(), g_config.common.logLevel);
+        K_slog_trace(K_SLOG_TRACE, "==============START==============");
+        K_slog_trace(K_SLOG_TRACE, "==============LOG_LEVEL: %d==============", g_config.common.logLevel);
 
         if (MySqlConnectionPool::Init(g_config.mysql, g_config.mysql.poolCount) != EXIT_SUCCESS)
         {
@@ -68,7 +70,7 @@ int main(int ac, char **av)
             K_slog_close();
             return -1;
         }
-        K_slog_trace(K_SLOG_TRACE, "[%s]==============MySqlConnectionPool Count: %d==============", CHAT_DAEMON_NAME, MySqlConnectionPool::GetInstance()->GetPoolSize());
+        K_slog_trace(K_SLOG_TRACE, "==============MySqlConnectionPool Count: %d==============", MySqlConnectionPool::GetInstance()->GetPoolSize());
         if (RedisClient::Init(g_config.redis) != EXIT_SUCCESS)
         {
             K_slog_trace(K_SLOG_ERROR, "Failed to init RedisClient");
@@ -87,12 +89,12 @@ int main(int ac, char **av)
 
         server.Run();
 
-        K_slog_trace(K_SLOG_TRACE, "[%s]..................the End..............", CHAT_DAEMON_NAME);
+        K_slog_trace(K_SLOG_TRACE, "..................the End..............");
         K_slog_close();
     }
     catch (const std::exception &ex)
     {
-        printf("[%s] Exception: %s\n", CHAT_DAEMON_NAME, ex.what());
+        printf("[%s] Exception: %s\n", daemonName.c_str(), ex.what());
         K_slog_trace(K_SLOG_ERROR, "Exception: %s", ex.what());
         K_slog_close();
         return -1;

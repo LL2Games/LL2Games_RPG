@@ -49,12 +49,12 @@ int main(int ac, char **av)
         if (g_config.common.logLevel == 0)
         {
             K_slog_init(WORLD_LOG_PATH, WORLD_DAEMON_NAME, 1);
-            K_slog_trace(K_SLOG_TRACE, "[%s]==============LOG_LEVEL: %d NO LOG==============", WORLD_DAEMON_NAME, g_config.common.logLevel);
+            K_slog_trace(K_SLOG_TRACE, "==============LOG_LEVEL: %d NO LOG==============", g_config.common.logLevel);
             K_slog_close();
         }
         K_slog_init(WORLD_LOG_PATH, WORLD_DAEMON_NAME, g_config.common.logLevel);
-        K_slog_trace(K_SLOG_TRACE, "[%s]==============START==============", WORLD_DAEMON_NAME);
-        K_slog_trace(K_SLOG_TRACE, "[%s]==============LOG_LEVEL: %d==============", WORLD_DAEMON_NAME, g_config.common.logLevel);
+        K_slog_trace(K_SLOG_TRACE, "==============START==============");
+        K_slog_trace(K_SLOG_TRACE, "==============LOG_LEVEL: %d==============", g_config.common.logLevel);
 
         if (MySqlConnectionPool::Init(g_config.mysql, g_config.mysql.poolCount) != EXIT_SUCCESS)
         {
@@ -62,7 +62,7 @@ int main(int ac, char **av)
             K_slog_close();
             return -1;
         }
-        K_slog_trace(K_SLOG_TRACE, "[%s]==============MySqlConnectionPool Count: %d==============", WORLD_DAEMON_NAME, MySqlConnectionPool::GetInstance()->GetPoolSize());
+        K_slog_trace(K_SLOG_TRACE, "==============MySqlConnectionPool Count: %d==============", MySqlConnectionPool::GetInstance()->GetPoolSize());
         if (RedisClient::Init(g_config.redis) != EXIT_SUCCESS)
         {
             K_slog_trace(K_SLOG_ERROR, "Failed to init RedisClient");
@@ -79,7 +79,7 @@ int main(int ac, char **av)
 
         server.Run();
 
-        K_slog_trace(K_SLOG_TRACE, "[%s]..................the End..............", WORLD_DAEMON_NAME);
+        K_slog_trace(K_SLOG_TRACE, "..................the End..............");
         K_slog_close();
     }
     catch (const std::exception &ex)

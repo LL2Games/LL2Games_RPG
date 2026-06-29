@@ -16,6 +16,7 @@ namespace
 
 int main(int ac, char **av)
 {
+    std::string daemonName = CHANNEL_DAEMON_NAME;
     try
     {
         int channelIndex = 0;
@@ -38,6 +39,7 @@ int main(int ac, char **av)
             else
             {
                 channelIndex = std::atoi(arg.c_str());
+                daemonName += "_" + std::to_string(channelIndex + 1); // 채널 인덱스는 1부터 시작
             }
         }
 
@@ -57,13 +59,13 @@ int main(int ac, char **av)
         g_config = loader.ToAppConfig();
         if (g_config.common.logLevel == 0)
         {
-            K_slog_init(CHANNEL_LOG_PATH, CHANNEL_DAEMON_NAME, 1);
-            K_slog_trace(K_SLOG_TRACE, "[%s]==============LOG_LEVEL: %d NO LOG==============", CHANNEL_DAEMON_NAME, g_config.common.logLevel);
+            K_slog_init(CHANNEL_LOG_PATH, daemonName.c_str(), 1);
+            K_slog_trace(K_SLOG_TRACE, "==============LOG_LEVEL: %d NO LOG==============", g_config.common.logLevel);
             K_slog_close();
         }
-        K_slog_init(CHANNEL_LOG_PATH, CHANNEL_DAEMON_NAME, g_config.common.logLevel);
-        K_slog_trace(K_SLOG_TRACE, "[%s]==============START==============", CHANNEL_DAEMON_NAME);
-        K_slog_trace(K_SLOG_TRACE, "[%s]==============LOG_LEVEL: %d==============", CHANNEL_DAEMON_NAME, g_config.common.logLevel);
+        K_slog_init(CHANNEL_LOG_PATH, daemonName.c_str(), g_config.common.logLevel);
+        K_slog_trace(K_SLOG_TRACE, "[%s]==============START==============", daemonName.c_str());
+        K_slog_trace(K_SLOG_TRACE, "[%s]==============LOG_LEVEL: %d==============", daemonName.c_str(), g_config.common.logLevel);
         if (MySqlConnectionPool::Init(g_config.mysql, g_config.mysql.poolCount) != EXIT_SUCCESS)
         {
             K_slog_trace(K_SLOG_ERROR, "Failed to init MySqlConnectionPool");
@@ -71,7 +73,7 @@ int main(int ac, char **av)
             return -1;
         }
 
-        K_slog_trace(K_SLOG_TRACE, "[%s]==============MySqlConnectionPool Count: %d==============", CHANNEL_DAEMON_NAME, MySqlConnectionPool::GetInstance()->GetPoolSize());
+        K_slog_trace(K_SLOG_TRACE, "[%s]==============MySqlConnectionPool Count: %d==============", daemonName.c_str(), MySqlConnectionPool::GetInstance()->GetPoolSize());
         if (RedisClient::Init(g_config.redis) != EXIT_SUCCESS)
         {
             K_slog_trace(K_SLOG_ERROR, "Failed to init RedisClient");
@@ -89,12 +91,12 @@ int main(int ac, char **av)
 
         channelServer.Run();
 
-        K_slog_trace(K_SLOG_TRACE, "[%s]..................the End..............", CHANNEL_DAEMON_NAME);
+        K_slog_trace(K_SLOG_TRACE, "[%s]..................the End..............", daemonName.c_str());
         K_slog_close();
     }
     catch (const std::exception& ex)
     {
-        printf("[%s] Exception: %s\n", CHANNEL_DAEMON_NAME, ex.what());
+        printf("[%s] Exception: %s\n", daemonName.c_str(), ex.what());
         K_slog_trace(K_SLOG_ERROR, "Exception: %s", ex.what());
         K_slog_close();
         return -1;
