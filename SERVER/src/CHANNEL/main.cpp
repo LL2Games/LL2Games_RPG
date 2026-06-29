@@ -77,7 +77,7 @@ int main(int ac, char **av)
             K_slog_close();
             return -1;
         }
-        ChannelServer channelServer(channelIndex + 1, g_config.channelServer.threadCount); // 채널 인덱스는 1부터 시작
+        ChannelServer channelServer(channelIndex + 1, g_config.channelServer.threadCount, g_config.channelServer.maxUserCount); // 채널 인덱스는 1부터 시작
 
         bool start = channelServer.Init(g_config.channelServer.port + channelIndex);
         if (start == false)

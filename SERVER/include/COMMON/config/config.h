@@ -26,6 +26,7 @@ struct ServerConfig
 {
     int port;
     int threadCount;
+    int maxUserCount;
 };
 
 struct AppConfig

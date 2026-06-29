@@ -6,20 +6,8 @@
 #include "ChannelStateUpdateTask.h"
 #include "RedisCommonEnum.h"
 
-#define THREAD_POOL_COUNT 4
-#define MAX_USER_COUNT 1000
-
 //threadCount == 0 인경우 하드웨어 CPU 코어 수를 계산하여 스레드풀 생성
-ChannelServer::ChannelServer(const int channelId, const int threadCount) : m_channel_id(channelId), m_listen_fd(0), m_epfd(0), m_running(false), m_map_manager(this), m_map_service(m_player_mamager, m_map_manager), m_pool(threadCount == 0 ? std::thread::hardware_concurrency() : threadCount), m_current_user_count(0), m_max_user_count(MAX_USER_COUNT)
-{
-    m_item_manager = ItemManager::GetInstance();
-    m_monster_manager = MonsterManager::GetInstance();
-    m_skill_manager = SkillManager::GetInstance();
-    m_drop_manager = DropManager::GetInstance();
-    m_level_manager = LevelManager::GetInstance();
-}
-
-ChannelServer::ChannelServer(const int channelId) : m_channel_id(channelId), m_listen_fd(0), m_epfd(0), m_running(false), m_map_manager(this), m_map_service(m_player_mamager, m_map_manager), m_pool(THREAD_POOL_COUNT), m_current_user_count(0), m_max_user_count(MAX_USER_COUNT)
+ChannelServer::ChannelServer(const int channelId, const int threadCount, const int maxUserCount) : m_channel_id(channelId), m_listen_fd(0), m_epfd(0), m_running(false), m_map_manager(this), m_map_service(m_player_mamager, m_map_manager), m_pool(threadCount == 0 ? std::thread::hardware_concurrency() : threadCount), m_current_user_count(0), m_max_user_count(maxUserCount)
 {
     m_item_manager = ItemManager::GetInstance();
     m_monster_manager = MonsterManager::GetInstance();
