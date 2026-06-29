@@ -56,12 +56,13 @@ int main(int ac, char **av)
         K_slog_trace(K_SLOG_TRACE, "[%s]==============START==============", WORLD_DAEMON_NAME);
         K_slog_trace(K_SLOG_TRACE, "[%s]==============LOG_LEVEL: %d==============", WORLD_DAEMON_NAME, g_config.common.logLevel);
 
-        if (MySqlConnectionPool::Init(g_config.mysql) != EXIT_SUCCESS)
+        if (MySqlConnectionPool::Init(g_config.mysql, g_config.mysql.poolCount) != EXIT_SUCCESS)
         {
             K_slog_trace(K_SLOG_ERROR, "Failed to init MySqlConnectionPool");
             K_slog_close();
             return -1;
         }
+        K_slog_trace(K_SLOG_TRACE, "[%s]==============MySqlConnectionPool Count: %d==============", WORLD_DAEMON_NAME, MySqlConnectionPool::GetInstance()->GetPoolSize());
         if (RedisClient::Init(g_config.redis) != EXIT_SUCCESS)
         {
             K_slog_trace(K_SLOG_ERROR, "Failed to init RedisClient");

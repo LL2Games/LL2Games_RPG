@@ -8,6 +8,7 @@ struct MySqlConfig
     std::string user;
     std::string password;
     std::string database;
+    int poolCount;
 };
 
 

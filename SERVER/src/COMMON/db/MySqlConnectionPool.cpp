@@ -10,7 +10,7 @@ int MySqlConnectionPool::Init(const MySqlConfig& mysqlConfig, const int pool_siz
         return -1;
     }
 
-    MySqlConnectionPool* client = new MySqlConnectionPool(mysqlConfig, pool_size);
+    MySqlConnectionPool* client = new MySqlConnectionPool(mysqlConfig, pool_size == 0 ? MYSQL_POOL_SIZE : pool_size);
     if (client == nullptr)
     {
         K_slog_trace(K_SLOG_ERROR, "[%s][%d] Memory error(new MySqlConnectionPool(mysqlConfig, pool_size)) ", __FUNCTION__, __LINE__);

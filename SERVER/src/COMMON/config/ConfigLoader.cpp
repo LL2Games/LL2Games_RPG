@@ -69,7 +69,7 @@ AppConfig ConfigLoader::ToAppConfig() const
     appConfig.channelServer.port = GetInt("CHANNEL_SERVER", "PORT");
     appConfig.chatServer.port = GetInt("CHAT_SERVER", "PORT");
     
-    // try {appConfig.mysql.poolCount = GetInt("MYSQL", "POOL_COUNT");} catch (const std::exception&) {printf("MYSQL POOL_COUNT not found, using default value"); appConfig.mysql.poolCount = 0;} 
+    try {appConfig.mysql.poolCount = GetInt("MYSQL", "POOL_COUNT");} catch (const std::exception&) {printf("MYSQL POOL_COUNT not found, using default value"); appConfig.mysql.poolCount = 8;} 
 
     try {appConfig.channelServer.maxUserCount = GetInt("CHANNEL_SERVER", "MAX_USER_COUNT");} catch (const std::exception&) {printf("CHANNEL_SERVER MAX_USER_COUNT not found, using default value"); appConfig.channelServer.maxUserCount = 1000;} 
     
