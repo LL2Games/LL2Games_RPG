@@ -25,6 +25,7 @@ struct CommonConfig
 struct ServerConfig
 {
     int port;
+    int threadCount;
 };
 
 struct AppConfig

@@ -28,6 +28,7 @@ class ChannelServer
 {
 public:
     ChannelServer(const int channelId = 0);
+    ChannelServer(const int channelId, const int threadCount);
     ~ChannelServer();
 
     bool Init(const int port);

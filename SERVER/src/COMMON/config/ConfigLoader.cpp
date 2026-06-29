@@ -60,14 +60,20 @@ AppConfig ConfigLoader::ToAppConfig() const
     appConfig.mysql.user = GetString("MYSQL", "USER");
     appConfig.mysql.password = GetString("MYSQL", "PASSWORD");
     appConfig.mysql.database = GetString("MYSQL", "DATABASE");
-
+    
     appConfig.redis.host = GetString("REDIS", "HOST");
     appConfig.redis.port = GetInt("REDIS", "PORT");
-
+    
     appConfig.loginServer.port = GetInt("LOGIN_SERVER", "PORT");
     appConfig.worldServer.port = GetInt("WORLD_SERVER", "PORT");
     appConfig.channelServer.port = GetInt("CHANNEL_SERVER", "PORT");
     appConfig.chatServer.port = GetInt("CHAT_SERVER", "PORT");
+    
+    // try {appConfig.mysql.poolCount = GetInt("MYSQL", "POOL_COUNT");} catch (const std::exception&) {printf("MYSQL POOL_COUNT not found, using default value"); appConfig.mysql.poolCount = 0;} 
+
+    // try {appConfig.channelServer.maxUserCount = GetInt("CHANNEL_SERVER", "MAX_USER_COUNT");} catch (const std::exception&) {printf("CHANNEL_SERVER MAX_USER_COUNT not found, using default value"); appConfig.channelServer.maxUserCount = 0;} 
+    
+    try {appConfig.channelServer.threadCount = GetInt("CHANNEL_SERVER", "THREAD_COUNT");} catch (const std::exception&) {printf("CHANNEL_SERVER THREAD_COUNT not found, using default value"); appConfig.channelServer.threadCount = 0;} 
 
     return appConfig;
 }
