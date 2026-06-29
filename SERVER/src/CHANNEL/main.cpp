@@ -18,9 +18,6 @@ int main(int ac, char **av)
 {
     try
     {
-        K_slog_init(CHANNEL_LOG_PATH, CHANNEL_DAEMON_NAME);
-        K_slog_trace(K_SLOG_TRACE, "[%s]==============START==============", CHANNEL_DAEMON_NAME);
-
         int channelIndex = 0;
         std::string configPath;
 
@@ -32,8 +29,7 @@ int main(int ac, char **av)
             {
                 if (i + 1 >= ac)
                 {
-                    K_slog_trace(K_SLOG_ERROR, "Missing config path after --config");
-                    K_slog_close();
+                    printf("Missing config path after --config");
                     return -1;
                 }
 
@@ -47,20 +43,28 @@ int main(int ac, char **av)
 
         if (configPath.empty())
         {
-            K_slog_trace(K_SLOG_ERROR, "Missing required --config argument");
-            K_slog_close();
+            printf("Missing required --config argument");
             return -1;
         }
 
         ConfigLoader loader;
         if (!loader.Load(configPath))
         {
-            K_slog_trace(K_SLOG_ERROR, "Failed to load config: %s", configPath.c_str());
-            K_slog_close();
+            printf("Failed to load config: %s", configPath.c_str());
             return -1;
         }
 
         g_config = loader.ToAppConfig();
+        if (g_config.common.logLevel == 0)
+        {
+            K_slog_init(CHANNEL_LOG_PATH, CHANNEL_DAEMON_NAME, 1);
+            K_slog_trace(K_SLOG_TRACE, "[%s]==============LOG_LEVEL: %d NO LOG==============", CHANNEL_DAEMON_NAME, g_config.common.logLevel);
+            K_slog_close();
+        }
+        K_slog_init(CHANNEL_LOG_PATH, CHANNEL_DAEMON_NAME, g_config.common.logLevel);
+        K_slog_trace(K_SLOG_TRACE, "[%s]==============START==============", CHANNEL_DAEMON_NAME);
+        K_slog_trace(K_SLOG_TRACE, "[%s]==============LOG_LEVEL: %d==============", CHANNEL_DAEMON_NAME, g_config.common.logLevel);
+
         if (MySqlConnectionPool::Init(g_config.mysql) != EXIT_SUCCESS)
         {
             K_slog_trace(K_SLOG_ERROR, "Failed to init MySqlConnectionPool");

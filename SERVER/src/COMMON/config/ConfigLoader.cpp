@@ -75,6 +75,8 @@ AppConfig ConfigLoader::ToAppConfig() const
     
     try {appConfig.channelServer.threadCount = GetInt("CHANNEL_SERVER", "THREAD_COUNT");} catch (const std::exception&) {printf("CHANNEL_SERVER THREAD_COUNT not found, using default value"); appConfig.channelServer.threadCount = 0;} 
 
+    try {appConfig.common.logLevel = GetInt("COMMON", "LOG_LEVEL");} catch (const std::exception&) {printf("COMMON LOG_LEVEL not found, using default value"); appConfig.common.logLevel = 2;}
+
     return appConfig;
 }
 

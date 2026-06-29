@@ -3,9 +3,18 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <algorithm>
 
-int K_slog_init(const char* path, const char *fileName)
+int g_logLevel; 
+
+int K_slog_init(const char* path, const char *fileName, int logLevel)
 {
+	if (logLevel <= 0)
+		return 0;
+
+	g_logLevel = std::max(logLevel, (int)K_SLOG_NONE);
+	g_logLevel = std::min(logLevel, (int)K_SLOG_TRACE);
+
     slog_init(fileName, SLOG_FLAGS_ALL, 0);
 
     slog_config_t config;
@@ -31,9 +40,9 @@ int K_slog_trace(enum e_slog lev, const char* pszFmt, ...)
 	int nLen = 0;
 	va_list args;
 
-	// //로그레벨 0일경우 로그출력 X, TRACE는 로그레벨 0이상부터 출력
-	// if (pKcoContext->gw_nLog_level == 0 || (lev != K_SLOG_TRACE && pKcoContext->gw_nLog_level < lev))
-	// 	return KCE_APP_FAIL;
+	//로그레벨 0일경우 로그출력 X, TRACE는 로그레벨 1이상부터 출력
+	if (g_logLevel == 0 || (lev != K_SLOG_TRACE && g_logLevel < lev))
+		return -1;
 
 	va_start(args, pszFmt);
 	nLen = vsnprintf(NULL, 0, pszFmt, args);

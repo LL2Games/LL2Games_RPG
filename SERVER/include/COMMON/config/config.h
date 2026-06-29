@@ -19,7 +19,7 @@ struct RedisConfig
 
 struct CommonConfig
 {
-
+    int logLevel;
 };
 
 struct ServerConfig

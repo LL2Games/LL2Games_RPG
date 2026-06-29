@@ -13,6 +13,6 @@ enum e_slog
     // K_SLOG_WARN,			//보안수준 lev = 2
 };
 
-int K_slog_init(const char* path, const char *fileName);
+int K_slog_init(const char* path, const char *fileName, int logLevel = K_SLOG_DEBUG);
 int K_slog_close();
 int K_slog_trace(enum e_slog lev, const char *pszFmt, ...);
