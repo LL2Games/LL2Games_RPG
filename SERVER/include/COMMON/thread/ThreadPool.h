@@ -2,6 +2,7 @@
 #include <vector>
 #include <memory>
 #include "WorkerThread.h"
+#include <mutex>
 
 class ThreadPool {
 
@@ -16,5 +17,5 @@ public:
 private:
     std::vector<std::unique_ptr<WorkerThread>> m_workers;
     size_t m_nextIndex{0};
-
+    std::mutex m_submitMutex;
 };

@@ -6,6 +6,7 @@
 
 #define THREAD_POOL_COUNT 4
 #define AUTH_THREAD_POOL_COUNT 4
+#define REDIS_POOL_COUNT AUTH_THREAD_POOL_COUNT
 
 
 ChannelServer::ChannelServer() : m_channel_id(0), m_listen_fd(0), m_epfd(0), m_running(false), m_map_manager(this), m_map_service(m_player_mamager, m_map_manager), m_pool(THREAD_POOL_COUNT), m_authPool(AUTH_THREAD_POOL_COUNT),m_level_manager(nullptr)
@@ -56,7 +57,6 @@ void ChannelServer::DisableWriteEvent(int fd)
 
 void ChannelServer::OnSend(int fd)
 {
-    K_slog_trace(K_SLOG_TRACE, "[OnSend] fd:%d", fd);
     auto it = m_sessions.find(fd);
     if (it == m_sessions.end())
         return;
@@ -77,8 +77,6 @@ void ChannelServer::OnSend(int fd)
 
 bool ChannelServer::Init(const int port)
 {
-    K_slog_trace(K_SLOG_TRACE, "[%s] Channel Server Init %d\n", "ChannelServer", port); 
-
     // 서버 구동 시 JSON 파일을 읽어온다.
     if(!m_map_manager.Init()) return false;
     if(!m_item_manager->Init()) return false;
@@ -88,21 +86,27 @@ bool ChannelServer::Init(const int port)
     if(!m_level_manager->Init()) return false;
 
 
-   if(!InitListenSocket(port))
-   {
+    if(!InitListenSocket(port))
+    {
         K_slog_trace(K_SLOG_ERROR, "[%s] InitListenSocket %d\n", "ChannelServer", port); 
         return false;
-   }
+    }
 
-   if(!InitEpoll())
-   {
+    if(!InitEpoll())
+    {
         K_slog_trace(K_SLOG_ERROR, "[%s] InitEpoll Error %d\n", "ChannelServer", port); 
         return false;
-   }
+    }
+
+    if (!m_redisPool.Init(REDIS_POOL_COUNT))
+    {
+        K_slog_trace(K_SLOG_ERROR, "[ChannelServer] RedisConnectionPool Init failed");
+        return false;
+    }
 
     m_pool.Start();
     m_authPool.Start();
-    m_cmd_receiver.Start();
+    //m_cmd_receiver.Start();
     m_map_manager.Start();
 
    return true;
@@ -407,19 +411,13 @@ void ChannelServer::ProcessAuthResults()
 
     while (!local.empty())
     {
+
         ChannelAuthResult result = std::move(local.front());
         local.pop();
 
         auto it = m_sessions.find(result.fd);
         if (it == m_sessions.end())
         {
-            K_slog_trace(
-                K_SLOG_ERROR,
-                "[ProcessAuthResults] session not found fd:%d characterId:%d success:%d",
-                result.fd,
-                result.characterId,
-                result.success ? 1 : 0
-            );  
             K_slog_trace(K_SLOG_TRACE, "[ProcessAuthResults] fd closed:%d", result.fd);
             continue;
         }
@@ -433,15 +431,10 @@ void ChannelServer::ProcessAuthResults()
         }
 
         Player* rawPlayer = result.player.get();
+        rawPlayer->SetSession(session);
 
         if (!m_player_mamager.AddPlayer(std::move(result.player)))
         {   
-            K_slog_trace(
-                K_SLOG_ERROR,
-                "[ProcessAuthResults] AddPlayer failed characterId:%d fd:%d",
-                result.characterId,
-                result.fd
-            );
             session->SendNok(PKT_CHANNEL_AUTH, "already connected");
             continue;
         }

@@ -34,23 +34,40 @@ void WorkerThread::PushTask(std::unique_ptr<Task> task)
 
 void WorkerThread::Run()
 {
-    while (m_running)
+    while (true)
     {
         std::unique_ptr<Task> task;
 
         {
             std::unique_lock<std::mutex> lock(m_mutex);
+
             m_cv.wait(lock, [&]() {
                 return !m_tasks.empty() || !m_running;
             });
 
-            if (!m_running) break;
+            if (!m_running && m_tasks.empty())
+            {
+                break;
+            }
 
             task = std::move(m_tasks.front());
             m_tasks.pop();
         }
 
         if (task)
-            task->Execute();
+        {
+            try
+            {
+                task->Execute();
+            }
+            catch (const std::exception& e)
+            {
+               
+            }
+            catch (...)
+            {
+             
+            }
+        }
     }
 }

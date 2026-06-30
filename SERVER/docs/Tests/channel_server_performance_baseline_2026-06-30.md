@@ -611,3 +611,130 @@ received_bytes_max=2744
 - auth 전용 worker 구조 설계
 - 세션 생명주기 보호 방식 검토
 - auth 전용 worker 적용 후 33/50/100명 인증 부하 재측정
+
+<br></br>
+
+# 채널 인증 비동기 처리 개선 재측정
+
+
+## 개선 목적
+- 기존 `PKT_CHANNEL_AUTH` 처리에서 DB/Redis 기반 Player 로딩과 초기 인증 처리가 epoll 이벤트 흐름에 직접 영향을 주는 문제를 완화
+- auth worker thread에서 `ChannelSession*`를 직접 사용해 응답을 전송하던 구조의 session lifetime 위험 제거
+- 인증 결과를 `AuthResult queue`로 전달하고, `ChannelServer` event loop에서 fd 생존 여부를 확인한 뒤 응답을 전송하도록 구조 변경
+
+## 개선 내용
+- `ChannelAuthTask`를 auth 전용 ThreadPool에서 실행하도록 분리
+- worker thread는 characterId 파싱 및 `LoadPlayer` 수행 후 `ChannelAuthResult`를 queue에 push
+- `ChannelServer` event loop에서 `ProcessAuthResults()`를 통해 인증 결과 처리
+- `ProcessAuthResults()`에서 fd가 아직 살아있는 경우에만 PlayerManager 등록 및 응답 전송 수행
+- `Player`에 `ChannelSession`을 설정한 뒤 PlayerPacketSender/QuickSlotPacketSender를 호출하도록 수정
+- `AddPlayer()` 실패 시 raw pointer를 계속 사용하지 않고 `already connected` 응답 후 처리 중단
+- `LoadPlayer` 구간에 mutex를 적용해 PlayerService/Redis/MySQL 로딩 경로의 공유 자원 경합을 방지
+
+## 실행 조건
+- Branch: `100-refactor-채널인증처리-기능-개선`
+- Target: ChannelServer
+- Host: 127.0.0.1
+- Port: 9001
+- AUTH_THREAD_POOL_COUNT: 4
+- 테스트 데이터: character_id `900000 ~ 900099`
+
+## 실행 명령
+
+```zsh
+python3 channel_auth_test.py --host 127.0.0.1 --port 9001 --character-id 900000
+python3 channel_auth_load_test.py --host 127.0.0.1 --port 9001 --start-character-id 900000 --clients 10 --timeout 5
+python3 channel_auth_load_test.py --host 127.0.0.1 --port 9001 --start-character-id 900000 --clients 30 --timeout 5
+python3 channel_auth_load_test.py --host 127.0.0.1 --port 9001 --start-character-id 900000 --clients 50 --timeout 10
+python3 channel_auth_load_test.py --host 127.0.0.1 --port 9001 --start-character-id 900000 --clients 100 --timeout 30
+```
+
+## 실행 결과
+### 단일 인증
+```text
+target=127.0.0.1:9001
+character_id=900000
+received_bytes=22
+received_packets=1
+elapsed_sec=2.098
+packet[1] type=0x0009 fields=['ok', 'PerfTest0000']
+[PASS] channel_auth: received ok
+```
+
+### clients 10
+```text
+success=10
+failed=0
+```
+
+### clients 30
+```text
+success=30
+failed=0
+```
+
+### clients 50
+```text
+결과: PASS
+조건: timeout 증가 후 성공
+```
+
+### clients 100
+```text
+결과: PASS
+조건: timeout 30초 기준 성공
+``` 
+
+## 테스트 결과
+### 단일 인증
+- 결과: PASS
+- 관찰: PKT_CHANNEL_AUTH 요청 후 ok, PerfTest0000 응답을 수신함
+- 의미: AuthResult queue 기반 인증 응답 경로가 정상 동작함
+
+### clients 10
+- 결과: PASS
+- 관찰: 10개 동시 인증 요청이 모두 성공함
+- 의미: auth worker 분리 후 소규모 동시 인증 요청을 안정적으로 처리함
+
+### clients 30
+- 결과: PASS
+- 관찰: 30개 동시 인증 요청이 모두 성공함
+- 의미: 기존 32명 근처에서 관찰되던 인증 병목이 개선됨
+
+### clients 50
+- 결과: PASS
+- 관찰: 서버 재시작 후 단독 실행 및 timeout 증가 조건에서 50개 인증 요청이 성공함
+- 의미: 50명 자체가 서버 처리 한계는 아니며, 짧은 timeout 또는 이전 테스트의 세션 정리 상태가 결과에 영향을 줄 수 있음
+
+### clients 100
+- 결과: PASS
+- 관찰: timeout 30초 기준으로 100개 인증 요청이 성공함
+- 의미: 서버가 100개 인증 요청을 처리할 수 있으나, LoadPlayer 구간 mutex 직렬화로 인해 요청 수가 증가할수록 대기 시간이 증가함
+
+## 개선 전/후 비교
+### 개선 전
+- 단일 인증은 PASS
+- clients 30까지는 PASS
+- clients 32는 PASS
+- clients 33부터 timeout 발생
+- clients 100은 success=32, failed=68
+- 기존 ThreadPool에 인증 작업을 넣는 실험은 clients 33 기준 success=1, failed=32
+
+### 개선 후
+- auth 전용 ThreadPool + AuthResult queue 구조 적용
+- worker thread에서 ChannelSession* 직접 접근 제거
+- AUTH_THREAD_POOL_COUNT=4 기준 clients 30/50/100 인증 처리 성공 확인
+- clients 100은 timeout 30초 기준 성공
+
+### 현재 한계
+- LoadPlayer 구간은 mutex로 보호되어 있어 실제 DB/Redis 로딩은 직렬 처리됨
+- 따라서 동시 인증 수가 증가하면 서버가 crash하지는 않지만 뒤쪽 요청의 대기 시간이 증가함
+- 현재 테스트는 PKT_CHANNEL_AUTH ok 응답 수신 기준이며, 전체 초기화 패킷 수신 검증은 별도 확인 필요
+- 동일 character_id 범위를 서버 재시작 없이 반복 테스트하면 이전 세션 정리 상태가 결과에 영향을 줄 수 있음
+
+### 남은 과제
+- PlayerService/Redis/MySQL 로딩 경로를 worker별 독립 connection 또는 thread-safe 구조로 개선
+- LoadPlayer mutex 제거 후 AUTH_THREAD_POOL_COUNT 증가 효과 재측정
+- 전체 초기화 패킷(PlayerInfo/Stat/Skill/QuickSlot) 수신 검증
+- 연속 재접속 시 동일 character_id 정리 완료 전 재접속 안정성 검증
+- AuthResult queue 처리 시 eventfd 등을 사용해 epoll wait timeout 의존 제거 검토

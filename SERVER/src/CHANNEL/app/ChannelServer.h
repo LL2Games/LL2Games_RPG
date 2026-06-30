@@ -7,6 +7,7 @@
 #include "MapManager.h"
 #include "MonsterManager.h"
 #include "MySqlConnectionPool.h"
+#include "RedisConnectionPool.h"
 #include "RedisClient.h"
 #include "common.h"
 
@@ -22,6 +23,7 @@
 #include "TradeService.h"
 #include "LevelManager.h"
 #include "ChannelAuthResult.h"
+
 
 #include <queue>
 #include <mutex>
@@ -52,6 +54,7 @@ public:
     ThreadPool* GetThreadPool() {return &m_pool;}
     ThreadPool* GetAuthThreadPool() { return &m_authPool; }
     std::mutex& GetAuthLoadMutex() { return m_authLoadMutex; }
+    RedisConnectionPool* GetRedisConnectionPool() { return &m_redisPool; }
 private:
     bool InitListenSocket(int port);
     bool InitEpoll();
@@ -82,6 +85,7 @@ private:
     //MySqlConnectionPool m_db;
     RedisClient m_redis;
     
+    
     MapService m_map_service;
     StatService m_stat_service;
     ItemService m_item_service;
@@ -90,6 +94,7 @@ private:
     ThreadPool m_pool;
     // ChannelAuth 전용 쓰레드
     ThreadPool m_authPool;
+    RedisConnectionPool m_redisPool;
     CommandReceiver m_cmd_receiver;
 
     TradeService m_trade_service;

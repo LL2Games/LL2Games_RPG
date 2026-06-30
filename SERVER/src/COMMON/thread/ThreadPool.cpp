@@ -32,6 +32,13 @@ void ThreadPool::Stop()
 
 void ThreadPool::Submit(std::unique_ptr<Task> task)
 {
+    if (m_workers.empty() || task == nullptr)
+    {
+        return;
+    }
+
+    std::lock_guard<std::mutex> lock(m_submitMutex);
+
     m_workers[m_nextIndex]->PushTask(std::move(task));
     m_nextIndex = (m_nextIndex + 1) % m_workers.size();
 }

@@ -9,6 +9,8 @@ public:
     ~RedisClient();
 
     static RedisClient *GetInstance();
+    
+    bool Connect();
 
     int Set(const std::string key, const std::string value);
     std::string Get(std::string key);

@@ -71,6 +71,7 @@ SRCS := \
 	db/PlayerService.cpp \
 	db/RedisClient.cpp \
 	db/RedisUtility.cpp \
+	db/RedisConnectionPool.cpp \
 	\
 	domain/Player.cpp \
 	domain/Monster.cpp \

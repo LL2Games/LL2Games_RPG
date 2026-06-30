@@ -27,6 +27,11 @@ PlayerService::~PlayerService()
 
 std::unique_ptr<Player> PlayerService::LoadPlayer(int characterId)
 {
+    return LoadPlayer(characterId, m_redis);
+}
+
+std::unique_ptr<Player> PlayerService::LoadPlayer(int characterId, RedisClient* redis)
+{
     std::unique_ptr<Player> player = nullptr;
     PlayerInitData playerInit{};
     AllStat allStat{};
@@ -35,9 +40,9 @@ std::unique_ptr<Player> PlayerService::LoadPlayer(int characterId)
 
     const std::string redisKey = "characterID:" + std::to_string(characterId);
 
-    if (m_redis != nullptr)
+    if (redis != nullptr)
     {
-        auto redis_value = m_redis->HGetAll(redisKey);
+        auto redis_value = redis->HGetAll(redisKey);
         if (redis_value.has_value() && !redis_value->empty())
         {
             player = std::make_unique<Player>();
@@ -101,7 +106,13 @@ std::unique_ptr<Player> PlayerService::LoadPlayer(int characterId)
     player->SetInitData(playerInit, stat);
     redis_map = PlayerInfoToRedisMap(playerInit, stat);
 
-    result = m_redis->HSetAll(redisKey, redis_map, 600);
+    if (redis == nullptr)
+    {
+        K_slog_trace(K_SLOG_ERROR, "redis is nullptr");
+        return nullptr;
+    }
+
+    result = redis->HSetAll(redisKey, redis_map, 600);
 
     K_slog_trace(K_SLOG_TRACE, "HSetAll SUCCESS");
 
