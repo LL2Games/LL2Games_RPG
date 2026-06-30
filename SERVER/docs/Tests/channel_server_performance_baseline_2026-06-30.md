@@ -86,7 +86,7 @@ Run ChannelServer first, then execute this script.
 # 동시 접속 테스트
 
 
-## 테스트 파일
+## 테스트 파일`  
 - channel_load_test.py
 
 ## 테스트 목적
@@ -363,3 +363,198 @@ send_ms_max=37331.865
 - CPU/메모리/FD 사용량 측정
 - 장시간 soak test
 
+<br></br>
+
+# 채널 인증 패킷 테스트
+
+## 테스트 파일
+- channel_auth_test.py
+
+## 테스트 목적
+- 실제 PKT_CHANNEL_AUTH 패킷을 ChannelServer에 전송해 인증 핸들러 흐름이 정상 동작하는지 확인
+- DB에서 캐릭터/스탯/스킬/인벤토리/퀵슬롯 초기 데이터를 로드하고 인증 응답을 반환하는지 확인
+
+## 테스트 데이터
+- account_id: test_account_001
+- character_id: 900000
+- character_name: PerfTest0000
+
+## 실행 명령
+
+```zsh
+python3 channel_auth_test.py --host 127.0.0.1 --port 9001 --character-id 900000
+```
+
+## 실행 결과
+
+```text
+target=127.0.0.1:9001
+character_id=900000
+received_bytes=2744
+received_packets=7
+elapsed_sec=2.172
+packet[1] type=0x0024 field_count=7 body_bytes=51
+packet[2] type=0x0025 field_count=12 body_bytes=43
+packet[3] type=0x0026 field_count=3 body_bytes=10
+packet[4] type=0x0080 field_count=16 body_bytes=53
+packet[5] type=0x0081 field_count=641 body_bytes=2035
+packet[6] type=0x1002 field_count=161 body_bytes=506
+packet[7] type=0x0009 fields=['ok', 'PerfTest0000']
+[PASS] channel_auth: received ok
+```
+
+## 테스트 결과
+
+### channel auth
+- 결과: PASS
+- 관찰: PKT_CHANNEL_AUTH 요청 후 총 7개 응답 패킷을 수신했고, 마지막 인증 응답에서 ok와 캐릭터명 PerfTest0000을 확인함
+- 의미: ChannelServer가 실제 인증 패킷을 처리하고 DB 기반 캐릭터 초기 데이터를 로드한 뒤 정상 인증 응답을 반환함
+
+## 테스트 방식
+- Python socket 스크립트를 사용해 실제 PKT_CHANNEL_AUTH 패킷을 생성해 전송
+- 응답 패킷을 파싱해 인증 응답 타입 0x0009와 ok 결과를 확인
+- 단순 연결 유지가 아니라 실제 ChannelServer 인증 핸들러 경로를 검증
+
+## 비고
+
+- 응답 패킷에는 캐릭터 정보, 스탯, 스킬, 인벤토리 메타, 인벤토리 슬롯, 퀵슬롯 정보가 포함됨
+- 단일 캐릭터 인증 성공을 확인한 뒤, 다음 단계로 서로 다른 character_id를 사용한 다중 인증 부하 테스트를 진행함
+
+
+# 채널 인증 과부화 테스트
+
+## 테스트 파일 
+- channel_auth_load_test_auth.py
+
+## 테스트 목적
+- 여러 클라이언트가 동시에 실제 PKT_CHANNEL_AUTH 패킷을 전송했을 때 ChannelServer가 인증 요청을 안정적으로 처리하는지 확인
+- DB 기반 캐릭터 초기 데이터 로드, Player 세션 등록, 초키 패킷 전송, 인증 응답 반환까지 포함된 실제 핸들러 경로를 측정
+
+## 테스트 데이터
+- account_id = test_account_001
+- character_id range = 900000 ~ 900099
+- character_name pattern : PerfTest0000 ~ PerfTest0099
+
+## 실행 명령
+
+```zsh
+python3 channel_auth_load_test.py --host 127.0.0.1 --port 9001 --start-character-id 900000 --clients 10
+python3 channel_auth_load_test.py --host 127.0.0.1 --port 9001 --start-character-id 900000 --clients 30 --timeout 5
+python3 channel_auth_load_test.py --host 127.0.0.1 --port 9001 --start-character-id 900000 --clients 32 --timeout 5
+python3 channel_auth_load_test.py --host 127.0.0.1 --port 9001 --start-character-id 900000 --clients 33 --timeout 5
+python3 channel_auth_load_test.py --host 127.0.0.1 --port 9001 --start-character-id 900000 --clients 100 --timeout 5  
+```
+
+## 실행 결과
+
+### client 10
+
+```text
+target=127.0.0.1:9001
+start_character_id=900000, clients=10, timeout=3.0
+success=10
+failed=0
+elapsed_sec=4.556
+auth_ms_min=3163.172
+auth_ms_avg=3868.912
+auth_ms_max=4550.601
+received_packets_avg=7.000
+received_packets_max=7
+received_bytes_avg=2744.000
+received_bytes_max=2744
+```
+
+### client 30
+
+``` text
+target=127.0.0.1:9001
+start_character_id=900000, clients=30, timeout=5.0
+success=30
+failed=0
+elapsed_sec=4.503
+auth_ms_min=144.610
+auth_ms_avg=2304.002
+auth_ms_max=4491.252
+received_packets_avg=7.000
+received_packets_max=7
+received_bytes_avg=2744.000
+received_bytes_max=2744
+```
+
+### client 100
+
+```text
+target=127.0.0.1:9001
+start_character_id=900000, clients=100, timeout=5.0
+success=32
+failed=68
+elapsed_sec=9.897
+auth_ms_min=5001.188
+auth_ms_avg=5819.200
+auth_ms_max=9878.425
+received_packets_avg=2.240
+received_packets_max=7
+received_bytes_avg=878.080
+received_bytes_max=2744
+```
+
+### client 32
+
+```text
+success=32
+failed=0
+```
+
+### client 33
+
+```text
+success=32
+failed=1
+```
+
+## 테스트 결과
+
+
+### client10
+
+- 결과 : PASS
+- 관찰 : 10개 클라이언트가 서로 다른 캐릭터 ID로 PKT_CHANNEL_AUTH 요청을 보냈고 모두 ok 응답을 수신함
+- 의미 : 소규모 동시 인증 상황에서 DB기반 캐릭터 초기 데이터 로드 및 인증 응답 반환 흐름이 정상 동작함
+- 비고 : 최초 측정 당시에는 응답 수신 후 socket timeout 대기 시간이 포함되어 있어 auth_ms가 실제 인증 완료 시간보다 크게 측정됨
+
+### client30
+
+- 결과: PASS
+- 관찰: 30개 클라이언트가 모두 PKT_CHANNEL_AUTH 요청 후 ok 응답을 수신함
+- 의미: 로컬 환경 기준 30명 동시 채널 인증까지 DB 기반 초기 데이터 로드 및 인증 응답 반환 흐름이 정상 처리됨
+- 비고: 수정된 테스트는 PKT_CHANNEL_AUTH의 ok 응답을 수신하는 즉시 측정을 종료하므로, auth_ms는 클라이언트 기준 인증 완료 시간으로 해석할 수 있음
+
+### clients100
+- 결과: FAIL
+- 관찰: 100개 동시 인증 요청 중 32개만 성공하고 68개는 no_auth_response로 실패함
+- 의미: 인증 처리/DB 조회/초기 데이터 송신 경로에서 동시 처리 한계가 32명 근처에 존재하는 것으로 관찰됨
+
+### clients32
+- 결과: PASS
+- 관찰: 32개 클라이언트가 모두 인증 성공함
+- 의미: 현재 로컬 환경과 timeout 5초 기준에서 32명 동시 인증까지 안정적으로 처리됨
+
+### clients 33
+- 결과: FAIL
+- 관찰: 33개 동시 인증 요청 중 32개는 성공했으나 1개 요청이 timeout 내 인증 응답을 수신하지 못함
+- 의미: 32명을 초과하는 동시 인증 상황에서 인증 처리 지연 또는 병목이 발생함
+
+
+## 테스트 방식
+
+- 각 클라이언트는 서로 다른 character_id로 TCP 연결을 생성하고 PKT_CHANNEL_AUTH 패킷을 전송함
+- 서버 응답 중 PKT_CHANNEL_AUTH의 ok 또는 nok를 수신하는 즉시 해당 클라이언트의 측정을 종료함
+- 따라서 수정 후 auth_ms는 클라이언트 기준으로 인증 요청 전송부터 인증 응답 수신까지의 시간임
+- 같은 character_id를 동시에 중복 사용하지 않도록 900000부터 순차적으로 캐릭터 ID를 배정함
+
+## 결론 
+
+- 단일 인증 및 10명/30명/32명 동시 인증은 정상 처리됨
+- 33명 이상부터 timeout 내 인증 응답을 받지 못하는 요청이 발생함
+- 현재 로컬 테스트 환경 기준 ChannelServer의 PKT_CHANNEL_AUTH 안정 처리 기준은 32명 동시 인증으로 기록함
+- 향후 DB connection pool, 인증 처리 worker/thread 구조, 초기 데이터 송신량, PlayerManager 등록 과정의 lock 경합 여부를 추가 확인할 필요가 있음
