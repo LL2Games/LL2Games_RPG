@@ -12,9 +12,11 @@ public:
     void Start();
     void Stop();
     void Submit(std::unique_ptr<Task> task);
+    size_t GetPoolSize() const { return m_poolSize; }
 
 private:
     std::vector<std::unique_ptr<WorkerThread>> m_workers;
     size_t m_nextIndex{0};
+    size_t m_poolSize{0};
 
 };
