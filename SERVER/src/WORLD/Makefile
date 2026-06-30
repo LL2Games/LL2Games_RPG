@@ -33,6 +33,7 @@ INCLUDES := \
     -I$(INC_DIR)/COMMON/packet \
 	-I$(INC_DIR)/COMMON/slog \
     -I$(INC_DIR)/COMMON/config \
+    -I$(INC_DIR)/COMMON/db \
     \
     -I$(SRC_DIR)/WORLD/app \
     -I$(SRC_DIR)/WORLD/db \
@@ -61,9 +62,6 @@ SRCS := \
     packet/CharacterHandler.cpp \
     packet/WorldInitHandler.cpp \
     packet/ChannelSelectHandler.cpp \
-    \
-    db/MySqlConnectionPool.cpp \
-    db/RedisClient.cpp \
     \
     main.cpp
 

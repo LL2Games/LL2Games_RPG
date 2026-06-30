@@ -3,6 +3,7 @@
 #include "ConfigLoader.h"
 #if 1 /*DB 연결 테스트*/
 #include "MySqlConnectionPool.h"
+#include "RedisClient.h"
 #include "ItemManager.h"
 #include "MapManager.h"
 #endif
@@ -60,7 +61,18 @@ int main(int ac, char **av)
         }
 
         g_config = loader.ToAppConfig();
-        MySqlConnectionPool::GetInstance(g_config.mysql);
+        if (MySqlConnectionPool::Init(g_config.mysql) != EXIT_SUCCESS)
+        {
+            K_slog_trace(K_SLOG_ERROR, "Failed to init MySqlConnectionPool");
+            K_slog_close();
+            return -1;
+        }
+        if (RedisClient::Init(g_config.redis) != EXIT_SUCCESS)
+        {
+            K_slog_trace(K_SLOG_ERROR, "Failed to init RedisClient");
+            K_slog_close();
+            return -1;
+        }
         ChannelServer channelServer(channelIndex + 1); // 채널 인덱스는 1부터 시작
 
         bool start = channelServer.Init(g_config.channelServer.port + channelIndex);

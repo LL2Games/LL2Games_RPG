@@ -1,5 +1,6 @@
 #include "Server.h"
-#include "MySQLManager.h"
+#include "MySqlConnectionPool.h"
+#include "RedisClient.h"
 #include "ConfigLoader.h"
 
 #include "common.h"
@@ -58,14 +59,15 @@ int main(int ac, char **av)
 
         g_config = loader.ToAppConfig();
 
-        if (!MySQLManager::Instance().Connect(
-                g_config.mysql.host.c_str(),
-                g_config.mysql.user.c_str(),
-                g_config.mysql.password.c_str(),
-                g_config.mysql.database.c_str(),
-                g_config.mysql.port))
+        if (MySqlConnectionPool::Init(g_config.mysql) != EXIT_SUCCESS)
         {
-            K_slog_trace(K_SLOG_ERROR, "Failed to connect MySQL");
+            K_slog_trace(K_SLOG_ERROR, "Failed to init MySqlConnectionPool");
+            K_slog_close();
+            return -1;
+        }
+        if (RedisClient::Init(g_config.redis) != EXIT_SUCCESS)
+        {
+            K_slog_trace(K_SLOG_ERROR, "Failed to init RedisClient");
             K_slog_close();
             return -1;
         }

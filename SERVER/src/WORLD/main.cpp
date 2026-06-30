@@ -1,6 +1,8 @@
 #include "common.h"
 #include "WorldServer.h"
 #include "ConfigLoader.h"
+#include "MySqlConnectionPool.h"
+#include "RedisClient.h"
 
 namespace
 {
@@ -50,7 +52,18 @@ int main(int ac, char **av)
         }
 
         g_config = loader.ToAppConfig();
-        MySqlConnectionPool::GetInstance(g_config.mysql, 8);
+        if (MySqlConnectionPool::Init(g_config.mysql) != EXIT_SUCCESS)
+        {
+            K_slog_trace(K_SLOG_ERROR, "Failed to init MySqlConnectionPool");
+            K_slog_close();
+            return -1;
+        }
+        if (RedisClient::Init(g_config.redis) != EXIT_SUCCESS)
+        {
+            K_slog_trace(K_SLOG_ERROR, "Failed to init RedisClient");
+            K_slog_close();
+            return -1;
+        }
         WorldServer server;
 
         if (server.Init(g_config.worldServer.port) != 0)

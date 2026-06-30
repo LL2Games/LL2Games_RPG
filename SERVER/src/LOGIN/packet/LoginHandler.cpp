@@ -51,7 +51,7 @@ void LoginHandler::Execute(PacketContext* ctx)
     
     K_slog_trace(K_SLOG_DEBUG, "[%s][%d] id=%s pw=%s\n", __FUNCTION__, __LINE__, id.c_str(), pw.c_str());
 
-    if (!MySQLManager::Instance().Login(id, pw))
+    if (!MySQLManager::GetInstance()->Login(id, pw))
     {
         K_slog_trace(K_SLOG_ERROR, "[%s][%d] Login fail invalid ID/PW\n", __FUNCTION__, __LINE__);
         rc = EXIT_FAILURE;
