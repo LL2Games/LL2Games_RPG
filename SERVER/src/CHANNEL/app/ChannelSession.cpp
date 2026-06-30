@@ -5,8 +5,9 @@
 #include "Packet.h"
 #include "MapInstance.h"
 #include "PlayerManager.h"
+#include "ChannelAuthTask.h"
 
-ChannelSession::ChannelSession(int fd, ChannelServer* server) : m_fd(fd), m_server(server), m_player(nullptr)
+ChannelSession::ChannelSession(int fd, ChannelServer* server) : m_fd(fd), m_server(server), m_player(nullptr), m_playerManager(nullptr)
 {
    m_recvBuf.reserve(8192);
 }
@@ -24,9 +25,16 @@ ChannelSession::~ChannelSession()
             K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d] map->OnLeave(Id:%d)", __FILE__, __FUNCTION__, __LINE__, m_player->GetId());
         }
 
-        m_playerManager->RemovePlayer(m_player->GetId());
+        if (m_playerManager != nullptr)
+        {
+            K_slog_trace(K_SLOG_TRACE, "[ChannelSession Destroy] RemovePlayer id:%d", m_player->GetId());
+            m_playerManager->RemovePlayer(m_player->GetId());
+        }
+        else
+        {
+            K_slog_trace(K_SLOG_ERROR, "[ChannelSession Destroy] playerManager is null. player id:%d", m_player->GetId());
+        }
     }
-    K_slog_trace(K_SLOG_DEBUG, "[%s:%s][%d] ChannelSession Destroy(fd:%d)", __FILE__, __FUNCTION__, __LINE__, m_fd);
 }
 
 
@@ -37,7 +45,6 @@ bool ChannelSession::OnBytes(const uint8_t* data, size_t len)
     while (true)
     {
         ParseResult result = PacketParser::TryParse(m_recvBuf);
-
         if (result.status == ParseStatus::NeedMoreData)
         {
             return true;
@@ -56,21 +63,31 @@ bool ChannelSession::OnBytes(const uint8_t* data, size_t len)
 
 void ChannelSession::Dispatch(const ParsedPacket &pkt)
 {
+    if (pkt.type == PKT_CHANNEL_AUTH && m_server)
+    {
+        auto task = std::make_unique<ChannelAuthTask>(
+            m_server,
+            m_fd,
+            pkt.payload
+        );
+
+        m_server->GetAuthThreadPool()->Submit(std::move(task));
+        return;
+    }
+
     auto handler = m_factory.Create(pkt.type);
-    if(handler)
+    if (handler)
     {
         PacketContext ctx;
         ctx.type = pkt.type;
         ctx.channel_session = this;
         ctx.fd = m_fd;
-        ctx.type = pkt.type;
         ctx.payload = const_cast<char*>(pkt.payload.c_str());
         ctx.payload_len = pkt.payload.size();
-        
-        // PlayerManager 설정
-        if (m_server) {
+
+        if (m_server)
+        {
             ctx.player_manager = m_server->GetPlayerManager();
-            //K_slog_trace(K_SLOG_DEBUG, "Player_Manager [%p]\n", ctx.player_manager);
             ctx.map_service = m_server->GetMapService();
             ctx.player_service = m_server->GetPlayerService();
             ctx.stat_service = m_server->GetStatService();
@@ -78,7 +95,7 @@ void ChannelSession::Dispatch(const ParsedPacket &pkt)
             ctx.combat_service = m_server->GetCombatService();
             ctx.trade_service = m_server->GetTradeService();
         }
-        
+
         handler->Execute(&ctx);
     }
 }
@@ -92,19 +109,10 @@ int ChannelSession::Send(int type, const std::vector<std::string>& payload)
 {
     std::string body = PacketParser::MakeBody(payload);
     std::string packet = PacketParser::MakePacket(type, body);
-    send(m_fd, packet.c_str(), packet.size(), 0);
-   
-    return 0;
+    
+    return EnqueueSend(std::move(packet));
 }
 
-// int ChannelSession::Send(int type, std::vector<std::string> payload)
-// {
-//     std::string body = PacketParser::MakeBody(payload);
-//     std::string packet = PacketParser::MakePacket(type, body);
-//     send(m_fd, packet.c_str(), packet.size(), 0);
-   
-//     return 0;
-// }
 
 int ChannelSession::SendOk(int type, std::vector<std::string> payload)
 {
@@ -117,9 +125,8 @@ int ChannelSession::SendOk(int type, std::vector<std::string> payload)
     payload.insert(payload.begin(), "ok");
     std::string body = PacketParser::MakeBody(payload);
     std::string packet = PacketParser::MakePacket(type, body);
-    
-    send(m_fd, packet.c_str(), packet.size(), 0);
-    return 0;
+
+   return EnqueueSend(std::move(packet));
 }
 
 int ChannelSession::SendNok(int type, const std::string &errMsg)
@@ -129,8 +136,80 @@ int ChannelSession::SendNok(int type, const std::string &errMsg)
     msg.push_back(errMsg);
     std::string body = PacketParser::MakeBody(msg);
     std::string packet = PacketParser::MakePacket(type, body);
-    send(m_fd, packet.c_str(), packet.size(), 0);
+
+    return EnqueueSend(std::move(packet));
+}
+
+int ChannelSession::EnqueueSend(std::string packet)
+{
+     if (packet.empty())
+        return -1;
+
+    bool needEnableWrite = false;
+
+    {
+        std::lock_guard<std::mutex> lock(m_sendMutex);
+
+        needEnableWrite = m_sendQueue.empty();
+        m_sendQueue.push_back(std::move(packet));
+
+    }
+
+    if (needEnableWrite && m_server != nullptr)
+    {
+        K_slog_trace(K_SLOG_TRACE, "[EnqueueSend] EnableWriteEvent fd:%d", m_fd);
+        m_server->EnableWriteEvent(m_fd);
+    }
+
     return 0;
 }
 
+bool ChannelSession::FlushSend()
+{
+    std::lock_guard<std::mutex> lock(m_sendMutex);
+
+    while (!m_sendQueue.empty())
+    {
+        std::string& packet = m_sendQueue.front();
+        ssize_t sent = send(
+            m_fd,
+            packet.data() + m_sendOffset,
+            packet.size() - m_sendOffset,
+            MSG_NOSIGNAL
+        );
+        if (sent > 0)
+        {
+            m_sendOffset += static_cast<size_t>(sent);
+
+            if (m_sendOffset == packet.size())
+            {
+                m_sendQueue.pop_front();
+                m_sendOffset = 0;
+            }
+
+            continue;
+        }
+
+        if (sent < 0)
+        {
+            if (errno == EINTR)
+                continue;
+
+            if (errno == EAGAIN || errno == EWOULDBLOCK)
+                return true;
+
+            return false;
+        }
+
+        return false;
+    }
+
+    return true;
+}
+
+bool ChannelSession::HasPendingSend() const
+{
+   std::lock_guard<std::mutex> lock(m_sendMutex);
+   return !m_sendQueue.empty();
+}
 

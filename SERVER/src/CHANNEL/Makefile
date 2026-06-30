@@ -65,6 +65,7 @@ TARGET := $(BIN_DIR)/channelD
 SRCS := \
 	app/ChannelServer.cpp \
 	app/ChannelSession.cpp \
+	app/ChannelAuthTask.cpp \
     \
     db/MySqlConnectionPool.cpp \
 	db/PlayerService.cpp \

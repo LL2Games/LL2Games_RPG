@@ -21,7 +21,10 @@
 #include "CombatService.h"
 #include "TradeService.h"
 #include "LevelManager.h"
+#include "ChannelAuthResult.h"
 
+#include <queue>
+#include <mutex>
 
 
 class ChannelServer
@@ -36,6 +39,9 @@ public:
     void OnReceive(int fd);
     void OnDisconnect(int fd);
     void BroadCast(); // 매개변수로 packet 받아야함
+    void EnableWriteEvent(int fd);
+    void PushAuthResult(ChannelAuthResult result);
+
     PlayerManager* GetPlayerManager() { return &m_player_mamager; }
     MapService* GetMapService() {return &m_map_service;}
     PlayerService* GetPlayerService() {return &m_player_service;}
@@ -44,6 +50,8 @@ public:
     CombatService* GetCombatService() {return &m_combat_service;}
     TradeService* GetTradeService() {return &m_trade_service;}
     ThreadPool* GetThreadPool() {return &m_pool;}
+    ThreadPool* GetAuthThreadPool() { return &m_authPool; }
+    std::mutex& GetAuthLoadMutex() { return m_authLoadMutex; }
 private:
     bool InitListenSocket(int port);
     bool InitEpoll();
@@ -53,6 +61,9 @@ private:
 
     static int SetNonblocking(int fd);
 
+    void DisableWriteEvent(int fd);
+    void OnSend(int fd);
+    void ProcessAuthResults();
 private:
     int m_channel_id;
     int m_listen_fd;
@@ -77,9 +88,15 @@ private:
     CombatService m_combat_service;
 
     ThreadPool m_pool;
+    // ChannelAuth 전용 쓰레드
+    ThreadPool m_authPool;
     CommandReceiver m_cmd_receiver;
 
     TradeService m_trade_service;
 
     LevelManager* m_level_manager;
+
+    std::queue<ChannelAuthResult> m_authResults;
+    std::mutex m_authResultMutex;
+    std::mutex m_authLoadMutex;
 };

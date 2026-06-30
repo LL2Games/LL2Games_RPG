@@ -88,9 +88,9 @@ void PlayerPacketSender::SendPlayerSkillList(Player* player)
         payload.push_back(std::to_string(skill.skill_id));
         payload.push_back(std::to_string(skill.skill_level));
     }
-
-    session->Send(PKT_PLAYER_SKILLLIST, payload);
-
+    K_slog_trace(K_SLOG_TRACE, "[SendPlayerSkillList] before Send payload_count:%zu", payload.size());
+    int ret = session->Send(PKT_PLAYER_SKILLLIST, payload);
+    K_slog_trace(K_SLOG_TRACE, "[SendPlayerSkillList] after Send ret:%d", ret);
     K_slog_trace(K_SLOG_TRACE, "[%s][%d] SendPlayerSkillList Send Success.", __FUNCTION__, __LINE__);
 }
 

@@ -3,6 +3,8 @@
 #include "Player.h"
 #include "PlayerManager.h"
 #include "ChannelPacketFactory.h"
+#include <deque>
+#include <mutex>
 
 class ChannelServer;
 
@@ -21,7 +23,11 @@ public:
     //int Send(int type, std::vector<std::string> payload={});
     int SendOk(int type, std::vector<std::string> payload={});
     int SendNok(int type, const std::string &errMsg);
+    int SendPacket(const std::string& packet);
 
+    int EnqueueSend(std::string packet);
+    bool FlushSend();
+    bool HasPendingSend() const;
 public: 
     void SetPlayer(Player* player) {m_player = player;}
     Player* GetPlayer() const {return m_player;}
@@ -40,4 +46,9 @@ private:
     Player* m_player;
     PlayerManager* m_playerManager;
     ChannelPacketFactory m_factory;
+
+    std::deque<std::string> m_sendQueue;
+    size_t m_sendOffset = 0;
+    mutable std::mutex m_sendMutex;
+
 };

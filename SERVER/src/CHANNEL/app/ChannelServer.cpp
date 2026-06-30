@@ -1,12 +1,14 @@
 #include "ChannelServer.h"
 #include "common.h"
-#include "thread"
-
+#include <thread>
+#include "PlayerPacketSender.h"
+#include "QuickSlotPacketSender.h"
 
 #define THREAD_POOL_COUNT 4
+#define AUTH_THREAD_POOL_COUNT 4
 
 
-ChannelServer::ChannelServer() : m_channel_id(0), m_listen_fd(0), m_epfd(0), m_running(false), m_map_manager(this), m_map_service(m_player_mamager, m_map_manager), m_pool(THREAD_POOL_COUNT)
+ChannelServer::ChannelServer() : m_channel_id(0), m_listen_fd(0), m_epfd(0), m_running(false), m_map_manager(this), m_map_service(m_player_mamager, m_map_manager), m_pool(THREAD_POOL_COUNT), m_authPool(AUTH_THREAD_POOL_COUNT),m_level_manager(nullptr)
 {
     m_item_manager = ItemManager::GetInstance();
     m_monster_manager = MonsterManager::GetInstance();
@@ -28,6 +30,49 @@ int ChannelServer::SetNonblocking(int fd)
     // fd의 현재 설정된 값을 유지하면서 non_block 옵션을 추가로 설정해준다.
     if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1) return -1;
     return 0;
+}
+
+
+void ChannelServer::DisableWriteEvent(int fd)
+{
+    epoll_event ev{};
+    ev.data.fd = fd;
+    ev.events = EPOLLIN | EPOLLRDHUP;
+
+    if (epoll_ctl(m_epfd, EPOLL_CTL_MOD, fd, &ev) < 0)
+    {
+        K_slog_trace(
+            K_SLOG_ERROR,
+            "[%s : %s : %d] EPOLL_CTL_MOD disable write failed fd:%d errno:%d",
+            __FILE__,
+            __FUNCTION__,
+            __LINE__,
+            fd,
+            errno
+        );
+    }
+}
+
+
+void ChannelServer::OnSend(int fd)
+{
+    K_slog_trace(K_SLOG_TRACE, "[OnSend] fd:%d", fd);
+    auto it = m_sessions.find(fd);
+    if (it == m_sessions.end())
+        return;
+
+    ChannelSession* session = it->second;
+
+    if (!session->FlushSend())
+    {
+        OnDisconnect(fd);
+        return;
+    }
+
+    if (!session->HasPendingSend())
+    {
+        DisableWriteEvent(fd);
+    }
 }
 
 bool ChannelServer::Init(const int port)
@@ -55,16 +100,10 @@ bool ChannelServer::Init(const int port)
         return false;
    }
 
-   K_slog_trace(K_SLOG_TRACE, "Thread Pool Start\n");
-   //스레드풀 시작
-   m_pool.Start();
-   K_slog_trace(K_SLOG_TRACE, "ChatD MessageQueue Start\n");
-   //chatD 메시지큐 리시버 스레드 시작
-   m_cmd_receiver.Start();
-
-   
-   //맵매니저 스레드 시작
-   m_map_manager.Start();
+    m_pool.Start();
+    m_authPool.Start();
+    m_cmd_receiver.Start();
+    m_map_manager.Start();
 
    return true;
 }
@@ -149,8 +188,6 @@ bool ChannelServer::InitEpoll()
         m_epfd = -1;
         return false;
     }
-
-    K_slog_trace(K_SLOG_TRACE, "[%s] InitEpoll Success \n", "ChannelServer");
     // 이벤트를 받아 담을 공간을 미리 설정
     m_events.resize(64);
     return true;
@@ -174,7 +211,7 @@ void ChannelServer::GameLoop()
     while(true)
     {
         // m_epfd에 등록된 관심 목록에서 이벤트가 발생한 것들을 기다렸다가 m_events 배열에 채워 넣고 발생한 이벤트 개수를 n에 저장/ -1은 무한 대기의 의미 이벤트가 발생할 때 까지 계속 블로킹 
-        int n = epoll_wait(m_epfd, m_events.data(), static_cast<int>(m_events.size()), -1);
+        int n = epoll_wait(m_epfd, m_events.data(), static_cast<int>(m_events.size()), 10);
 
         if( n < 0)
         {
@@ -202,11 +239,22 @@ void ChannelServer::GameLoop()
                 continue;
             }
 
-            if(e & EPOLLIN)
+            if (e & EPOLLIN)
             {
                 OnReceive(fd);
             }
+
+            if (m_sessions.find(fd) == m_sessions.end())
+            {
+                continue;
+            }
+
+            if (e & EPOLLOUT)
+            {
+                OnSend(fd);
+            }
         }
+        ProcessAuthResults();
     }
 
 }
@@ -283,7 +331,6 @@ void ChannelServer::OnReceive(int fd)
         {
             // 진짜 클라이언트 종료
             OnDisconnect(fd);
-            close(fd);
             return;
         }
         else
@@ -293,7 +340,6 @@ void ChannelServer::OnReceive(int fd)
         
             // 진짜 recv 에러
             OnDisconnect(fd);
-            close(fd);
             return;
         }
     } while (tempLen == BUFFER_SIZE);
@@ -324,11 +370,90 @@ void ChannelServer::OnDisconnect(int fd)
     }
 
     close(fd);
-
+    K_slog_trace(K_SLOG_TRACE, "[OnDisconnect] fd:%d", fd);
     std::cout << "Disconnected FD [" << fd <<"]" << std::endl;
 }
 
-void ChannelServer::BroadCast()
-{
 
+
+void ChannelServer::EnableWriteEvent(int fd)
+{
+    epoll_event ev{};
+    ev.data.fd = fd;
+    ev.events = EPOLLIN | EPOLLRDHUP | EPOLLOUT;
+
+    if (epoll_ctl(m_epfd, EPOLL_CTL_MOD, fd, &ev) < 0)
+    {
+        K_slog_trace(
+            K_SLOG_ERROR,"[%s : %s : %d] EPOLL_CTL_MOD enable write failed fd:%d errno:%d",__FILE__, __FUNCTION__, __LINE__, fd, errno);
+    }
+}
+
+void ChannelServer::PushAuthResult(ChannelAuthResult result)
+{
+    std::lock_guard<std::mutex> lock(m_authResultMutex);
+    m_authResults.push(std::move(result));
+}
+
+
+void ChannelServer::ProcessAuthResults()
+{
+    std::queue<ChannelAuthResult> local;
+
+    {
+        std::lock_guard<std::mutex> lock(m_authResultMutex);
+        std::swap(local, m_authResults);
+    }
+
+    while (!local.empty())
+    {
+        ChannelAuthResult result = std::move(local.front());
+        local.pop();
+
+        auto it = m_sessions.find(result.fd);
+        if (it == m_sessions.end())
+        {
+            K_slog_trace(
+                K_SLOG_ERROR,
+                "[ProcessAuthResults] session not found fd:%d characterId:%d success:%d",
+                result.fd,
+                result.characterId,
+                result.success ? 1 : 0
+            );  
+            K_slog_trace(K_SLOG_TRACE, "[ProcessAuthResults] fd closed:%d", result.fd);
+            continue;
+        }
+
+        ChannelSession* session = it->second;
+
+        if (!result.success || result.player == nullptr)
+        {
+            session->SendNok(PKT_CHANNEL_AUTH, result.error.empty() ? "auth failed" : result.error);
+            continue;
+        }
+
+        Player* rawPlayer = result.player.get();
+
+        if (!m_player_mamager.AddPlayer(std::move(result.player)))
+        {   
+            K_slog_trace(
+                K_SLOG_ERROR,
+                "[ProcessAuthResults] AddPlayer failed characterId:%d fd:%d",
+                result.characterId,
+                result.fd
+            );
+            session->SendNok(PKT_CHANNEL_AUTH, "already connected");
+            continue;
+        }
+
+        session->SetPlayer(rawPlayer);
+        session->SetPlayerManager(&m_player_mamager);
+
+        PlayerPacketSender::SendPlayerInfo(rawPlayer);
+        PlayerPacketSender::SendPlayerStat(rawPlayer);
+        PlayerPacketSender::SendPlayerSkillList(rawPlayer);
+        QuickSlotPacketSender::SendQuickSlotList(rawPlayer);
+
+        session->SendOk(PKT_CHANNEL_AUTH, { rawPlayer->GetName() });
+    }
 }
