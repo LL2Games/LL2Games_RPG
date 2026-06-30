@@ -3,9 +3,22 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <algorithm>
+#include <unistd.h>
+#include <string>
 
-int K_slog_init(const char* path, const char *fileName)
+int g_logLevel; 
+std::string g_logName;
+
+int K_slog_init(const char* path, const char *fileName, int logLevel)
 {
+	if (logLevel <= 0)
+		return 0;
+
+	g_logLevel = std::max(logLevel, (int)K_SLOG_NONE);
+	g_logLevel = std::min(logLevel, (int)K_SLOG_TRACE);
+	g_logName = fileName;
+
     slog_init(fileName, SLOG_FLAGS_ALL, 0);
 
     slog_config_t config;
@@ -27,13 +40,14 @@ int K_slog_close()
 
 int K_slog_trace(enum e_slog lev, const char* pszFmt, ...)
 {
+	char* pNewBuf = NULL;
 	char* pBuf = NULL;
 	int nLen = 0;
 	va_list args;
 
-	// //로그레벨 0일경우 로그출력 X, TRACE는 로그레벨 0이상부터 출력
-	// if (pKcoContext->gw_nLog_level == 0 || (lev != K_SLOG_TRACE && pKcoContext->gw_nLog_level < lev))
-	// 	return KCE_APP_FAIL;
+	//로그레벨 0일경우 로그출력 X, TRACE는 로그레벨 1이상부터 출력
+	if (g_logLevel == 0 || (lev != K_SLOG_TRACE && g_logLevel < lev))
+		return -1;
 
 	va_start(args, pszFmt);
 	nLen = vsnprintf(NULL, 0, pszFmt, args);
@@ -50,27 +64,33 @@ int K_slog_trace(enum e_slog lev, const char* pszFmt, ...)
 	vsnprintf(pBuf, nLen + 1, pszFmt, args);
 	va_end(args);
 
+	pNewBuf = (char*)calloc(nLen + 40, sizeof(char));
+	if (pNewBuf == NULL)
+		return -1;
+	snprintf(pNewBuf, nLen + 40, "[%s][pid=%d]%s", g_logName.c_str(), static_cast<int>(getpid()), pBuf);
+
 	switch (lev)
 	{
 	case K_SLOG_DEBUG:
-		slog_display(SLOG_DEBUG, 1, pBuf);
+		slog_display(SLOG_DEBUG, 1, pNewBuf);
 		break;
 	/*case K_SLOG_WARN:
-		slog_display(SLOG_WARN, 1, pBuf);
+		slog_display(SLOG_WARN, 1, pNewBuf);
 		break;*/
 	case K_SLOG_ERROR:
-		slog_display(SLOG_ERROR, 1, pBuf);
+		slog_display(SLOG_ERROR, 1, pNewBuf);
 		break;
 
     default:
 	case K_SLOG_TRACE:
-		slog_display(SLOG_TRACE, 1, pBuf);
+		slog_display(SLOG_TRACE, 1, pNewBuf);
 		break;
 
 	}
 
 
-	free(pBuf);
+	if (pBuf) free(pBuf);
+	if (pNewBuf) free(pNewBuf);
 
 	return 0;
 }

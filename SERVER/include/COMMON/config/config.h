@@ -8,6 +8,7 @@ struct MySqlConfig
     std::string user;
     std::string password;
     std::string database;
+    int poolCount;
 };
 
 
@@ -19,13 +20,14 @@ struct RedisConfig
 
 struct CommonConfig
 {
-
+    int logLevel;
 };
 
 struct ServerConfig
 {
     int port;
     int threadCount;
+    int maxUserCount;
 };
 
 struct AppConfig

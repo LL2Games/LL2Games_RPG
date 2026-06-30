@@ -15,10 +15,6 @@ int main(int ac, char **av)
 {
     try
     {
-        // log
-        K_slog_init(LOGIN_LOG_PATH, LOGIN_DAEMON_NAME);
-        K_slog_trace(K_SLOG_TRACE, "[%s]==============START==============", LOGIN_DAEMON_NAME);
-
         std::string configPath;
 
         for (int i = 1; i < ac; ++i)
@@ -29,8 +25,7 @@ int main(int ac, char **av)
             {
                 if (i + 1 >= ac)
                 {
-                    K_slog_trace(K_SLOG_ERROR, "Missing config path after --config");
-                    K_slog_close();
+                    printf("Missing config path after --config");
                     return -1;
                 }
 
@@ -39,27 +34,35 @@ int main(int ac, char **av)
         }
         if (configPath.empty())
         {
-            K_slog_trace(K_SLOG_ERROR, "Missing required --config argument");
-            K_slog_close();
+            printf("Missing required --config argument");
             return -1;
         }
 
         ConfigLoader loader;
         if (!loader.Load(configPath))
         {
-            K_slog_trace(K_SLOG_ERROR, "Failed to load config: %s", configPath.c_str());
-            K_slog_close();
+            printf("Failed to load config: %s", configPath.c_str());
             return -1;
         }
 
         g_config = loader.ToAppConfig();
+        if (g_config.common.logLevel == 0)
+        {
+            K_slog_init(LOGIN_LOG_PATH, LOGIN_DAEMON_NAME, 1);
+            K_slog_trace(K_SLOG_TRACE, "==============LOG_LEVEL: %d NO LOG==============", g_config.common.logLevel);
+            K_slog_close();
+        }
+        K_slog_init(LOGIN_LOG_PATH, LOGIN_DAEMON_NAME, g_config.common.logLevel);
+        K_slog_trace(K_SLOG_TRACE, "==============START==============");
+        K_slog_trace(K_SLOG_TRACE, "==============LOG_LEVEL: %d==============", g_config.common.logLevel);
 
-        if (MySqlConnectionPool::Init(g_config.mysql) != EXIT_SUCCESS)
+        if (MySqlConnectionPool::Init(g_config.mysql, g_config.mysql.poolCount) != EXIT_SUCCESS)
         {
             K_slog_trace(K_SLOG_ERROR, "Failed to init MySqlConnectionPool");
             K_slog_close();
             return -1;
         }
+        K_slog_trace(K_SLOG_TRACE, "==============MySqlConnectionPool Count: %d==============", MySqlConnectionPool::GetInstance()->GetPoolSize());
         if (RedisClient::Init(g_config.redis) != EXIT_SUCCESS)
         {
             K_slog_trace(K_SLOG_ERROR, "Failed to init RedisClient");
@@ -77,7 +80,7 @@ int main(int ac, char **av)
 
         server.Run();
 
-        K_slog_trace(K_SLOG_TRACE, "[%s]..................the End..............", LOGIN_DAEMON_NAME);
+        K_slog_trace(K_SLOG_TRACE, "..................the End..............");
         K_slog_close();
     }
     catch (const std::exception &ex)
