@@ -37,6 +37,7 @@ INCLUDES := \
     -I$(INC_DIR)/COMMON/command \
     -I$(INC_DIR)/COMMON/config \
     -I$(INC_DIR)/COMMON/ipc \
+    -I$(INC_DIR)/COMMON/db \
     \
     -I$(SRC_DIR)/CHAT/util \
     -I$(SRC_DIR)/CHAT/packet \

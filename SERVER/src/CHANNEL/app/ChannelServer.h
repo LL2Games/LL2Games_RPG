@@ -32,7 +32,7 @@
 class ChannelServer
 {
 public:
-    ChannelServer();
+    ChannelServer(const int channelId, const int threadCount, const int maxUserCount);
     ~ChannelServer();
 
     bool Init(const int port);
@@ -44,6 +44,7 @@ public:
     void EnableWriteEvent(int fd);
     void PushAuthResult(ChannelAuthResult result);
 
+public:
     PlayerManager* GetPlayerManager() { return &m_player_mamager; }
     MapService* GetMapService() {return &m_map_service;}
     PlayerService* GetPlayerService() {return &m_player_service;}
@@ -55,6 +56,8 @@ public:
     ThreadPool* GetAuthThreadPool() { return &m_authPool; }
     std::mutex& GetAuthLoadMutex() { return m_authLoadMutex; }
     RedisConnectionPool* GetRedisConnectionPool() { return &m_redisPool; }
+    void UpdateChannelState(const int interval, const int ttl);
+    void UpdateChannelStateToRedis(const int ttl);
 private:
     bool InitListenSocket(int port);
     bool InitEpoll();
@@ -67,6 +70,7 @@ private:
     void DisableWriteEvent(int fd);
     void OnSend(int fd);
     void ProcessAuthResults();
+
 private:
     int m_channel_id;
     int m_listen_fd;
@@ -82,8 +86,6 @@ private:
     MonsterManager* m_monster_manager;
     SkillManager* m_skill_manager;
     DropManager* m_drop_manager;
-    //MySqlConnectionPool m_db;
-    RedisClient m_redis;
     
     
     MapService m_map_service;
@@ -104,4 +106,6 @@ private:
     std::queue<ChannelAuthResult> m_authResults;
     std::mutex m_authResultMutex;
     std::mutex m_authLoadMutex;
+    unsigned int m_current_user_count;
+    unsigned int m_max_user_count;
 };

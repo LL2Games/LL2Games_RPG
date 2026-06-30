@@ -34,6 +34,7 @@ INCLUDES := \
     -I$(INC_DIR)/COMMON/packet \
 	-I$(INC_DIR)/COMMON/slog \
     -I$(INC_DIR)/COMMON/config \
+    -I$(INC_DIR)/COMMON/db \
     \
     -I$(SRC_DIR)/LOGIN/app \
     -I$(SRC_DIR)/LOGIN/db \

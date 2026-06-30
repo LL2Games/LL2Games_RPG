@@ -27,7 +27,6 @@ private:
     int m_listen_fd;
     std::map<int, WorldSession*> m_sessions;
     ChannelManager  m_channel_manager;
-    RedisClient m_redis;
     CharacterService m_char_service;
     WorldPacketFactory m_factory;
 };

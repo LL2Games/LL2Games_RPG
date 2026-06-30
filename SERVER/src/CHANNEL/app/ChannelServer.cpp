@@ -1,15 +1,13 @@
 #include "ChannelServer.h"
 #include "common.h"
-#include <thread>
-#include "PlayerPacketSender.h"
-#include "QuickSlotPacketSender.h"
+#include "thread"
+#include "RedisClient.h"
+#include "RedisUtility.h"
+#include "ChannelStateUpdateTask.h"
+#include "RedisCommonEnum.h"
 
-#define THREAD_POOL_COUNT 4
-#define AUTH_THREAD_POOL_COUNT 4
-#define REDIS_POOL_COUNT AUTH_THREAD_POOL_COUNT
-
-
-ChannelServer::ChannelServer() : m_channel_id(0), m_listen_fd(0), m_epfd(0), m_running(false), m_map_manager(this), m_map_service(m_player_mamager, m_map_manager), m_pool(THREAD_POOL_COUNT), m_authPool(AUTH_THREAD_POOL_COUNT),m_level_manager(nullptr)
+//threadCount == 0 인경우 하드웨어 CPU 코어 수를 계산하여 스레드풀 생성
+ChannelServer::ChannelServer(const int channelId, const int threadCount, const int maxUserCount) : m_channel_id(channelId), m_listen_fd(0), m_epfd(0), m_running(false), m_map_manager(this), m_map_service(m_player_mamager, m_map_manager), m_pool(threadCount == 0 ? std::thread::hardware_concurrency() : threadCount), m_authPool(threadCount == 0 ? std::thread::hardware_concurrency() : threadCount), ,m_level_manager(nullptr),m_current_user_count(0), m_max_user_count(maxUserCount)
 {
     m_item_manager = ItemManager::GetInstance();
     m_monster_manager = MonsterManager::GetInstance();
@@ -33,7 +31,11 @@ int ChannelServer::SetNonblocking(int fd)
     return 0;
 }
 
-
+// FlushSend()로 송신 큐를 전부 비운 뒤, 그 fd의 EPOLLOUT 감시를 꺼주는 함수
+// EPOLLOUT은 대부분의 경우 계속 발생할 수 있다.
+// TCP 소켓은 보통 쓸 수 있는 상태인 시간이 많기 떄문에 보낼 데이터가 없는데도
+// EPOLLOUT을 켜두면 epoll_wait()가 계속 깨어날 수 있기 때문이다.
+// epoll_wait()가 꺠어난다는 의미는 epoll에서 이벤트가 발생했다는 의미이다
 void ChannelServer::DisableWriteEvent(int fd)
 {
     epoll_event ev{};
@@ -54,10 +56,9 @@ void ChannelServer::DisableWriteEvent(int fd)
     }
 }
 
-
 void ChannelServer::OnSend(int fd)
 {
-    auto it = m_sessions.find(fd);
+     auto it = m_sessions.find(fd);
     if (it == m_sessions.end())
         return;
 
@@ -98,6 +99,17 @@ bool ChannelServer::Init(const int port)
         return false;
     }
 
+   K_slog_trace(K_SLOG_TRACE, "MAX_USER_COUNT: %d\n", m_max_user_count);
+   K_slog_trace(K_SLOG_TRACE, "Thread Pool Start ==PoolSize: %zu\n", m_pool.GetPoolSize());
+   //스레드풀 시작
+   m_pool.Start();
+   K_slog_trace(K_SLOG_TRACE, "ChatD MessageQueue Start\n");
+   //chatD 메시지큐 리시버 스레드 시작
+    m_authPool.Start();
+    //m_cmd_receiver.Start(); 지금 미사용 나중에 다시 풀어야함
+   
+   //맵매니저 스레드 시작
+   m_map_manager.Start();
     if (!m_redisPool.Init(REDIS_POOL_COUNT))
     {
         K_slog_trace(K_SLOG_ERROR, "[ChannelServer] RedisConnectionPool Init failed");
@@ -105,9 +117,11 @@ bool ChannelServer::Init(const int port)
     }
 
     m_pool.Start();
-    m_authPool.Start();
-    //m_cmd_receiver.Start();
-    m_map_manager.Start();
+    
+
+   //채널 상태 업데이트 스레드 시작
+    std::thread stateUpdateThread(&ChannelServer::UpdateChannelState, this, 3, 10); // 3초마다 업데이트, TTL은 10초
+    stateUpdateThread.detach(); // 스레드를 분리하여 백그라운드에서 실행
 
    return true;
 }
@@ -131,6 +145,15 @@ bool ChannelServer::InitListenSocket(int port)
         return false;
     }
 
+    int nodelay = 1;
+    if(setsockopt(m_listen_fd, IPPROTO_TCP, TCP_NODELAY, (const char*)&nodelay, sizeof(nodelay)) < 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s] m_listen_fd Setsockopt Error %d\n", "ChannelServer", port);
+        close(m_listen_fd);
+        m_listen_fd =-1;
+        return false;
+    }
+
     sockaddr_in addr{};
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -138,7 +161,9 @@ bool ChannelServer::InitListenSocket(int port)
 
     if(bind(m_listen_fd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr))< 0)
     {   
-        K_slog_trace(K_SLOG_ERROR, "[%s][%s][%d] m_listen_fd bind Error %d\n", "ChannelServer", __FILE__, __LINE__,  port);
+        K_slog_trace( K_SLOG_ERROR,
+        "[%s][%s][%d] bind Error port:%d errno:%d msg:%s\n",
+    "ChannelServer", __FILE__, __LINE__, port, errno, strerror(errno));
         close(m_listen_fd);
         m_listen_fd = -1;
         return false;
@@ -248,12 +273,12 @@ void ChannelServer::GameLoop()
                 OnReceive(fd);
             }
 
-            if (m_sessions.find(fd) == m_sessions.end())
-            {
+            if(m_sessions.find(fd) == m_sessions.end())
+            {           
                 continue;
             }
 
-            if (e & EPOLLOUT)
+            if(e & EPOLLOUT)
             {
                 OnSend(fd);
             }
@@ -289,6 +314,23 @@ void ChannelServer::OnAccept()
             continue;
         }
 
+        /*
+        이 Nagle 알고리즘이라는 것이 작은 데이터를 모아서 한번에 보내는 방식인데
+
+        이게 켜져 있으면 게임 같은 많은 데이터를 보내는 곳에서는 딜레이를 유발할 수있다
+        그리고 기본으로 설정되어 있어서 꺼주는게 좋고
+        서버 리슨 fd랑 클라이언트 fd 두 곳 모두 설정해줘야 정상적으로 작동한다
+        */
+        int nodelay = 1;
+        if (setsockopt(cfd, IPPROTO_TCP, TCP_NODELAY, (const char*)&nodelay, sizeof(nodelay)) < 0)
+        {
+            K_slog_trace(K_SLOG_ERROR, "[%s : %s : %d] cfd Setsockopt Error \n", __FILE__, __FUNCTION__, __LINE__);
+            close(m_listen_fd);
+            m_listen_fd =-1;
+            close(cfd);
+            continue;
+        }
+
         epoll_event cev{};
         // EPOLLIN : 읽기 가능한 상태
         // EPOLLRDHUP : 상대방이 연결의 읽기 방향을 닫았음
@@ -311,8 +353,8 @@ void ChannelServer::OnAccept()
             inet_ntop(AF_INET, &caddr.sin_addr, ip, sizeof(ip));
             // 로그로 접속한 IP 정보 출력
         }
-
-
+        m_current_user_count++;
+        K_slog_trace(K_SLOG_TRACE, "[%s][%d] New Connection FD [%d] Current User Count [%d]\n", __FUNCTION__, __LINE__, cfd, m_current_user_count);
     }
 }
 
@@ -364,17 +406,17 @@ void ChannelServer::OnReceive(int fd)
 
 void ChannelServer::OnDisconnect(int fd)
 {
-    epoll_ctl(m_epfd, EPOLL_CTL_DEL, fd, nullptr);
-
     auto it = m_sessions.find(fd);
-    if(it != m_sessions.end())
+    if(it == m_sessions.end())
     {
-        delete it->second;
-        m_sessions.erase(it);
+        return;
     }
 
+    epoll_ctl(m_epfd, EPOLL_CTL_DEL, fd, nullptr);
+    delete it->second;
+    m_sessions.erase(it);
     close(fd);
-    K_slog_trace(K_SLOG_TRACE, "[OnDisconnect] fd:%d", fd);
+    m_current_user_count--;
     std::cout << "Disconnected FD [" << fd <<"]" << std::endl;
 }
 
@@ -395,58 +437,89 @@ void ChannelServer::EnableWriteEvent(int fd)
 
 void ChannelServer::PushAuthResult(ChannelAuthResult result)
 {
-    std::lock_guard<std::mutex> lock(m_authResultMutex);
-    m_authResults.push(std::move(result));
+
 }
 
-
-void ChannelServer::ProcessAuthResults()
+void ChannelServer::UpdateChannelState(const int interval, const int ttl)
 {
-    std::queue<ChannelAuthResult> local;
-
+    while(true)
     {
-        std::lock_guard<std::mutex> lock(m_authResultMutex);
-        std::swap(local, m_authResults);
+        auto task = std::make_unique<ChannelStateUpdateTask>(this, ttl);
+        this->GetThreadPool()->Submit(std::move(task));
+        sleep(interval); // 지정된 시간마다 업데이트
+    }
+}
+
+void ChannelServer::UpdateChannelStateToRedis(const int ttl)
+{
+    RedisClient* redis = RedisClient::GetInstance();
+    int curUser = m_current_user_count;
+    int maxUser = m_max_user_count;
+    std::string state;
+    int rc;
+
+    if (redis == nullptr)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] RedisClient is nullptr", __FUNCTION__, __LINE__);
+        return;
     }
 
-    while (!local.empty())
+    int percentage = 0;
+    if (maxUser > 0)
     {
+        percentage = (curUser * 100) / maxUser;
+    }
+    percentage = std::min(percentage, 100); // 최대 100%로 제한
 
-        ChannelAuthResult result = std::move(local.front());
-        local.pop();
+    if (percentage >= 90)
+    {
+        state = ChannelState::FULL;
+    }
+    else if (percentage >= 70)
+    {
+        state = ChannelState::BUSY;
+    }
+    else
+    {
+        state = ChannelState::NORMAL;
+    }
 
-        auto it = m_sessions.find(result.fd);
-        if (it == m_sessions.end())
-        {
-            K_slog_trace(K_SLOG_TRACE, "[ProcessAuthResults] fd closed:%d", result.fd);
-            continue;
-        }
+    
+    std::map<std::string, std::string> redisMap;
+    redisMap["state"] = state;
+    redisMap["percentage"] = std::to_string(percentage);
 
-        ChannelSession* session = it->second;
+    rc = redis->HSetAll("channel:" + std::to_string(m_channel_id) + ":status", redisMap, ttl); // 지정된 시간 동안 유지
+    if (rc != 0)
+    {
+        K_slog_trace(K_SLOG_ERROR, "[%s][%d] Failed to update channel status to Redis", __FUNCTION__, __LINE__);
+        return;
+    }
 
-        if (!result.success || result.player == nullptr)
-        {
-            session->SendNok(PKT_CHANNEL_AUTH, result.error.empty() ? "auth failed" : result.error);
-            continue;
-        }
+    K_slog_trace(K_SLOG_DEBUG, "[%s][%d] Updated channel status to Redis: state=%s, percentage=%d%%", __FUNCTION__, __LINE__, state.c_str(), percentage);
+    K_slog_trace(K_SLOG_DEBUG, "[%s][%d] Current User Count: %d, Max User Count: %d", __FUNCTION__, __LINE__, curUser, maxUser);
+}
+// 클라이언트 fd는 기본적으로 읽기/끊김 이벤트만 감시한다.
+// 송신 큐에 보낼 데이터가 생기면 EPOLLOUT을 추가해서,
+// 소켓이 쓰기 가능한 시점에 남은 데이터를 이어서 전송한다.
+// 송신 큐에 대기 중인 데이터가 있을 때 EPOLLOUT 감시를 켠다.
+// EPOLLOUT은 계속 켜두면 반복적으로 발생하므로, FlushSend 완료 후 다시 끈다.
+void ChannelServer::EnableWriteEvent(int fd)
+{
+    epoll_event ev{};
+    ev.data.fd = fd;
+    ev.events = EPOLLIN | EPOLLRDHUP | EPOLLOUT;
 
-        Player* rawPlayer = result.player.get();
-        rawPlayer->SetSession(session);
-
-        if (!m_player_mamager.AddPlayer(std::move(result.player)))
-        {   
-            session->SendNok(PKT_CHANNEL_AUTH, "already connected");
-            continue;
-        }
-
-        session->SetPlayer(rawPlayer);
-        session->SetPlayerManager(&m_player_mamager);
-
-        PlayerPacketSender::SendPlayerInfo(rawPlayer);
-        PlayerPacketSender::SendPlayerStat(rawPlayer);
-        PlayerPacketSender::SendPlayerSkillList(rawPlayer);
-        QuickSlotPacketSender::SendQuickSlotList(rawPlayer);
-
-        session->SendOk(PKT_CHANNEL_AUTH, { rawPlayer->GetName() });
+    if (epoll_ctl(m_epfd, EPOLL_CTL_MOD, fd, &ev) < 0)
+    {
+        K_slog_trace(
+            K_SLOG_ERROR,
+            "[%s : %s : %d] EPOLL_CTL_MOD enable write failed fd:%d errno:%d",
+            __FILE__,
+            __FUNCTION__,
+            __LINE__,
+            fd,
+            errno
+        );
     }
 }

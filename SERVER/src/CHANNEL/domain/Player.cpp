@@ -94,6 +94,8 @@ bool Player::CanAttack(SkillDef* skillDef)
 
     const bool isBasicAttack = (skillDef->category == SkillCategory::BASIC_ATTACK);
 
+    K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] skillDef->categoy [%d].\n", __FILE__, __FUNCTION__, __LINE__, skillDef->category);
+
     // 기본 공격이 아닌 경우에만 직업/습득 여부 검사
     if (!isBasicAttack)
     {

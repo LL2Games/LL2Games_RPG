@@ -95,14 +95,16 @@ void PlayerPacketSender::SendPlayerSkillList(Player* player)
 }
 
 
-void PlayerPacketSender::SendPlayersMove(Player* sender, Vec2 pos, float speed, std::unordered_map<int, Player*>& playerList)
+void PlayerPacketSender::SendPlayersMove(Player* sender, Vec2 pos, float speed, int dir, std::unordered_map<int, Player*>& playerList)
 {
     std::vector<std::string> payload;
-	payload.reserve(4);
+	
 	payload.push_back(std::to_string(sender->GetId()));
 	payload.push_back(std::to_string(pos.xPos));
 	payload.push_back(std::to_string(pos.yPos));
 	payload.push_back(std::to_string(speed));
+    payload.push_back(std::to_string(dir));
+    payload.push_back(std::to_string(static_cast<int>(sender->GetState())));
 
 	for(auto it = playerList.begin(); it != playerList.end(); ++it)
 	{
@@ -168,4 +170,70 @@ void PlayerPacketSender::SendExpGain(Player *player, const ExpResult& expResult)
 
 	session->Send(PKI_PLAYER_EXP_GAIN, payload);
     
+}
+
+void PlayerPacketSender::SendPlayerEnter(Player *player, std::unordered_map<int, Player *> &playerList)
+{
+    std::vector<std::string> payload;
+
+    payload.push_back(std::to_string(player->GetId()));
+    payload.push_back(std::to_string(player->GetJob()));  
+    payload.push_back(std::to_string(player->GetPos().xPos));
+    payload.push_back(std::to_string(player->GetPos().yPos));
+    payload.push_back(std::to_string(player->GetDir()));
+    payload.push_back(std::to_string(static_cast<int>(player->GetState())));
+
+
+    for(const auto& [id, otherPlayer] : playerList)
+    {
+        if(otherPlayer == player) continue;
+
+        otherPlayer->GetSession()->Send(PKT_OTHERPLAYER_ENTER, payload);
+        K_slog_trace(K_SLOG_TRACE, "[%s : %s : %d] 플레이어 Enter 정보 전달 완료.\n", __FILE__, __FUNCTION__, __LINE__);
+    }
+}
+
+void PlayerPacketSender::SendPlayerAttack(Player *attacker, int skillId, int attackDir, std::unordered_map<int, Player *> &playerList)
+{
+    std::vector<std::string> payload;
+    payload.push_back(std::to_string(attacker->GetId()));
+    payload.push_back(std::to_string(skillId));
+    payload.push_back(std::to_string(attackDir));
+    payload.push_back(std::to_string(3));
+
+    for(const auto& [id, player] : playerList)
+    {
+        if(attacker == player) continue;
+
+        player->GetSession()->Send(PKT_OTHER_PLAYER_ATTACK, payload);
+    }
+}
+
+void PlayerPacketSender::SendExistingPlayersToNewPlayer(Player *newPlayer, std::unordered_map<int, Player *> &playerList)
+{
+    std::vector<std::string> payload;
+
+    int count = 0;
+    for (const auto& [id, other] : playerList)
+    {
+        if (other != nullptr && other != newPlayer)
+            count++;
+    }
+
+    payload.push_back(std::to_string(count));
+
+    for (const auto& [id, other] : playerList)
+    {
+        if (other == nullptr || other == newPlayer)
+            continue;
+
+        payload.push_back(std::to_string(other->GetId()));
+        payload.push_back(std::to_string(other->GetJob()));
+        payload.push_back(std::to_string(other->GetPos().xPos));
+        payload.push_back(std::to_string(other->GetPos().yPos));
+        payload.push_back(std::to_string(other->GetDir()));
+        payload.push_back(std::to_string(static_cast<int>(other->GetState())));
+    }
+
+    newPlayer->GetSession()->Send(PKT_OTHERPLAYER_SNAPSHOT, payload);
 }

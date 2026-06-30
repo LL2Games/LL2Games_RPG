@@ -37,6 +37,7 @@ INCLUDES := \
 	-I$(INC_DIR)/COMMON/ipc \
 	-I$(INC_DIR)/COMMON/thread \
 	-I$(INC_DIR)/COMMON/util \
+	-I$(INC_DIR)/COMMON/db \
 	\
 	-I$(SRC_DIR)/CHANNEL/app \
     -I$(SRC_DIR)/CHANNEL/db \
@@ -67,9 +68,7 @@ SRCS := \
 	app/ChannelSession.cpp \
 	app/ChannelAuthTask.cpp \
     \
-    db/MySqlConnectionPool.cpp \
 	db/PlayerService.cpp \
-	db/RedisClient.cpp \
 	db/RedisUtility.cpp \
 	db/RedisConnectionPool.cpp \
 	\

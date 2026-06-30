@@ -53,6 +53,8 @@ public:
 
     void SetLearnedSkill(const LearnedSkill& learnedSkill){m_learnedSkills[learnedSkill.skill_id] = learnedSkill;}
 
+    void SetState(PlayerState state) {m_CurrentState = state;}
+
 public:
     int GetCurHP(){return m_stat.GetCurHp();}
     int GetCurMP(){return m_stat.GetCurMp();}
@@ -85,6 +87,8 @@ public:
     Collider2D GetCollider() {return m_collider;}
 
     std::vector<LearnedSkill> GetPlayerSkillList() const;
+
+    int GetDir() {return m_dir;}
 
 public:
 
@@ -123,6 +127,7 @@ private:
     int m_map_id;
     float m_xPos;
     float m_yPos;
+    int m_dir;
 
     Collider2D m_collider;
 

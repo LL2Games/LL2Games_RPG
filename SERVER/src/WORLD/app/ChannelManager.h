@@ -30,6 +30,7 @@ public:
     ChannelInfo* GetChannel(const std::string& id);
     int LoadFromRedis(RedisClient&);
     int SaveToRedis(RedisClient&);
+    int CanEnterChannel(const std::string& channel_id);
 private:
     //key=channel_id, value=ChannelInfo
     std::map<std::string, ChannelInfo> m_channels;

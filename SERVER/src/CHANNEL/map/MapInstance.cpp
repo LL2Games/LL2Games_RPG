@@ -271,7 +271,7 @@ void MapInstance::GiveExp(int playerID, float exp)
 	(void)exp;
 }
 
-void MapInstance::HandleMove(Player* sender, Vec2 pos, float speed)
+void MapInstance::HandleMove(Player* sender, Vec2 pos, float speed, int dir)
 {
 	if(!sender) return;
 
