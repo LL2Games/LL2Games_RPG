@@ -48,7 +48,7 @@ public:
 	void OnLeave(int PlayerID);
 
     void GiveExp(int platerID, float exp);
-    void HandleMove(Player* sender, Vec2 pos, float speed);
+    void HandleMove(Player* sender, Vec2 pos, float speed, int dir);
     void ResolveSkillHit(Player* Attacker, SkillDef& skillDef, std::vector<std::pair<Monster*, int>> hits);
     void SetPlayerHitResult(Player* player, int monster_instanceId, PlayerHitResult& result);
     bool PickupDropItem(Player* player, int dropItemId, std::vector<AddItemResult>& addItemResults);
@@ -79,6 +79,7 @@ public:
     std::vector<Monster>& GetMonsterList(){ return m_monsterList;};
     ProjectileManager& GetProjectileManager() { return m_projectileManager; }
 
+    std::unordered_map<int, Player*>& GetPlayerList(){return m_playerList;}
 private:
    	// 플레이어가 맵에 있는지 없는지 판단 변수
     bool m_has_player;

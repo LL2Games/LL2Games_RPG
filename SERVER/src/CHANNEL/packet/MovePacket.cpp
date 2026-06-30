@@ -18,10 +18,8 @@ void PlayerHandler::MovePacket(PacketContext * ctx)
     float speed = 0;
 
     std::string errMsg;
-    std::string playerXPos;
-    std::string playerYPos;
-    std::string str_speed;
     Vec2 PlayerPos = {0,0};
+    int dir = 0;
      
     if(ctx == nullptr)
     {
@@ -57,77 +55,47 @@ void PlayerHandler::MovePacket(PacketContext * ctx)
         errMsg = "[" + std::to_string(rc) + "]current_map is nullptr";
         goto err;
     }
+
     // 받은 정보에서 Xpos 추출
-     if(!PacketParser::ParseLengthPrefixedString(
-        ctx->payload,
-        ctx->payload_len,
-        offset,
-        playerXPos,
-        errMsg
-    ))
+    if(!PacketParser::ParseNextFloatField(ctx->payload, ctx->payload_len, offset, PlayerPos.xPos, errMsg))
     {
         rc = EXIT_FAILURE;
-        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] ParseLengthPrefixedString fail", __FILE__, __FUNCTION__, __LINE__);
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] ParseNextFloatField fail", __FILE__, __FUNCTION__, __LINE__);
         goto err;
     }
 
      // 받은 정보에서 Ypos 추출
-     if(!PacketParser::ParseLengthPrefixedString(
-        ctx->payload,
-        ctx->payload_len,
-        offset,
-        playerYPos,
-        errMsg
-    ))
+    if(!PacketParser::ParseNextFloatField(ctx->payload, ctx->payload_len, offset, PlayerPos.yPos, errMsg))
     {
         rc = EXIT_FAILURE;
-        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] ParseLengthPrefixedString fail", __FILE__, __FUNCTION__, __LINE__);
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] ParseNextFloatField fail", __FILE__, __FUNCTION__, __LINE__);
         goto err;
     }
 
-     // 받은 정보에서 speed 추출
-     if(!PacketParser::ParseLengthPrefixedString(
-        ctx->payload,
-        ctx->payload_len,
-        offset,
-        str_speed,
-        errMsg
-    ))
+    // 받은 정보에서 speed 추출
+    if(!PacketParser::ParseNextFloatField(ctx->payload, ctx->payload_len, offset, speed, errMsg))
     {
         rc = EXIT_FAILURE;
-        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] ParseLengthPrefixedString fail", __FILE__, __FUNCTION__, __LINE__);
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] ParseNextFloatField fail", __FILE__, __FUNCTION__, __LINE__);
         goto err;
     }
 
-    // stoi 등 형식 변환은 위험 가능성이 높다 따라서 utiliy 파일에서 int와 float 형식으로 변환하는 함수를 통해서 안전하게 변환
-    if(!utility::StringToFloat(playerXPos, PlayerPos.xPos))
+    // 받은 정보에서 Dir 추출
+    if(!PacketParser::ParseNextIntField(ctx->payload, ctx->payload_len, offset, dir, errMsg))
     {
         rc = EXIT_FAILURE;
-        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] playerXPos String to Float fail", __FILE__, __FUNCTION__, __LINE__);
+        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] ParseNextIntField fail", __FILE__, __FUNCTION__, __LINE__);
         goto err;
     }
+    
 
-    if(!utility::StringToFloat(playerYPos,  PlayerPos.yPos))
-    {
-        rc = EXIT_FAILURE;
-        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] playerYPos String to Float fail", __FILE__, __FUNCTION__, __LINE__);
-        goto err;
-    }
-
-    if(!utility::StringToFloat(str_speed,  speed))
-    {
-        rc = EXIT_FAILURE;
-        K_slog_trace(K_SLOG_ERROR, "[%s : %s][%d] speed String to Float fail", __FILE__, __FUNCTION__, __LINE__);
-        goto err;
-    }
-   
     // 플레이어가 속한 맵의 모든 플레이어한테 변경 정보 전달
-    map->HandleMove(player, PlayerPos, speed);
+    map->HandleMove(player, PlayerPos, speed, dir);
    
 err:
     if (rc != EXIT_SUCCESS) {
-        session->SendNok(PKT_ENTER_MAP, errMsg);
+        session->SendNok(PKT_PLAYER_MOVE, errMsg);
     } else {
-        session->SendOk(PKT_ENTER_MAP);
+        session->SendOk(PKT_PLAYER_MOVE);
     }
 }
