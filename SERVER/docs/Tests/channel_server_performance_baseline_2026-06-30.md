@@ -189,3 +189,177 @@ connect_ms_max=29.110
 - 패킷 반복 전송 기준 측정
 - 처리량 기준 측정
 - 평균/최대 응답 시간 측정
+
+<br></br>
+
+
+# 패킷 반복 전송 테스트
+
+## 테스트 파일
+-  channel_packet_burst_test.py 
+
+## 테스트 목적
+- 여러 클라이언트가 ChannelServer에 접속한 뒤 짧은 패킷을 반복 전송했을 때 서버가 안정적으로 수신 흐름을 유지하는지 확인
+-  recv -> OnBytes -> TryParse  경로에 반복 패킷 부하를 주고 연결 종료/크래시 여부를 확인
+- 실제 게임 핸들러 처리량이 아니라 TCP 수신/파싱 경로의 안정성 baseline을 측정
+
+## 실행 명령
+
+```zsh
+python3 channel_packet_burst_test.py --host 127.0.0.1 --port 9001 --clients 10 --packets 100
+python3 channel_packet_burst_test.py --host 127.0.0.1 --port 9001 --clients 50 --packets 100
+python3 channel_packet_burst_test.py --host 127.0.0.1 --port 9001 --clients 500 --packets 1000 --timeout 10
+python3 channel_packet_burst_test.py --host 127.0.0.1 --port 9001 --clients 1000 --packets 100 --timeout 10
+python3 channel_packet_burst_test.py --host 127.0.0.1 --port 9001 --clients 1000 --packets 500 --timeout 15
+python3 channel_packet_burst_test.py --host 127.0.0.1 --port 9001 --clients 1000 --packets 1000 --timeout 30
+```
+
+## 실행 결과
+
+### clients 10, packets 100
+
+```text
+target=127.0.0.1:9001
+clients=10, packets_per_client=100, total_expected=1000, timeout=2.0, delay=0.0
+success_clients=10
+failed_clients=0
+total_sent=1000
+elapsed_sec=0.071
+packets_per_sec=14026.072
+connect_ms_avg=1.678
+connect_ms_max=2.751
+send_ms_avg=65.028
+send_ms_max=68.484
+```
+
+### clients 50, packets 100
+
+```text
+target=127.0.0.1:9001
+clients=50, packets_per_client=100, total_expected=5000, timeout=2.0, delay=0.0
+success_clients=50
+failed_clients=0
+total_sent=5000
+elapsed_sec=0.347
+packets_per_sec=14390.211
+connect_ms_avg=5.355
+connect_ms_max=15.628
+send_ms_avg=281.236
+send_ms_max=311.365
+```
+
+### clients 500, packets 1000
+
+```text
+target=127.0.0.1:9001
+clients=500, packets_per_client=1000, total_expected=500000, timeout=10.0, delay=0.0
+success_clients=500
+failed_clients=0
+total_sent=500000
+elapsed_sec=25.637
+packets_per_sec=19503.141
+connect_ms_avg=34.347
+connect_ms_max=148.269
+send_ms_avg=21570.690
+send_ms_max=23468.261
+```
+
+### clients 1000, packets 100
+
+```text
+target=127.0.0.1:9001
+clients=1000, packets_per_client=100, total_expected=100000, timeout=10.0, delay=0.0
+success_clients=1000
+failed_clients=0
+total_sent=100000
+elapsed_sec=6.183
+packets_per_sec=16174.264
+connect_ms_avg=34.008
+connect_ms_max=216.466
+send_ms_avg=1448.410
+send_ms_max=2263.050
+```
+
+### clients 1000, packets 500
+
+```text
+target=127.0.0.1:9001
+clients=1000, packets_per_client=500, total_expected=500000, timeout=15.0, delay=0.0
+success_clients=1000
+failed_clients=0
+total_sent=500000
+elapsed_sec=25.000
+packets_per_sec=19999.856
+connect_ms_avg=51.927
+connect_ms_max=261.606
+send_ms_avg=12841.233
+send_ms_max=16426.109
+```
+
+### clients 1000, packets 1000
+
+```text
+target=127.0.0.1:9001
+clients=1000, packets_per_client=1000, total_expected=1000000, timeout=30.0, delay=0.0
+success_clients=1000
+failed_clients=0
+total_sent=1000000
+elapsed_sec=46.778
+packets_per_sec=21377.561
+connect_ms_avg=53.508
+connect_ms_max=343.508
+send_ms_avg=32658.624
+send_ms_max=37331.865
+```
+
+## 테스트 결과
+
+### clients 10, packets 100
+- 결과: PASS
+- 관찰: 10개 클라이언트가 총 1000개 패킷을 실패 없이 전송함
+- 의미: 소규모 반복 패킷 전송 상황에서 수신/파싱 경로가 안정적으로 유지됨
+
+### clients 50, packets 100
+- 결과: PASS
+- 관찰: 50개 클라이언트가 총 5000개 패킷을 실패 없이 전송함
+- 의미: 클라이언트 수가 증가해도 반복 패킷 전송 중 연결 실패가 발생하지 않음
+
+### clients 500, packets 1000
+- 결과: PASS
+- 관찰: 500개 클라이언트가 각 1000개 패킷을 전송해 총 500000개 패킷을 실패 없이 전송함
+- 의미: 다수 클라이언트의 반복 패킷 전송 상황에서도 TCP 수신/파싱 경로가 안정적으로 유지됨
+
+### clients 1000, packets 100
+- 결과: PASS
+- 관찰: 1000개 클라이언트가 각 100개 패킷을 전송해 총 100000개 패킷을 실패 없이 전송함
+- 의미: 1000개 동시 클라이언트 환경에서도 반복 패킷 전송 중 연결 실패가 발생하지 않음
+
+### clients 1000, packets 500
+- 결과: PASS
+- 관찰: 1000개 클라이언트가 각 500개 패킷을 전송해 총 500000개 패킷을 실패 없이 전송함
+- 의미: 동일한 총 500000개 패킷 기준에서 500 clients/1000 packets와 1000 clients/500 packets 모두 실패 없이 완료됨
+
+### clients 1000, packets 1000
+- 결과: PASS
+- 관찰: 1000개 클라이언트가 각 1000개 패킷을 전송해 총 1000000개 패킷을 실패 없이 전송함
+- 의미: 1000개 동시 클라이언트의 반복 패킷 전송 상황에서 연결 실패 없이 수신/파싱 경로가 유지됨
+
+## 테스트 방식
+-  channel_packet_burst_test.py 는 clients 수만큼 Python thread를 생성하고, 각 thread가 하나의 TCP socket을 통해 반복 패킷을 전송
+- 각 패킷은 서버의  PacketHeader(length, type)  구조에 맞춰 구성
+- 테스트 패킷 타입은 unknown packet을 사용하므로 실제 게임 핸들러 처리량을 측정하지 않음
+- 본 테스트는 클라이언트 기준 send 성공 및 연결 안정성을 측정
+
+## 패킷 반복 전송 테스트 결론
+- 로컬 환경 기준 1000개 클라이언트가 총 1000000개 패킷을 실패 없이 전송함
+- 클라이언트 기준 약 21k packets/sec 수준의 반복 전송이 관찰됨
+- TCP 수신/파싱 경로는 반복 패킷 부하 상황에서도 안정적으로 유지됨
+- 실제 게임 로직 처리량, handler 처리 완료율, 응답 latency는 별도 테스트가 필요함
+
+## 남은 테스트
+- 실제 패킷 타입 기반 handler 부하 테스트
+- coalesced packet 개별 Dispatch 로그 확인
+- 서버 내부 수신/Dispatch 카운터 로그 보강
+- CPU/메모리/FD 사용량 측정
+- 장시간 soak test
+
