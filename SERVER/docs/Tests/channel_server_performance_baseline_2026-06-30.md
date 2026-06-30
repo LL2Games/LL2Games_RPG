@@ -558,3 +558,56 @@ failed=1
 - 33명 이상부터 timeout 내 인증 응답을 받지 못하는 요청이 발생함
 - 현재 로컬 테스트 환경 기준 ChannelServer의 PKT_CHANNEL_AUTH 안정 처리 기준은 32명 동시 인증으로 기록함
 - 향후 DB connection pool, 인증 처리 worker/thread 구조, 초기 데이터 송신량, PlayerManager 등록 과정의 lock 경합 여부를 추가 확인할 필요가 있음
+
+<br></br>
+
+# 채널 인증 ThreadPool 혼용 실험
+
+## 실험 목적
+- `PKT_CHANNEL_AUTH` 처리를 epoll 메인 루프에서 분리하기 위해 기존 ChannelServer ThreadPool에 인증 작업을 위임했을 때 성능이 개선되는지 확인
+
+## 실험 방식
+- `PacketTask`를 추가해 `PacketContext`, payload, packet handler를 task 내부에서 소유하도록 구성
+- `ChannelSession::Dispatch()`에서 `PKT_CHANNEL_AUTH` 패킷만 기존 `ChannelServer::GetThreadPool()`에 Submit
+- 기존 ThreadPool은 `MapManager`의 `MapUpdateTask` 처리에도 사용 중인 상태
+
+## 실행 결과
+
+### clients 33
+
+```text
+target=127.0.0.1:9001
+start_character_id=900000, clients=33, timeout=5.0
+success=1
+failed=32
+elapsed_sec=5.020
+auth_ms_min=144.820
+auth_ms_avg=4858.954
+auth_ms_max=5015.764
+received_packets_avg=0.212
+received_packets_max=7
+received_bytes_avg=83.152
+received_bytes_max=2744
+```
+
+## 결과
+- 결과: FAIL
+- 관찰: 33개 동시 인증 요청 중 1개만 성공하고 32개는 timeout 내 인증 응답을 받지 못함
+- 의미: 기존 ThreadPool에 인증 작업을 단순히 추가하는 방식은 성능을 개선하지 못했고, 오히려 인증 처리 성공률이 크게 낮아짐
+
+## 원인 후보
+- 기존 ThreadPool은 MapManager의 MapUpdateTask 처리에도 사용 중이므로 인증 작업과 맵 업데이트 작업이 같은 worker queue를 공유함
+- PKT_CHANNEL_AUTH는 DB 조회와 초기 데이터 송신을 포함하는 무거운 작업이라 공유 pool에서 대기 시간이 증가할 수 있음
+- PacketTask가 ChannelSession*를 보유하므로 클라이언트 timeout/disconnect 이후 세션 생명주기 문제가 발생할 수 있음
+- 인증 작업은 일반 맵 업데이트 작업과 성격이 다르므로 같은 pool에 섞기보다 별도 처리 구조가 필요함
+
+## 결론
+- 기존 ChannelServer ThreadPool을 인증 처리에 그대로 재사용하는 방식은 부적합한 것으로 판단함
+- 인증 처리는 별도 auth 전용 ThreadPool 또는 인증 전용 queue/worker 구조로 분리하는 방향이 적절함
+- 최종 적용 전에는 ChannelSession 생명주기 보호, Send thread safety, 동일 세션 패킷 순서 보장 방안을 함께 설계해야 함
+
+## 후속작업
+- 실패 실험 코드는 제거하고 Redis 캐시 개선 상태만 유지
+- auth 전용 worker 구조 설계
+- 세션 생명주기 보호 방식 검토
+- auth 전용 worker 적용 후 33/50/100명 인증 부하 재측정
