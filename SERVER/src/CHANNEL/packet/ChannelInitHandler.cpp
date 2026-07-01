@@ -71,8 +71,6 @@ void ChannelInitHandler::HandleChannelAuth(PacketContext *ctx)
         goto err;
     }
 
-    player = PlayerService::LoadPlayer(characterId);
-
     if(!player) {
         errMsg = "[" + std::to_string(rc) + "]HandleChannelAuth: 플레이어 로드 실패 [" + std::to_string(characterId) + "]";
         K_slog_trace(K_SLOG_ERROR, "[%d][%s]%s", __LINE__, __FUNCTION__, errMsg.c_str());

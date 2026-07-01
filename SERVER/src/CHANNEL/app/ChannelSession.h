@@ -3,14 +3,16 @@
 #include "Player.h"
 #include "PlayerManager.h"
 #include "ChannelPacketFactory.h"
-#include <queue>
+#include <deque>
+#include <mutex>
+#include <cstdint>
 
 class ChannelServer;
 
 class ChannelSession
 {
 public:
-    explicit ChannelSession(int fd, ChannelServer* server = nullptr);
+    ChannelSession(int fd, ChannelServer* server, uint64_t sessionId, uint64_t generation);
     ~ChannelSession();
 
 
@@ -24,11 +26,9 @@ public:
     int SendNok(int type, const std::string &errMsg);
     int SendPacket(const std::string& packet);
 
-
     int EnqueueSend(std::string packet);
     bool FlushSend();
     bool HasPendingSend() const;
-
 public: 
     void SetPlayer(Player* player) {m_player = player;}
     Player* GetPlayer() const {return m_player;}
@@ -36,8 +36,9 @@ public:
     void SetPlayerManager(PlayerManager* playerManager) {m_playerManager = playerManager;}
     int GetFd() const {return m_fd;}
     void Dispatch(const ParsedPacket& pkt);
-private:
-   
+
+    uint64_t GetSessionId() const { return m_sessionId; }
+    uint64_t GetGeneration() const { return m_generation; }
 private:
     int m_fd = -1;
     ChannelServer* m_server = nullptr;
@@ -50,4 +51,8 @@ private:
 
     std::deque<std::string> m_sendQueue;
     size_t m_sendOffset = 0;
+    mutable std::mutex m_sendMutex;
+
+    uint64_t m_sessionId = 0;
+    uint64_t m_generation = 0;
 };
