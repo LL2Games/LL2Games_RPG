@@ -5,13 +5,14 @@
 #include "ChannelPacketFactory.h"
 #include <deque>
 #include <mutex>
+#include <cstdint>
 
 class ChannelServer;
 
 class ChannelSession
 {
 public:
-    explicit ChannelSession(int fd, ChannelServer* server = nullptr);
+    ChannelSession(int fd, ChannelServer* server, uint64_t sessionId, uint64_t generation);
     ~ChannelSession();
 
 
@@ -35,8 +36,9 @@ public:
     void SetPlayerManager(PlayerManager* playerManager) {m_playerManager = playerManager;}
     int GetFd() const {return m_fd;}
     void Dispatch(const ParsedPacket& pkt);
-private:
-   
+
+    uint64_t GetSessionId() const { return m_sessionId; }
+    uint64_t GetGeneration() const { return m_generation; }
 private:
     int m_fd = -1;
     ChannelServer* m_server = nullptr;
@@ -51,4 +53,6 @@ private:
     size_t m_sendOffset = 0;
     mutable std::mutex m_sendMutex;
 
+    uint64_t m_sessionId = 0;
+    uint64_t m_generation = 0;
 };

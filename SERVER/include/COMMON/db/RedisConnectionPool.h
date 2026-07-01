@@ -18,7 +18,7 @@ public:
     RedisConnectionPool(const RedisConnectionPool&) = delete;
     RedisConnectionPool& operator=(const RedisConnectionPool&) = delete;
 
-    bool Init(std::size_t count);
+    bool Init(const RedisConfig& redisConfig, std::size_t count);
 
     RedisClient* Acquire();
     void Release(RedisClient* conn);

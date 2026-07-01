@@ -58,8 +58,15 @@ def parse_packets(buffer):
 
     return packets
 
+def percentile(values, p):
+    if not values:
+        return 0.0
 
-def auth_once(host, port, character_id, timeout):
+    sorted_values = sorted(values)
+    index = int((len(sorted_values) - 1) * p)
+    return sorted_values[index]
+
+def auth_once(host, port, character_id, timeout, hold_seconds):
     packet = make_packet(PKT_CHANNEL_AUTH, make_body(str(character_id)))
     received = b""
 
@@ -90,6 +97,10 @@ def auth_once(host, port, character_id, timeout):
 
                         if fields[0] in ("ok", "nok"):
                             elapsed_ms = (time.perf_counter() - start) * 1000
+
+                            if hold_seconds > 0:
+                                time.sleep(hold_seconds)
+
                             return {
                                 "character_id": character_id,
                                 "success": fields[0] == "ok",
@@ -139,6 +150,7 @@ def main():
     parser.add_argument("--start-character-id", type=int, default=900000)
     parser.add_argument("--clients", type=int, default=10)
     parser.add_argument("--timeout", type=float, default=3.0)
+    parser.add_argument("--hold-seconds", type=float, default=0.0)
     parser.add_argument("--verbose", action="store_true")
     args = parser.parse_args()
 
@@ -148,14 +160,26 @@ def main():
     ]
 
     print(f"target={args.host}:{args.port}")
-    print(f"start_character_id={args.start_character_id}, clients={args.clients}, timeout={args.timeout}")
+    print(
+        f"start_character_id={args.start_character_id}, "
+        f"clients={args.clients}, "
+        f"timeout={args.timeout}, "
+        f"hold_seconds={args.hold_seconds}"
+    )
 
     started = time.perf_counter()
     results = []
 
     with ThreadPoolExecutor(max_workers=args.clients) as executor:
         futures = [
-            executor.submit(auth_once, args.host, args.port, character_id, args.timeout)
+            executor.submit(
+                auth_once,
+                args.host,
+                args.port,
+                character_id,
+                args.timeout,
+                args.hold_seconds,
+            )
             for character_id in character_ids
         ]
 
@@ -178,6 +202,9 @@ def main():
     if elapsed_values:
         print(f"auth_ms_min={min(elapsed_values):.3f}")
         print(f"auth_ms_avg={sum(elapsed_values) / len(elapsed_values):.3f}")
+        print(f"auth_ms_p50={percentile(elapsed_values, 0.50):.3f}")
+        print(f"auth_ms_p95={percentile(elapsed_values, 0.95):.3f}")
+        print(f"auth_ms_p99={percentile(elapsed_values, 0.99):.3f}")
         print(f"auth_ms_max={max(elapsed_values):.3f}")
 
     if packet_values:

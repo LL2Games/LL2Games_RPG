@@ -1,7 +1,7 @@
 #include "RedisConnectionPool.h"
 #include "K_slog.h"
 
-bool RedisConnectionPool::Init(std::size_t count)
+bool RedisConnectionPool::Init(const RedisConfig& redisConfig, std::size_t count)
 {
     std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -20,8 +20,8 @@ bool RedisConnectionPool::Init(std::size_t count)
 
     for (std::size_t i = 0; i < count; ++i)
     {
-        auto conn = std::make_unique<RedisClient>();
-        if (!conn->Connect())
+        auto conn = std::make_unique<RedisClient>(redisConfig);
+        if (!conn->IsConnected())
         {
             K_slog_trace(K_SLOG_ERROR, "[RedisConnectionPool] redis connect failed. index:%zu", i);
 

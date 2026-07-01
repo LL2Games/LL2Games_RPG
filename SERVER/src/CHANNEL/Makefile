@@ -70,7 +70,6 @@ SRCS := \
     \
 	db/PlayerService.cpp \
 	db/RedisUtility.cpp \
-	db/RedisConnectionPool.cpp \
 	\
 	domain/Player.cpp \
 	domain/Monster.cpp \
@@ -112,6 +111,7 @@ SRCS := \
 	packet/ItemPacketSender.cpp\
 	packet/HandleTrade.cpp \
 	packet/InventoryPacketHandler.cpp\
+	packet/PacketProcessTask.cpp \
 	\
 	service/MapService.cpp \
 	service/StatService.cpp \

@@ -49,3 +49,14 @@ void ThreadPool::Submit(std::unique_ptr<Task> task)
     m_workers[m_nextIndex]->PushTask(std::move(task));
     m_nextIndex = (m_nextIndex + 1) % m_workers.size();
 }
+
+void ThreadPool::SubmitByKey(uint64_t key, std::unique_ptr<Task> task)
+{
+    if (m_workers.empty() || task == nullptr)
+    {
+        return;
+    }
+
+    const size_t index = key % m_workers.size();
+    m_workers[index]->PushTask(std::move(task));
+}

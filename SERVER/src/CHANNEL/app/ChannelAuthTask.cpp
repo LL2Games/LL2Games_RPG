@@ -3,6 +3,7 @@
 #include "ChannelAuthResult.h"
 #include "RedisConnectionPool.h"
 #include "PacketParser.h"
+#include "RedisClient.h"
 #include "K_slog.h"
 #include <cstring>
 #include <stdexcept>
@@ -66,6 +67,22 @@ void ChannelAuthTask::Execute()
             return;
         }
 
+        if (!PlayerService::LoadInventoryMeta(player.get()) ||!PlayerService::LoadInventory(player.get()))
+        {
+            result.error = "player inventory load failed";
+            m_server->PushAuthResult(std::move(result));
+            return;
+        }
+
+        if (!PlayerService::LoadLearnedSkill(player.get()))
+        {
+            K_slog_trace(K_SLOG_ERROR, "[ChannelAuthTask] LoadLearnedSkill failed. characterId:%d", characterId);
+        }
+
+        if (!PlayerService::LoadSlotSetting(player.get()))
+        {
+            K_slog_trace(K_SLOG_ERROR, "[ChannelAuthTask] LoadSlotSetting failed. characterId:%d", characterId);
+        }
         result.success = true;
         result.player = std::move(player);
         m_server->PushAuthResult(std::move(result));

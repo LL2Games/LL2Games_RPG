@@ -13,22 +13,16 @@
 
 
 MySqlConnectionPool *PlayerService::m_mySql = nullptr;
-RedisClient *PlayerService::m_redis = nullptr;
 
 PlayerService::PlayerService()
 {
     m_mySql = MySqlConnectionPool::GetInstance();
-    m_redis = RedisClient::GetInstance();
 }
 
 PlayerService::~PlayerService()
 {
 }
 
-std::unique_ptr<Player> PlayerService::LoadPlayer(int characterId)
-{
-    return LoadPlayer(characterId, m_redis);
-}
 
 std::unique_ptr<Player> PlayerService::LoadPlayer(int characterId, RedisClient* redis)
 {

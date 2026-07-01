@@ -24,10 +24,10 @@
 #include "LevelManager.h"
 #include "ChannelAuthResult.h"
 
-
+#include <atomic>
 #include <queue>
 #include <mutex>
-
+#include <cstdint>
 
 class ChannelServer
 {
@@ -35,7 +35,7 @@ public:
     ChannelServer(const int channelId, const int threadCount, const int maxUserCount);
     ~ChannelServer();
 
-    bool Init(const int port);
+    bool Init(const int port, const RedisConfig& redisConfig);
     void Run();
 
     void OnReceive(int fd);
@@ -43,6 +43,7 @@ public:
     void BroadCast(); // 매개변수로 packet 받아야함
     void EnableWriteEvent(int fd);
     void PushAuthResult(ChannelAuthResult result);
+    ChannelSession* FindValidSession(int fd, uint64_t sessionId, uint64_t generation);
 
 public:
     PlayerManager* GetPlayerManager() { return &m_player_mamager; }
@@ -104,8 +105,10 @@ private:
     LevelManager* m_level_manager;
 
     std::queue<ChannelAuthResult> m_authResults;
+    std::atomic<uint64_t> m_nextSessionId{1};
     std::mutex m_authResultMutex;
     std::mutex m_authLoadMutex;
+    std::mutex m_sessionMutex;
     unsigned int m_current_user_count;
     unsigned int m_max_user_count;
 };

@@ -5,9 +5,12 @@
 #include "RedisUtility.h"
 #include "ChannelStateUpdateTask.h"
 #include "RedisCommonEnum.h"
+#include "PlayerPacketSender.h"
+#include "QuickSlotPacketSender.h"
+#include "InventoryPacketSender.h"
 
 //threadCount == 0 인경우 하드웨어 CPU 코어 수를 계산하여 스레드풀 생성
-ChannelServer::ChannelServer(const int channelId, const int threadCount, const int maxUserCount) : m_channel_id(channelId), m_listen_fd(0), m_epfd(0), m_running(false), m_map_manager(this), m_map_service(m_player_mamager, m_map_manager), m_pool(threadCount == 0 ? std::thread::hardware_concurrency() : threadCount), m_authPool(threadCount == 0 ? std::thread::hardware_concurrency() : threadCount), ,m_level_manager(nullptr),m_current_user_count(0), m_max_user_count(maxUserCount)
+ChannelServer::ChannelServer(const int channelId, const int threadCount, const int maxUserCount) : m_channel_id(channelId), m_listen_fd(0), m_epfd(0), m_running(false), m_map_manager(this), m_map_service(m_player_mamager, m_map_manager), m_pool(threadCount == 0 ? std::thread::hardware_concurrency() : threadCount), m_authPool(threadCount == 0 ? std::thread::hardware_concurrency() : threadCount),m_level_manager(nullptr),m_current_user_count(0), m_max_user_count(maxUserCount)
 {
     m_item_manager = ItemManager::GetInstance();
     m_monster_manager = MonsterManager::GetInstance();
@@ -58,11 +61,17 @@ void ChannelServer::DisableWriteEvent(int fd)
 
 void ChannelServer::OnSend(int fd)
 {
-     auto it = m_sessions.find(fd);
-    if (it == m_sessions.end())
-        return;
+    ChannelSession* session = nullptr;
 
-    ChannelSession* session = it->second;
+    {
+        std::lock_guard<std::mutex> lock(m_sessionMutex);
+
+        auto it = m_sessions.find(fd);
+        if (it == m_sessions.end())
+            return;
+
+        session = it->second;
+    }
 
     if (!session->FlushSend())
     {
@@ -76,7 +85,7 @@ void ChannelServer::OnSend(int fd)
     }
 }
 
-bool ChannelServer::Init(const int port)
+bool ChannelServer::Init(const int port, const RedisConfig& redisConfig)
 {
     // 서버 구동 시 JSON 파일을 읽어온다.
     if(!m_map_manager.Init()) return false;
@@ -101,6 +110,7 @@ bool ChannelServer::Init(const int port)
 
    K_slog_trace(K_SLOG_TRACE, "MAX_USER_COUNT: %d\n", m_max_user_count);
    K_slog_trace(K_SLOG_TRACE, "Thread Pool Start ==PoolSize: %zu\n", m_pool.GetPoolSize());
+   K_slog_trace(K_SLOG_TRACE, "Auth Thread Pool Start ==PoolSize: %zu\n", m_authPool.GetPoolSize());
    //스레드풀 시작
    m_pool.Start();
    K_slog_trace(K_SLOG_TRACE, "ChatD MessageQueue Start\n");
@@ -110,15 +120,11 @@ bool ChannelServer::Init(const int port)
    
    //맵매니저 스레드 시작
    m_map_manager.Start();
-    if (!m_redisPool.Init(REDIS_POOL_COUNT))
+    if (!m_redisPool.Init(redisConfig, redisConfig.poolCount))
     {
         K_slog_trace(K_SLOG_ERROR, "[ChannelServer] RedisConnectionPool Init failed");
         return false;
     }
-
-    m_pool.Start();
-    
-
    //채널 상태 업데이트 스레드 시작
     std::thread stateUpdateThread(&ChannelServer::UpdateChannelState, this, 3, 10); // 3초마다 업데이트, TTL은 10초
     stateUpdateThread.detach(); // 스레드를 분리하여 백그라운드에서 실행
@@ -273,9 +279,11 @@ void ChannelServer::GameLoop()
                 OnReceive(fd);
             }
 
-            if(m_sessions.find(fd) == m_sessions.end())
-            {           
-                continue;
+            {
+                std::lock_guard<std::mutex> lock(m_sessionMutex);
+
+                if(m_sessions.find(fd) == m_sessions.end())
+                    continue;
             }
 
             if(e & EPOLLOUT)
@@ -344,9 +352,15 @@ void ChannelServer::OnAccept()
             continue;
         }
 
-        ChannelSession* session = new ChannelSession(cfd, this);
+        uint64_t sessionId = m_nextSessionId.fetch_add(1);
+        uint64_t generation = 1;
 
-        m_sessions[cfd] = session;
+        ChannelSession* session =  new ChannelSession(cfd, this, sessionId, generation);
+
+        {
+            std::lock_guard<std::mutex> lock(m_sessionMutex);
+            m_sessions[cfd] = session;
+        }
 
         {
             char ip[64]{};
@@ -391,37 +405,69 @@ void ChannelServer::OnReceive(int fd)
     } while (tempLen == BUFFER_SIZE);
 
     //K_slog_trace(K_SLOG_DEBUG, "fd %d\n", fd);
-    auto it = m_sessions.find(fd);
-    if(it == m_sessions.end())
-    {
-        return;
-    }
+    ChannelSession* session = nullptr;
 
-     ChannelSession* session = it->second;
-     if(!session->OnBytes((const uint8_t*)buf.c_str(), buf.size()))
-     {
+    {
+        std::lock_guard<std::mutex> lock(m_sessionMutex);
+
+        auto it = m_sessions.find(fd);
+        if(it == m_sessions.end())
+            return;
+
+        session = it->second;
+    }
+    if(!session->OnBytes((const uint8_t*)buf.c_str(), buf.size()))
+    {
         OnDisconnect(fd);
-     }
+    }
+}
+
+ChannelSession* ChannelServer::FindValidSession(int fd, uint64_t sessionId, uint64_t generation)
+{
+    std::lock_guard<std::mutex> lock(m_sessionMutex);
+    auto it = m_sessions.find(fd);
+    if (it == m_sessions.end())
+        return nullptr;
+
+    ChannelSession* session = it->second;
+    if (session == nullptr)
+        return nullptr;
+
+    if (session->GetSessionId() != sessionId)
+        return nullptr;
+
+    if (session->GetGeneration() != generation)
+        return nullptr;
+
+    return session;
 }
 
 void ChannelServer::OnDisconnect(int fd)
 {
-    auto it = m_sessions.find(fd);
-    if(it == m_sessions.end())
+   ChannelSession* session = nullptr;
+
     {
-        return;
+        std::lock_guard<std::mutex> lock(m_sessionMutex);
+
+        auto it = m_sessions.find(fd);
+        if(it == m_sessions.end())
+            return;
+
+        session = it->second;
+        m_sessions.erase(it);
     }
 
     epoll_ctl(m_epfd, EPOLL_CTL_DEL, fd, nullptr);
-    delete it->second;
-    m_sessions.erase(it);
+    delete session;
     close(fd);
-    m_current_user_count--;
-    std::cout << "Disconnected FD [" << fd <<"]" << std::endl;
 }
 
 
-
+// 클라이언트 fd는 기본적으로 읽기/끊김 이벤트만 감시한다.
+// 송신 큐에 보낼 데이터가 생기면 EPOLLOUT을 추가해서,
+// 소켓이 쓰기 가능한 시점에 남은 데이터를 이어서 전송한다.
+// 송신 큐에 대기 중인 데이터가 있을 때 EPOLLOUT 감시를 켠다.
+// EPOLLOUT은 계속 켜두면 반복적으로 발생하므로, FlushSend 완료 후 다시 끈다.
 void ChannelServer::EnableWriteEvent(int fd)
 {
     epoll_event ev{};
@@ -437,7 +483,8 @@ void ChannelServer::EnableWriteEvent(int fd)
 
 void ChannelServer::PushAuthResult(ChannelAuthResult result)
 {
-
+    std::lock_guard<std::mutex> lock(m_authResultMutex);
+    m_authResults.push(std::move(result));
 }
 
 void ChannelServer::UpdateChannelState(const int interval, const int ttl)
@@ -452,7 +499,8 @@ void ChannelServer::UpdateChannelState(const int interval, const int ttl)
 
 void ChannelServer::UpdateChannelStateToRedis(const int ttl)
 {
-    RedisClient* redis = RedisClient::GetInstance();
+    RedisConnectionGuard redisGuard(&m_redisPool);
+    RedisClient* redis = redisGuard.Get();
     int curUser = m_current_user_count;
     int maxUser = m_max_user_count;
     std::string state;
@@ -499,27 +547,61 @@ void ChannelServer::UpdateChannelStateToRedis(const int ttl)
     K_slog_trace(K_SLOG_DEBUG, "[%s][%d] Updated channel status to Redis: state=%s, percentage=%d%%", __FUNCTION__, __LINE__, state.c_str(), percentage);
     K_slog_trace(K_SLOG_DEBUG, "[%s][%d] Current User Count: %d, Max User Count: %d", __FUNCTION__, __LINE__, curUser, maxUser);
 }
-// 클라이언트 fd는 기본적으로 읽기/끊김 이벤트만 감시한다.
-// 송신 큐에 보낼 데이터가 생기면 EPOLLOUT을 추가해서,
-// 소켓이 쓰기 가능한 시점에 남은 데이터를 이어서 전송한다.
-// 송신 큐에 대기 중인 데이터가 있을 때 EPOLLOUT 감시를 켠다.
-// EPOLLOUT은 계속 켜두면 반복적으로 발생하므로, FlushSend 완료 후 다시 끈다.
-void ChannelServer::EnableWriteEvent(int fd)
-{
-    epoll_event ev{};
-    ev.data.fd = fd;
-    ev.events = EPOLLIN | EPOLLRDHUP | EPOLLOUT;
 
-    if (epoll_ctl(m_epfd, EPOLL_CTL_MOD, fd, &ev) < 0)
+void ChannelServer::ProcessAuthResults()
+{
+    std::queue<ChannelAuthResult> local;
+
     {
-        K_slog_trace(
-            K_SLOG_ERROR,
-            "[%s : %s : %d] EPOLL_CTL_MOD enable write failed fd:%d errno:%d",
-            __FILE__,
-            __FUNCTION__,
-            __LINE__,
-            fd,
-            errno
-        );
+        std::lock_guard<std::mutex> lock(m_authResultMutex);
+        std::swap(local, m_authResults);
+    }
+
+    while (!local.empty())
+    {
+
+        ChannelAuthResult result = std::move(local.front());
+        local.pop();
+        ChannelSession* session = nullptr;
+        {
+            std::lock_guard<std::mutex> lock(m_sessionMutex);
+            auto it = m_sessions.find(result.fd);
+            if (it == m_sessions.end())
+            {
+                K_slog_trace(K_SLOG_TRACE, "[ProcessAuthResults] fd closed:%d", result.fd);
+                continue;
+            }
+
+            session = it->second;
+        }
+
+        if (!result.success || result.player == nullptr)
+        {
+            session->SendNok(PKT_CHANNEL_AUTH, result.error.empty() ? "auth failed" : result.error);
+            continue;
+        }
+
+        Player* rawPlayer = result.player.get();
+        rawPlayer->SetSession(session);
+
+        if (!m_player_mamager.AddPlayer(std::move(result.player)))
+        {   
+            session->SendNok(PKT_CHANNEL_AUTH, "already connected");
+            continue;
+        }
+
+        session->SetPlayer(rawPlayer);
+        session->SetPlayerManager(&m_player_mamager);
+
+        PlayerPacketSender::SendPlayerInfo(rawPlayer);
+        PlayerPacketSender::SendPlayerStat(rawPlayer);
+        PlayerPacketSender::SendPlayerSkillList(rawPlayer);
+
+        InventoryPacketSender::SendInventoryMeta(rawPlayer);
+        InventoryPacketSender::SendInventoryItems(rawPlayer);
+
+        QuickSlotPacketSender::SendQuickSlotList(rawPlayer);
+
+        session->SendOk(PKT_CHANNEL_AUTH, { rawPlayer->GetName() });
     }
 }

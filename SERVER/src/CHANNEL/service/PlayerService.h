@@ -15,7 +15,6 @@ public:
     PlayerService();
     ~PlayerService();
     
-    static std::unique_ptr<Player> LoadPlayer(int characterId);
     static std::unique_ptr<Player> LoadPlayer(int characterId, RedisClient* redis);
     static bool LoadInventoryMeta(Player* player);
     static bool LoadInventory(Player* player);
@@ -29,5 +28,4 @@ private:
     static bool LoadPlayerStat(int characterId, AllStat& allStat);
 private:
     static MySqlConnectionPool* m_mySql;
-    static RedisClient* m_redis;
 };

@@ -6,10 +6,17 @@
 #include "MapInstance.h"
 #include "PlayerManager.h"
 #include "ChannelAuthTask.h"
+#include "PacketProcessTask.h"
 
-ChannelSession::ChannelSession(int fd, ChannelServer* server) : m_fd(fd), m_server(server), m_player(nullptr), m_playerManager(nullptr)
+ChannelSession::ChannelSession(int fd, ChannelServer* server, uint64_t sessionId, uint64_t generation)
+    : m_fd(fd),
+      m_server(server),
+      m_player(nullptr),
+      m_playerManager(nullptr),
+      m_sessionId(sessionId),
+      m_generation(generation)
 {
-   m_recvBuf.reserve(8192);
+    m_recvBuf.reserve(8192);
 }
 
 ChannelSession::~ChannelSession()
@@ -75,29 +82,20 @@ void ChannelSession::Dispatch(const ParsedPacket &pkt)
         return;
     }
 
-    auto handler = m_factory.Create(pkt.type);
-    if (handler)
-    {
-        PacketContext ctx;
-        ctx.type = pkt.type;
-        ctx.channel_session = this;
-        ctx.fd = m_fd;
-        ctx.payload = const_cast<char*>(pkt.payload.c_str());
-        ctx.payload_len = pkt.payload.size();
+    if (m_server == nullptr)
+        return;
 
-        if (m_server)
-        {
-            ctx.player_manager = m_server->GetPlayerManager();
-            ctx.map_service = m_server->GetMapService();
-            ctx.player_service = m_server->GetPlayerService();
-            ctx.stat_service = m_server->GetStatService();
-            ctx.item_service = m_server->GetItemService();
-            ctx.combat_service = m_server->GetCombatService();
-            ctx.trade_service = m_server->GetTradeService();
-        }
+    auto task = std::make_unique<PacketProcessTask>(
+        m_server,
+        this,
+        m_fd,
+        m_sessionId,
+        m_generation,
+        pkt.type,
+        pkt.payload
+    );
 
-        handler->Execute(&ctx);
-    }
+    m_server->GetThreadPool()->SubmitByKey(m_sessionId, std::move(task));
 }
 // 지금 방식은 클라이언트 하나에 해당해서 Send를 하는 방식인데 Player 클래스를 vector로 가지고 있고
 // 같은 맵, 시야 범위 등등 환경요소들을 확인해서 보내는 방식으로 변경 필요

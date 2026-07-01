@@ -3,6 +3,7 @@
 #include <memory>
 #include "WorkerThread.h"
 #include <mutex>
+#include <cstdint>
 
 class ThreadPool {
 
@@ -13,6 +14,7 @@ public:
     void Start();
     void Stop();
     void Submit(std::unique_ptr<Task> task);
+    void SubmitByKey(uint64_t key, std::unique_ptr<Task> task);
     size_t GetPoolSize() const { return m_poolSize; }
 
 private:

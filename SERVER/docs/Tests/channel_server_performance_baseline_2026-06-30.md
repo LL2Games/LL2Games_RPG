@@ -738,3 +738,181 @@ failed=0
 - 전체 초기화 패킷(PlayerInfo/Stat/Skill/QuickSlot) 수신 검증
 - 연속 재접속 시 동일 character_id 정리 완료 전 재접속 안정성 검증
 - AuthResult queue 처리 시 eventfd 등을 사용해 epoll wait timeout 의존 제거 검토
+
+<br></br>
+
+# 채널 이동 패킷 부하 테스트  - 개선 전 구조 기록
+
+## 테스트 목적
+- 일반 패킷 handler가 ChannelSession::Dispatch()에서 직접 실행되던 기존 구조에서 이동 패킷 처리 성능과 안정성을 측정
+- PKT_CHANNEL_AUTH, PKT_ENTER_MAP, PKT_PLAYER_MOVE를 포함한 실제 게임 패킷 경로를 검증
+- 이후 PacketProcessTask 기반 멀티스레드 처리 구조와 비교하기 위한 기준값 확보
+
+## 기존 구조
+- OnReceive()에서 수신한 데이터를 ChannelSession::OnBytes()로 전달
+- OnBytes() 에서 패킷 파싱 후 Dispatch() 호출
+- Dispatch() 에서  ChannelPacketFactory로 handler 생성
+- handler가 epoll 이벤트 처리 흐름에서 직접 실행됨
+
+## 실행 조건
+- Branch: 100-refactor-채널인증처리-기능-개선
+- Target: ChannelServer
+- Host:  127.0.0.1
+- Port: 9001
+- 테스트 파일:  channel_move_load_test.py
+- 테스트 데이터: character_id  900000 ~ 900199
+- map_id: 100000000
+
+## 실행 명령
+
+```zsh
+python3 Test/channel_move_load_test.py --port 9001 --clients 200 --duration 30 --moves-per-sec 5
+```
+
+## 실행 결과
+```text
+개선 전 동일 조건 정량 결과는 별도 보관하지 못함.
+본 섹션은 개선 전 구조와 측정 필요성을 기록하고,
+개선 후 결과를 기준 측정값으로 남긴다.
+
+-  일반 패킷 handler가 epoll 이벤트 처리 흐름에서 직접 실행되던 상태에서 특정 thread CPU 사용률이 약 95%로 관찰됨
+- htop을 통해서 확인
+```
+
+## 테스트 결과
+
+### clients 200, duration 30, moves_per_sec 5
+
+- 결과 : PASS 또는 FAIL
+- 관찰 : 기존 구조의 처리량 수치 비교는 수행하지 못했으며, 개선 후 측정값을 기준값으로 기록함
+- 의미 : 기존 구조에서 실제 이동 패킷 처리 및 브로드캐스트 fan-out 기준 성능을 확인함
+
+## 관찰 사항
+- 일반 패킷 handler가 epoll 이벤트 처리 흐름에서 직접 실행되므로, 게임 로직 처리 비용이 증가하면 네트워크 이벤트 처리 지연으로 이어질 수 있음
+
+- 동일 맵 전체 브로드캐스트 구조에서는 클라이언트 수 증가에 따라 send queue enqueue 및 EPOLLOUT 처리 비용이 크게 증가함
+
+
+<br></br>
+
+# 채널 이동 패킷 멀티스레드 처리 부하 테스트 - 개선 후
+
+## 개선 목적
+- 일반 패킷 handler를 epoll 이벤트 처리 흐름에서 분리해 네트위크 I/O와 게임 로직 처리의 결합도를 낮춤
+- PKT_PLAYER_MOVE 같은 게임 로직 패킷을 ThreadPool worker에서 처리하도록 변경
+- worker thread에서 패킷이 늦게 실행될 때 이미 종료된 세션을 사용할 수 있는 위험을 줄이기 위해 세션 유효성 검증을 추가함
+
+
+## 개선 내용
+- PacketProcessTask 추가
+- ChannelSession::Dispatch()에서 PKT_CHANNEL_AUTH를 제외한 일반 패킷을 ThreadPool에 submit하도록 변경
+- PacketProcessTask::Excute()에서 ChannelPacketFactory로 handler 생성 후 PacketContext를 구성해 handler 실행
+- ChannelSession에 sessionId, geneeration 추가
+- ChannelServer::FindValidSession()에서 fd, sessinId, generation이 모두 일치하는 경우에만 handler 실행
+- m_sessions 접근을 m_sessionMutex로 보호
+- ChannelSession의 send queue는 m_sendMutex로 보호
+
+## 실행 조건
+- Branch: 100-refactor-채널인증처리-기능-개선
+- Target: ChannelServer
+- Host: 127.0.0.1
+- Port: 9001
+- 테스트 파일: channel_move_load_test.py
+- 테스트 데이터: character_id 900000 ~ 900199
+- map_id: 100000000
+
+## 실행 명령
+
+```zsh
+python3 Test/channel_move_load_test.py --port 9001 --clients 200 --duration 30 --moves-per-sec 5
+```
+
+## 실행 결과
+
+```text
+target=127.0.0.1:9001
+start_character_id=900000, clients=200, map_id=100000000, duration=30.0, moves_per_sec=5.0, timeout=10.0
+success=200
+failed=0
+auth_success=200
+enter_success=200
+elapsed_sec=30.968
+auth_ms_min=31.549
+auth_ms_avg=363.700
+auth_ms_p50=376.601
+auth_ms_p95=679.382
+auth_ms_p99=698.658
+auth_ms_max=712.389
+enter_ms_min=0.813
+enter_ms_avg=31.168
+enter_ms_p50=18.185
+enter_ms_p95=108.513
+enter_ms_p99=121.758
+enter_ms_max=140.845
+move_sent_total=30000
+move_sent_per_sec=968.733
+move_broadcast_recv_total=5924068
+move_broadcast_recv_per_sec=191294.752
+packets_recv_total=5929502
+bytes_recv_total=294415890
+bytes_recv_per_sec=9507016.932
+```
+
+## 테스트 결과
+### clients 200, duration 30, moves_per_sec 5
+- 결과 : PASS
+- 관찰: 200개 클라이언트가 모두 인증 및 맵 입장에 성공함
+- 관찰: 30초 동안 총 30000개의 PKT_PLAYER_MOVE 요청을 전송했고 실패 없이 완료됨
+- 관찰: 클라이언트 기준 이동 입력 처리량은 초당 약 968.733개로 측정됨
+- 관찰: 이동 브로드캐스트 수신은 총 5924068개, 초당 약 191294.752개로 측정됨
+- 의미: 일반 패킷 handler를 PacketProcessTask로 분리한 뒤에도 인증, 맵 입장, 이동 처리, 이동 브로드캐스트 흐름이 안정적으로 유지됨 
+
+## 테스트 방식
+
+- 각 클라이언트는 TCP 연결 후 PKT_CHANNEL_AUTH로 인증을 수행함
+- 인증 성공 후 PKT_ENTER_MAP으로 동일 map_id 100000000에 입장함
+- 입장 성공 후 30초 동안 초당 5개의 PKT_PLAYER_MOVE 패킷을 전송함
+- 각 클라이언트는 서버로부터 수신한 PKT_PLAYER_MOVE 브로드캐스트 개수를 집계함
+- 테스트는 실제 socket 통신을 사용하며 서버 코드를 직접 호출하지 않음
+
+## 관찰 사항
+
+- htop에서 channelD의 여러 thread가 표시되어 ThreadPool worker가 동작 중임을 확인함
+- 특정 thread의 CPU 사용률이 높게 관찰되었으며, 원인 후보는 이동 브로드캐스트 fan-out, send queue enqueue, EPOLLOUT/send 처리 비용으로 판단됨
+- 200명이 같은 맵에 있을 때 이동 패킷 1개가 다수 클라이언트에게 브로드캐스트되므로 입력 패킷 수보다 송신 패킷 수가 크게 증가함
+- 30000개의 이동 입력에 대해 약 592만개의 이동 브로드캐스트 수신이 관찰되어, 동일 맵 전체 브로드캐스트 비용이 주요 부하로 확인됨
+
+## 개선 전/후 비교
+
+| 항목 | 개선 전 | 개선 후 |
+|---|---:|---:|
+| 일반 패킷 처리 위치 | epoll 흐름의 `Dispatch()` 직접 실행 | `PacketProcessTask` 기반 worker 실행 |
+| 세션 유효성 검증 | 없음 | fd/sessionId/generation 검증 |
+| `m_sessions` 동기화 | 일부 미보호 | `m_sessionMutex` 적용 |
+| 동일 조건 정량 결과 | 미보관 | 측정 완료 |
+| clients | 미측정 | 200 |
+| duration | 미측정 | 30s |
+| moves_per_sec/client | 미측정 | 5 |
+| success | 미측정 | 200 |
+| failed | 미측정 | 0 |
+| move_sent_total | 미측정 | 30000 |
+| move_broadcast_recv_total | 미측정 | 5924068 |
+| move_broadcast_recv_per_sec | 미측정 | 191294.752 |
+
+
+## 현재 한계
+
+- 개선 전 동일 조건 정량 결과를 보관하지 못해 처리량 수치의 직접 비교는 수행하지 못함
+- FindValidSession()은 fd/sessionId/generation 검증으로 잘못된 세션 처리를 줄이지만, ChannelSession* 객체 생명주기를 완전히 보장하는 구조는 아님
+- lock 해제 후 handler 실행 중 disconnect가 발생하면 raw pointer 기반 생명주기 위험이 남아 있음
+- 동일 맵 전체 브로드캐스트 방식은 클라이언트 수가 증가할수록 fan-out 비용이 급격히 증가함
+
+## 남은 과제 
+- ChannelSession 생명주기를 shared_ptr/weak_ptr 또는 in-flight task count 방식으로 보강
+- 동일 세션 패킷 순서 보장 방식 검토
+- 맵 단위 또는 세션 단위 직렬화 모델 검토
+- 시야 범위 기반 브로드캐스트 적용
+- 이동 패킷 coalescing 또는 tick 단위 이동 상태 병합 검토
+- EPOLLOUT/send queue 처리 비용 분석
+- 개선 전 커밋 기준 동일 조건 재측정
+- 300/500 clients 기준 추가 부하 테스트

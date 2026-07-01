@@ -286,12 +286,13 @@ void MapInstance::HandleMove(Player* sender, Vec2 pos, float speed, int dir)
 			K_slog_trace(K_SLOG_ERROR, "[%s][%d] [%d]해당 맵에 존재하지 않은 플레이어 입니다.", __FUNCTION__, __LINE__, m_mapID);
 			return;
 		}
+		sender->SetPos(pos);
 		playerSnapshot = m_playerList;
 	}
 
-	sender->SetPos(pos);
+	
 
-	PlayerPacketSender::SendPlayersMove(sender, pos, speed, playerSnapshot);
+	PlayerPacketSender::SendPlayersMove(sender, pos, speed, dir, playerSnapshot);
 }
 
 void MapInstance::SendMonsterSnapshot(Player* player)
