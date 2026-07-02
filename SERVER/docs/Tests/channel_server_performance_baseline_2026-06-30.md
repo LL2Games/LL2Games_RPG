@@ -842,6 +842,11 @@ python3 Test/channel_move_load_test.py --port 9001 --clients 200 --duration 30 -
 - ChannelServer::FindValidSession()에서 fd, sessinId, generation이 모두 일치하는 경우에만 handler 실행
 - m_sessions 접근을 m_sessionMutex로 보호
 - ChannelSession의 send queue는 m_sendMutex로 보호
+- disconnect 중인 세션에 worker task가 새로 진입하지 못하도록 ChannelSession closing 상태 추가
+- PacketProcessTask 실행 중 세션이 삭제되지 않도록 in-flight task count와 WaitForNoTasks() 추가
+- OnDisconnect()에서 세션을 m_sessions에서 먼저 제거하고 closing 처리한 뒤, 진행 중인 task 종료를 기다린 후 delete 수행
+- PlayerPacketSender::SendPlayersMove()에서 nullptr Player/Session을 건너뛰도록 방어 로직 추가
+- channel_move_load_test.py에 실패 원인 집계(failure_by_error) 출력 추가
 
 ## 실행 조건
 - Branch: 100-refactor-채널인증처리-기능-개선
@@ -889,6 +894,41 @@ bytes_recv_total=294415890
 bytes_recv_per_sec=9507016.932
 ```
 
+### clients 300, duration 30, moves_per_sec 5
+
+```zsh
+python3 channel_move_load_test.py --port 9001 --clients 300 --duration 30 --moves-per-sec 5 --timeout 30
+```
+
+```text
+target=127.0.0.1:9001
+start_character_id=900000, clients=300, map_id=100000000, duration=30.0, moves_per_sec=5.0, timeout=30.0
+success=300
+failed=0
+auth_success=300
+enter_success=300
+elapsed_sec=38.910
+auth_ms_min=215.972
+auth_ms_avg=4046.794
+auth_ms_p50=3976.854
+auth_ms_p95=7563.454
+auth_ms_p99=7804.042
+auth_ms_max=7976.160
+enter_ms_min=0.436
+enter_ms_avg=307.529
+enter_ms_p50=77.162
+enter_ms_p95=852.822
+enter_ms_p99=891.234
+enter_ms_max=929.340
+move_sent_total=44998
+move_sent_per_sec=1156.467
+move_broadcast_recv_total=10614425
+move_broadcast_recv_per_sec=272795.039
+packets_recv_total=10628376
+bytes_recv_total=623939921
+bytes_recv_per_sec=16035509.732
+```
+
 ## 테스트 결과
 ### clients 200, duration 30, moves_per_sec 5
 - 결과 : PASS
@@ -897,6 +937,16 @@ bytes_recv_per_sec=9507016.932
 - 관찰: 클라이언트 기준 이동 입력 처리량은 초당 약 968.733개로 측정됨
 - 관찰: 이동 브로드캐스트 수신은 총 5924068개, 초당 약 191294.752개로 측정됨
 - 의미: 일반 패킷 handler를 PacketProcessTask로 분리한 뒤에도 인증, 맵 입장, 이동 처리, 이동 브로드캐스트 흐름이 안정적으로 유지됨 
+
+### clients 300, duration 30, moves_per_sec 5
+- 결과 : PASS
+- 관찰: 300개 클라이언트가 모두 인증 및 맵 입장에 성공했고 실패 없음
+- 관찰: 30초 동안 총 44998개의 PKT_PLAYER_MOVE 요청을 전송함
+- 관찰: 클라이언트 기준 이동 입력 처리량은 초당 약 1156.467개로 측정됨
+- 관찰: 이동 브로드캐스트 수신은 총 10614425개, 초당 약 272795.039개로 측정됨
+- 관찰: 인증 응답 시간은 avg 4046.794ms, p95 7563.454ms, p99 7804.042ms로 측정됨
+- 의미: 세션 closing/in-flight task 완화 후 300개 클라이언트 이동 부하에서 crash/restart 없이 인증, 맵 입장, 이동 브로드캐스트 흐름이 유지됨
+- 의미: 인증 latency는 여전히 높아 별도 최적화 대상으로 남지만, 이동 브로드캐스트 안정성은 300 clients 조건에서 확인됨
 
 ## 테스트 방식
 
@@ -912,38 +962,44 @@ bytes_recv_per_sec=9507016.932
 - 특정 thread의 CPU 사용률이 높게 관찰되었으며, 원인 후보는 이동 브로드캐스트 fan-out, send queue enqueue, EPOLLOUT/send 처리 비용으로 판단됨
 - 200명이 같은 맵에 있을 때 이동 패킷 1개가 다수 클라이언트에게 브로드캐스트되므로 입력 패킷 수보다 송신 패킷 수가 크게 증가함
 - 30000개의 이동 입력에 대해 약 592만개의 이동 브로드캐스트 수신이 관찰되어, 동일 맵 전체 브로드캐스트 비용이 주요 부하로 확인됨
+- 300명 조건에서는 약 44998개의 이동 입력에 대해 약 1061만개의 이동 브로드캐스트 수신이 관찰됨
+- worker task가 실행되는 동안 disconnect가 발생하면 ChannelSession이 먼저 삭제될 수 있는 위험이 있어, 세션 closing 상태와 in-flight task count로 완화함
+- 다만 MapInstance/PlayerManager 경로에는 여전히 raw Player* 기반 snapshot/broadcast 구조가 남아 있어, 장기적으로는 shared_ptr/weak_ptr 또는 세션 식별자 기반 검증 송신 구조가 필요함
 
 ## 개선 전/후 비교
 
 | 항목 | 개선 전 | 개선 후 |
 |---|---:|---:|
 | 일반 패킷 처리 위치 | epoll 흐름의 Dispatch() 직접 실행 | PacketProcessTask 기반 worker 실행 |
-| 세션 유효성 검증 | 없음 | fd/sessionId/generation 검증 |
+| 세션 유효성 검증 | 없음 | fd/sessionId/generation/closing 검증 |
+| 세션 task 생명주기 완화 | 없음 | in-flight task count 적용 |
 | m_sessions 동기화 | 일부 미보호 | m_sessionMutex 적용 |
 | 동일 조건 정량 결과 | 미보관 | 측정 완료 |
-| clients | 미측정 | 200 |
+| clients | 미측정 | 200 / 300 |
 | duration | 미측정 | 30s |
 | moves_per_sec/client | 미측정 | 5 |
-| success | 미측정 | 200 |
+| success | 미측정 | 200 / 300 |
 | failed | 미측정 | 0 |
-| move_sent_total | 미측정 | 30000 |
-| move_broadcast_recv_total | 미측정 | 5924068 |
-| move_broadcast_recv_per_sec | 미측정 | 191294.752 |
+| move_sent_total | 미측정 | 30000 / 44998 |
+| move_broadcast_recv_total | 미측정 | 5924068 / 10614425 |
+| move_broadcast_recv_per_sec | 미측정 | 191294.752 / 272795.039 |
 
 
 ## 현재 한계
 
 - 개선 전 동일 조건 정량 결과를 보관하지 못해 처리량 수치의 직접 비교는 수행하지 못함
-- FindValidSession()은 fd/sessionId/generation 검증으로 잘못된 세션 처리를 줄이지만, ChannelSession* 객체 생명주기를 완전히 보장하는 구조는 아님
-- lock 해제 후 handler 실행 중 disconnect가 발생하면 raw pointer 기반 생명주기 위험이 남아 있음
+- FindValidSession()/BeginValidSessionTask()는 fd/sessionId/generation/closing 검증으로 잘못된 세션 처리를 줄임
+- in-flight task count로 PacketProcessTask 실행 중 ChannelSession delete 위험을 완화했지만, 전체 객체 생명주기를 shared ownership으로 바꾼 것은 아님
+- MapInstance/PlayerManager의 raw Player* snapshot 구조에서는 disconnect/remove와 broadcast가 겹칠 때 추가 생명주기 위험이 남을 수 있음
 - 동일 맵 전체 브로드캐스트 방식은 클라이언트 수가 증가할수록 fan-out 비용이 급격히 증가함
+- 300 clients 조건에서 auth_ms_p95가 7563.454ms로 측정되어 인증 latency 최적화가 필요함
 
 ## 남은 과제 
-- ChannelSession 생명주기를 shared_ptr/weak_ptr 또는 in-flight task count 방식으로 보강
+- ChannelSession/Player 생명주기를 shared_ptr/weak_ptr 또는 세션 식별자 기반 검증 송신 구조로 보강
 - 동일 세션 패킷 순서 보장 방식 검토
 - 맵 단위 또는 세션 단위 직렬화 모델 검토
 - 시야 범위 기반 브로드캐스트 적용
 - 이동 패킷 coalescing 또는 tick 단위 이동 상태 병합 검토
 - EPOLLOUT/send queue 처리 비용 분석
 - 개선 전 커밋 기준 동일 조건 재측정
-- 300/500 clients 기준 추가 부하 테스트
+- 500 clients 기준 추가 부하 테스트

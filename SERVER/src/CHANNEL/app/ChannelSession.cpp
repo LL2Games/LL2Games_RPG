@@ -23,6 +23,8 @@ ChannelSession::~ChannelSession()
 {
     if (m_player != nullptr)
     {
+        m_player->SetSession(nullptr);
+
         MapInstance *map = m_player->GetCurrentMap();
         
         if (map != nullptr)
@@ -143,6 +145,9 @@ int ChannelSession::EnqueueSend(std::string packet)
      if (packet.empty())
         return -1;
 
+    if (m_closing.load())
+        return -1;
+
     bool needEnableWrite = false;
 
     {
@@ -164,6 +169,9 @@ int ChannelSession::EnqueueSend(std::string packet)
 
 bool ChannelSession::FlushSend()
 {
+    if (m_closing.load())
+        return false;
+
     std::lock_guard<std::mutex> lock(m_sendMutex);
 
     while (!m_sendQueue.empty())
@@ -211,3 +219,38 @@ bool ChannelSession::HasPendingSend() const
    return !m_sendQueue.empty();
 }
 
+bool ChannelSession::TryBeginTask()
+{
+    std::lock_guard<std::mutex> lock(m_taskMutex);
+    if (m_closing.load())
+        return false;
+
+    ++m_inFlightTasks;
+    return true;
+}
+
+void ChannelSession::EndTask()
+{
+    std::lock_guard<std::mutex> lock(m_taskMutex);
+    if (m_inFlightTasks > 0)
+        --m_inFlightTasks;
+
+    if (m_inFlightTasks == 0)
+        m_taskCv.notify_all();
+}
+
+void ChannelSession::MarkClosing()
+{
+    m_closing.store(true);
+    std::lock_guard<std::mutex> lock(m_taskMutex);
+    if (m_inFlightTasks == 0)
+        m_taskCv.notify_all();
+}
+
+void ChannelSession::WaitForNoTasks()
+{
+    std::unique_lock<std::mutex> lock(m_taskMutex);
+    m_taskCv.wait(lock, [this]() {
+        return m_inFlightTasks == 0;
+    });
+}

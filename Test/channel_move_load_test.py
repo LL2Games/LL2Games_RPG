@@ -2,6 +2,7 @@ import argparse
 import socket
 import struct
 import time
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 PKT_CHANNEL_AUTH = 0x0009
@@ -299,6 +300,14 @@ def main():
     print(f"auth_success={len(auth_success_results)}")
     print(f"enter_success={len(enter_success_results)}")
     print(f"elapsed_sec={elapsed_sec:.3f}")
+
+    if failed_results:
+        failure_by_error = Counter(result["error"] for result in failed_results)
+        print("failure_by_error=" + ", ".join(
+            f"{error}:{count}"
+            for error, count in sorted(failure_by_error.items())
+        ))
+
     print_latency("auth_ms", auth_values)
     print_latency("enter_ms", enter_values)
     print(f"move_sent_total={move_sent_total}")

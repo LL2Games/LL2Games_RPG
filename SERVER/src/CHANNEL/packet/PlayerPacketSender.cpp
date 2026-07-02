@@ -109,8 +109,10 @@ void PlayerPacketSender::SendPlayersMove(Player* sender, Vec2 pos, float speed, 
 	for(auto it = playerList.begin(); it != playerList.end(); ++it)
 	{
 		if(it->second == sender) continue;
+        if(it->second == nullptr) continue;
 		
 		auto session = it->second->GetSession();
+        if(session == nullptr) continue;
 		
 		session->Send(PKT_PLAYER_MOVE, payload);
 	}

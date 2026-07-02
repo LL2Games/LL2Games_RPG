@@ -452,7 +452,39 @@ ChannelSession* ChannelServer::FindValidSession(int fd, uint64_t sessionId, uint
     if (session->GetGeneration() != generation)
         return nullptr;
 
+    if (session->IsClosing())
+        return nullptr;
+
     return session;
+}
+
+ChannelSession* ChannelServer::BeginValidSessionTask(int fd, uint64_t sessionId, uint64_t generation)
+{
+    std::lock_guard<std::mutex> lock(m_sessionMutex);
+    auto it = m_sessions.find(fd);
+    if (it == m_sessions.end())
+        return nullptr;
+
+    ChannelSession* session = it->second;
+    if (session == nullptr)
+        return nullptr;
+
+    if (session->GetSessionId() != sessionId)
+        return nullptr;
+
+    if (session->GetGeneration() != generation)
+        return nullptr;
+
+    if (!session->TryBeginTask())
+        return nullptr;
+
+    return session;
+}
+
+void ChannelServer::EndSessionTask(ChannelSession* session)
+{
+    if (session != nullptr)
+        session->EndTask();
 }
 
 void ChannelServer::OnDisconnect(int fd)
@@ -467,12 +499,14 @@ void ChannelServer::OnDisconnect(int fd)
             return;
 
         session = it->second;
+        session->MarkClosing();
         m_sessions.erase(it);
     }
 
     epoll_ctl(m_epfd, EPOLL_CTL_DEL, fd, nullptr);
-    delete session;
     close(fd);
+    session->WaitForNoTasks();
+    delete session;
 
     unsigned int currentUserCount = m_current_user_count.load();
     while (currentUserCount > 0 &&

@@ -24,10 +24,21 @@ void PacketProcessTask::Execute()
     if (m_server == nullptr)
     return;
 
-    ChannelSession* session = m_server->FindValidSession(m_fd, m_sessionId, m_generation);
+    ChannelSession* session = m_server->BeginValidSessionTask(m_fd, m_sessionId, m_generation);
 
     if (session == nullptr)
         return;
+
+    struct SessionTaskGuard
+    {
+        ChannelServer* server;
+        ChannelSession* session;
+        ~SessionTaskGuard()
+        {
+            if (server != nullptr && session != nullptr)
+                server->EndSessionTask(session);
+        }
+    } taskGuard{m_server, session};
 
     try
     {

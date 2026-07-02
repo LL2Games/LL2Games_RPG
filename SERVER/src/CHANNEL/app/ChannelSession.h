@@ -6,6 +6,8 @@
 #include <deque>
 #include <mutex>
 #include <cstdint>
+#include <atomic>
+#include <condition_variable>
 
 class ChannelServer;
 
@@ -39,6 +41,11 @@ public:
 
     uint64_t GetSessionId() const { return m_sessionId; }
     uint64_t GetGeneration() const { return m_generation; }
+    bool TryBeginTask();
+    void EndTask();
+    void MarkClosing();
+    void WaitForNoTasks();
+    bool IsClosing() const { return m_closing.load(); }
 private:
     int m_fd = -1;
     ChannelServer* m_server = nullptr;
@@ -55,4 +62,8 @@ private:
 
     uint64_t m_sessionId = 0;
     uint64_t m_generation = 0;
+    std::atomic<bool> m_closing{false};
+    std::mutex m_taskMutex;
+    std::condition_variable m_taskCv;
+    int m_inFlightTasks = 0;
 };

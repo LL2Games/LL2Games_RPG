@@ -44,6 +44,8 @@ public:
     void EnableWriteEvent(int fd);
     void PushAuthResult(ChannelAuthResult result);
     ChannelSession* FindValidSession(int fd, uint64_t sessionId, uint64_t generation);
+    ChannelSession* BeginValidSessionTask(int fd, uint64_t sessionId, uint64_t generation);
+    void EndSessionTask(ChannelSession* session);
 
 public:
     PlayerManager* GetPlayerManager() { return &m_player_mamager; }
