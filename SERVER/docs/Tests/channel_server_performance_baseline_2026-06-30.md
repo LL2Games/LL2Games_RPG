@@ -647,6 +647,7 @@ python3 channel_auth_load_test.py --host 127.0.0.1 --port 9001 --start-character
 python3 channel_auth_load_test.py --host 127.0.0.1 --port 9001 --start-character-id 900000 --clients 30 --timeout 5
 python3 channel_auth_load_test.py --host 127.0.0.1 --port 9001 --start-character-id 900000 --clients 50 --timeout 10
 python3 channel_auth_load_test.py --host 127.0.0.1 --port 9001 --start-character-id 900000 --clients 100 --timeout 30
+python3 channel_auth_load_test.py --host 127.0.0.1 --port 9001 --start-character-id 900000 --clients 5000 --workers 500 --ramp-seconds 10 --timeout 60
 ```
 
 ## 실행 결과
@@ -685,6 +686,25 @@ failed=0
 조건: timeout 30초 기준 성공
 ``` 
 
+### clients 5000, workers 500, ramp 10s
+```text
+target=127.0.0.1:9001
+start_character_id=900000, clients=5000, workers=500, timeout=60.0, hold_seconds=0.0, ramp_seconds=10.0
+success=5000
+failed=0
+elapsed_sec=133.271
+auth_ms_min=316.794
+auth_ms_avg=12547.786
+auth_ms_p50=13023.971
+auth_ms_p95=15384.294
+auth_ms_p99=15982.493
+auth_ms_max=16413.311
+received_packets_avg=3.450
+received_packets_max=7
+received_bytes_avg=620.332
+received_bytes_max=2744
+```
+
 ## 테스트 결과
 ### 단일 인증
 - 결과: PASS
@@ -711,6 +731,14 @@ failed=0
 - 관찰: timeout 30초 기준으로 100개 인증 요청이 성공함
 - 의미: 서버가 100개 인증 요청을 처리할 수 있으나, LoadPlayer 구간 mutex 직렬화로 인해 요청 수가 증가할수록 대기 시간이 증가함
 
+### clients 5000, workers 500, ramp 10s
+- 결과: PASS
+- 관찰: 총 5000건의 PKT_CHANNEL_AUTH 요청이 모두 성공했고 실패 없음
+- 관찰: 테스트 클라이언트는 최대 500 worker로 인증 요청을 병렬 실행했으며, 5000건 요청을 10초 동안 점진적으로 투입함
+- 관찰: 클라이언트 기준 인증 응답 시간은 avg 12547.786ms, p95 15384.294ms, p99 15982.493ms로 측정됨
+- 의미: ChannelServer는 로컬 환경 기준 5000건의 채널 인증 부하를 실패 없이 처리했으나, 본 결과는 5000명 연결 유지 테스트가 아니라 500 worker 병렬 인증 요청 처리 결과임
+- 의미: 인증 성공률은 개선되었지만 p95/p99 지연 시간이 높아, 인증 latency 개선은 별도 최적화 과제로 남음
+
 ## 개선 전/후 비교
 ### 개선 전
 - 단일 인증은 PASS
@@ -725,12 +753,15 @@ failed=0
 - worker thread에서 ChannelSession* 직접 접근 제거
 - AUTH_THREAD_POOL_COUNT=4 기준 clients 30/50/100 인증 처리 성공 확인
 - clients 100은 timeout 30초 기준 성공
+- PKT_CHANNEL_AUTH ok 응답을 초기 데이터 패킷보다 먼저 전송하도록 조정
+- clients 5000, workers 500, ramp 10s, timeout 60초 조건에서 success=5000, failed=0 확인
 
 ### 현재 한계
 - LoadPlayer 구간은 mutex로 보호되어 있어 실제 DB/Redis 로딩은 직렬 처리됨
 - 따라서 동시 인증 수가 증가하면 서버가 crash하지는 않지만 뒤쪽 요청의 대기 시간이 증가함
 - 현재 테스트는 PKT_CHANNEL_AUTH ok 응답 수신 기준이며, 전체 초기화 패킷 수신 검증은 별도 확인 필요
 - 동일 character_id 범위를 서버 재시작 없이 반복 테스트하면 이전 세션 정리 상태가 결과에 영향을 줄 수 있음
+- clients 5000 결과는 총 인증 요청 5000건 처리 결과이며, 5000개 연결을 일정 시간 유지하는 동시접속 검증은 별도 hold_seconds 조건으로 측정 필요
 
 ### 남은 과제
 - PlayerService/Redis/MySQL 로딩 경로를 worker별 독립 connection 또는 thread-safe 구조로 개선
@@ -886,9 +917,9 @@ bytes_recv_per_sec=9507016.932
 
 | 항목 | 개선 전 | 개선 후 |
 |---|---:|---:|
-| 일반 패킷 처리 위치 | epoll 흐름의 `Dispatch()` 직접 실행 | `PacketProcessTask` 기반 worker 실행 |
+| 일반 패킷 처리 위치 | epoll 흐름의 Dispatch() 직접 실행 | PacketProcessTask 기반 worker 실행 |
 | 세션 유효성 검증 | 없음 | fd/sessionId/generation 검증 |
-| `m_sessions` 동기화 | 일부 미보호 | `m_sessionMutex` 적용 |
+| m_sessions 동기화 | 일부 미보호 | m_sessionMutex 적용 |
 | 동일 조건 정량 결과 | 미보관 | 측정 완료 |
 | clients | 미측정 | 200 |
 | duration | 미측정 | 30s |

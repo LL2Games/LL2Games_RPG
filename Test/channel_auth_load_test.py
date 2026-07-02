@@ -2,6 +2,7 @@ import argparse
 import socket
 import struct
 import time
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 PKT_CHANNEL_AUTH = 0x0009
@@ -151,8 +152,13 @@ def main():
     parser.add_argument("--clients", type=int, default=10)
     parser.add_argument("--timeout", type=float, default=3.0)
     parser.add_argument("--hold-seconds", type=float, default=0.0)
+    parser.add_argument("--workers", type=int, default=0)
+    parser.add_argument("--ramp-seconds", type=float, default=0.0)
     parser.add_argument("--verbose", action="store_true")
     args = parser.parse_args()
+
+    worker_count = args.workers if args.workers > 0 else args.clients
+    worker_count = max(1, min(worker_count, args.clients))
 
     character_ids = [
         args.start_character_id + i
@@ -163,25 +169,33 @@ def main():
     print(
         f"start_character_id={args.start_character_id}, "
         f"clients={args.clients}, "
+        f"workers={worker_count}, "
         f"timeout={args.timeout}, "
-        f"hold_seconds={args.hold_seconds}"
+        f"hold_seconds={args.hold_seconds}, "
+        f"ramp_seconds={args.ramp_seconds}"
     )
 
     started = time.perf_counter()
     results = []
 
-    with ThreadPoolExecutor(max_workers=args.clients) as executor:
-        futures = [
-            executor.submit(
+    with ThreadPoolExecutor(max_workers=worker_count) as executor:
+        futures = []
+        ramp_delay = 0.0
+        if args.ramp_seconds > 0 and args.clients > 1:
+            ramp_delay = args.ramp_seconds / (args.clients - 1)
+
+        for character_id in character_ids:
+            futures.append(executor.submit(
                 auth_once,
                 args.host,
                 args.port,
                 character_id,
                 args.timeout,
                 args.hold_seconds,
-            )
-            for character_id in character_ids
-        ]
+            ))
+
+            if ramp_delay > 0:
+                time.sleep(ramp_delay)
 
         for future in as_completed(futures):
             results.append(future.result())
@@ -198,6 +212,24 @@ def main():
     print(f"success={len(success_results)}")
     print(f"failed={len(failed_results)}")
     print(f"elapsed_sec={elapsed_sec:.3f}")
+
+    if failed_results:
+        failure_by_result = Counter(result["result"] for result in failed_results)
+        print("failure_by_result=" + ", ".join(
+            f"{result}:{count}"
+            for result, count in sorted(failure_by_result.items())
+        ))
+
+        failure_by_error = Counter(
+            result["error"]
+            for result in failed_results
+            if result["error"]
+        )
+        if failure_by_error:
+            print("failure_by_error=" + ", ".join(
+                f"{error}:{count}"
+                for error, count in failure_by_error.most_common(5)
+            ))
 
     if elapsed_values:
         print(f"auth_ms_min={min(elapsed_values):.3f}")

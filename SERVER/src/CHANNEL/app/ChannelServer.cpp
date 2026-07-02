@@ -175,7 +175,11 @@ bool ChannelServer::InitListenSocket(int port)
         return false;
     }
 
-    if(listen(m_listen_fd, 1024) < 0)
+    int backlog = static_cast<int>(m_max_user_count);
+    if (backlog < 1024)
+        backlog = 1024;
+
+    if(listen(m_listen_fd, backlog) < 0)
     {
         K_slog_trace(K_SLOG_ERROR, "[%s][%s][%d] m_listen_fd listen Error %d\n", "ChannelServer", __FILE__, __LINE__, port);
         close(m_listen_fd);
@@ -322,6 +326,15 @@ void ChannelServer::OnAccept()
             continue;
         }
 
+        unsigned int currentUserCount = m_current_user_count.load();
+        if (currentUserCount >= m_max_user_count)
+        {
+            K_slog_trace(K_SLOG_ERROR, "[%s][%d] Max user count reached. current:%u max:%u fd:%d",
+                         __FUNCTION__, __LINE__, currentUserCount, m_max_user_count, cfd);
+            close(cfd);
+            continue;
+        }
+
         /*
         이 Nagle 알고리즘이라는 것이 작은 데이터를 모아서 한번에 보내는 방식인데
 
@@ -367,8 +380,8 @@ void ChannelServer::OnAccept()
             inet_ntop(AF_INET, &caddr.sin_addr, ip, sizeof(ip));
             // 로그로 접속한 IP 정보 출력
         }
-        m_current_user_count++;
-        K_slog_trace(K_SLOG_TRACE, "[%s][%d] New Connection FD [%d] Current User Count [%d]\n", __FUNCTION__, __LINE__, cfd, m_current_user_count);
+        currentUserCount = m_current_user_count.fetch_add(1) + 1;
+        K_slog_trace(K_SLOG_TRACE, "[%s][%d] New Connection FD [%d] Current User Count [%u]\n", __FUNCTION__, __LINE__, cfd, currentUserCount);
     }
 }
 
@@ -460,6 +473,12 @@ void ChannelServer::OnDisconnect(int fd)
     epoll_ctl(m_epfd, EPOLL_CTL_DEL, fd, nullptr);
     delete session;
     close(fd);
+
+    unsigned int currentUserCount = m_current_user_count.load();
+    while (currentUserCount > 0 &&
+           !m_current_user_count.compare_exchange_weak(currentUserCount, currentUserCount - 1))
+    {
+    }
 }
 
 
@@ -501,7 +520,7 @@ void ChannelServer::UpdateChannelStateToRedis(const int ttl)
 {
     RedisConnectionGuard redisGuard(&m_redisPool);
     RedisClient* redis = redisGuard.Get();
-    int curUser = m_current_user_count;
+    int curUser = static_cast<int>(m_current_user_count.load());
     int maxUser = m_max_user_count;
     std::string state;
     int rc;
@@ -593,6 +612,8 @@ void ChannelServer::ProcessAuthResults()
         session->SetPlayer(rawPlayer);
         session->SetPlayerManager(&m_player_mamager);
 
+        session->SendOk(PKT_CHANNEL_AUTH, { rawPlayer->GetName() });
+
         PlayerPacketSender::SendPlayerInfo(rawPlayer);
         PlayerPacketSender::SendPlayerStat(rawPlayer);
         PlayerPacketSender::SendPlayerSkillList(rawPlayer);
@@ -601,7 +622,5 @@ void ChannelServer::ProcessAuthResults()
         InventoryPacketSender::SendInventoryItems(rawPlayer);
 
         QuickSlotPacketSender::SendQuickSlotList(rawPlayer);
-
-        session->SendOk(PKT_CHANNEL_AUTH, { rawPlayer->GetName() });
     }
 }

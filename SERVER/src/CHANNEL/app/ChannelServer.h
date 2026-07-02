@@ -109,6 +109,6 @@ private:
     std::mutex m_authResultMutex;
     std::mutex m_authLoadMutex;
     std::mutex m_sessionMutex;
-    unsigned int m_current_user_count;
+    std::atomic<unsigned int> m_current_user_count;
     unsigned int m_max_user_count;
 };

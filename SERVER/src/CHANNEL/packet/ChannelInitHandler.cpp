@@ -82,7 +82,6 @@ void ChannelInitHandler::HandleChannelAuth(PacketContext *ctx)
     PlayerService::LoadInventoryMeta(player.get());
     PlayerService::LoadInventory(player.get());
     PlayerService::LoadLearnedSkill(player.get());
-    PlayerService::LoadSlotSetting(player.get());
 
 
     K_slog_trace(K_SLOG_TRACE, "HandleChannelAuth: 플레이어 인벤토리 로드 성공 [%d]", characterId);
